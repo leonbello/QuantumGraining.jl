@@ -24,7 +24,7 @@ function getNodeDecompositions(breakNode::diagramNode)
     function NodeDecompositions(node)
         if (typeof(node) == diagramNode)
             nodeDecomp = [node.val, (node.root[1]-node.val[1], node.root[2]-node.val[2])]
-            ((nodeDecomp in nodeDecomp_list) == false) && push!(nodeDecomp_list, nodeDecomp)
+            ((nodeDecomp in nodeDecomp_list) == false)  && (nodeDecomp[2][1] > 0) &&  push!(nodeDecomp_list, nodeDecomp)
             NodeDecompositions(node.left)
             NodeDecompositions(node.right)
         else
