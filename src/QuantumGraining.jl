@@ -4,13 +4,20 @@ import SymbolicUtils
 import SymbolicUtils: substitute
 
 import Symbolics
+<<<<<<< HEAD
 #import TermInterface
 
 #import SciMLBase
+=======
+import TermInterface
+
+import SciMLBase
+>>>>>>> contraction-coeffecients
 
 import ModelingToolkit
 const MTK = ModelingToolkit
 
+<<<<<<< HEAD
 export DiagramNode, LeafNode,
         @definemodes, calculate_coeff,
         node_decomp, get_diagrams,
@@ -24,5 +31,11 @@ export Contraction,
 include("Diagrams.jl")
 include("Contractions.jl")
 
+=======
+export DiagramNode
+
+include("Contractions.jl")
+include("Diagrams.jl")
+>>>>>>> contraction-coeffecients
 
 end
