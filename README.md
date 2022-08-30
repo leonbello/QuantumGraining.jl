@@ -10,5 +10,6 @@ The main challenge with the TCG approach is that the calculations are very invol
 
 # Development Status
 Note that **QuantumGraining.jl** is still at an early stage of development.
+
 [![Build Status](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
