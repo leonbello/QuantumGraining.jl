@@ -25,7 +25,7 @@ AbstractDiagramNode
 ```
 
 ```@docs
-LeafNode
+NullNode
 ```
 
 ```@docs

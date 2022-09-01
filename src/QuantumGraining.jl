@@ -10,7 +10,7 @@ import Symbolics
 import ModelingToolkit
 const MTK = ModelingToolkit
 
-export DiagramNode, LeafNode,
+export DiagramNode, NullNode,
         @definemodes, calculate_coeff,
         node_decomp, get_diagrams,
         coeff                                   # helper functions -- remember to remove after testing

@@ -23,6 +23,17 @@ struct Contraction
 end
 
 """
+    _Ω(freqs...)
+Simple helper function to calculate the normalization for the correction terms.
+"""
+function _Ω(freqs)
+    n = length(freqs)
+    terms = [sum(freqs[i:end]) for i in 1:n]
+    return prod(terms)
+end
+
+
+"""
     @definemodes
 
 Helper macro to define `n` up-modes and `m` down-modes. Generates two vectors of symbols.
@@ -46,27 +57,6 @@ macro definemodes(n, m)
     end                                                                     # @cnumbers μ1 μ2 ... μn
 
     dmodes = [Symbol(:ν, i) for i in range(1, eval(:($m)) )]
-"""
-    _Ω(freqs...)
-Simple helper function to calculate the normalization for the correction terms.
-"""
-function _Ω(freqs)
-    n = length(freqs)
-    terms = [sum(freqs[i:end]) for i in 1:n]
-    return prod(terms)
-end
-
-"""
-    Helper macro to define `n` up-modes and `m` down-modes
-"""
-macro definemodes(n, m)
-    umodes = [Symbol(:μ, i) for i in range(1, n)]
-    ex1 = :(@cnumbers)
-    for mode in umodes
-        push!(ex1.args, mode)
-    end                                                                      # @cnumbers μ1 μ2 ... μn
-
-    dmodes = eval(:([Symbol(:ν, i) for i in range(1, m)]))
     ex2 = :(@cnumbers)
     for mode in dmodes
         push!(ex2.args, mode)
@@ -92,12 +82,13 @@ function coeff(μ, ν, endmode=0)
     return f(sum(μ) + sum(ν))/(_Ω(μ[1:(end-endmode)])*_Ω(ν)) 
 end
 
-#=
+
+# bad code, μ and ν aren't necessarily defined
 function coeff(bubble, endmode=0)
     # add symmetry sign factors
     coeff(μ[1:bubble[1]], ν[1:bubble[2]], endmode)
 end
-=#
+
 
 """
     Helper function for calculating the coefficient of a single bubble, returns a symbolic expression that evaluates to the coefficient

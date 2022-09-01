@@ -5,19 +5,16 @@ diagrams.jl contains all recursive functions that help produce all child diagram
 abstract type AbstractDiagramNode end
 
 """
-    LeafNode <: AbstractDiagramNode
+    NullNode <: AbstractDiagramNode
 
-A terminating node in the tree, its value is always chosen such that the rightmost bubble is (1, 0).
+A terminating node in the tree, has no value. Here so we can check if node can be decomposed using `isa DiagramNode`
 
 # Fields
 - `root`: Root value of the tree.
-- `val`: Value of the tree -- constant and always (1, 0).
+
 """
-struct LeafNode <: AbstractDiagramNode
+struct NullNode <: AbstractDiagramNode
     root::Tuple{Int64, Int64}
-    val::Tuple{Int64, Int64}
-    
-    LeafNode(root) = new(root, (root[1] - 1, root[2]))  # Value is chosen such that the rightmost bubble is (1,0)
 end
 
 """
@@ -29,44 +26,49 @@ It is defined as a recursive tree where the elements represent the different dec
 # Fields:
 - `root::Tuple{Int, Int}`: The root of the tree, the largest common bubble defining the contraction.
 - `val::Tuple{Int, Int}`: The value of the current node, determines how much of the bubble was broken to the left.
+- `rightmost::Tuple{Int, Int}`: The value of the rightmost bubble.
 - `right::DiagramNode`: Pointer to the next right node of the tree, a diagram with one mode broken to the down-bubble.
 - `left::DiagramNode`: Pointer to the next left node of the tree, a diagram with one mode broken to the up-bubble.
 """
 struct DiagramNode <: AbstractDiagramNode
     root::Tuple{Int64, Int64}
     val::Tuple{Int64, Int64}
+    rightmost::Tuple{Int64, Int64}
     left::AbstractDiagramNode
     right::AbstractDiagramNode
-
-    diagramNode(root, val) = new(root, val, LeafNode(root), LeafNode(root))
 
     function DiagramNode(root, val)
         if ((root[1] < val[1]) || (root[2] < val[2]))
             throw(DomainError(root, "Root node must be smaller than node value!"))
         else
-            left = (val[1] > root[1] - 1) ? DiagramNode(root, (val[1] - 1, val[2])) : LeafNode(root) # condition here is wrong
-            right = (val[2] > root[2]) ? DiagramNode(root, (val[1], val[2] - 1)) : LeafNode(root)
-            new(root, val, left, right)
+            rightmost = (root[1] - val[1], root[2] - val[2])
+            # the nodes (2, N) and (N, 1) are the last ones we can break.
+            left  = (rightmost[1] >= 2) ? DiagramNode(root, (val[1] + 1, val[2])) : NullNode(root)
+            right = (rightmost[2] >= 1) ? DiagramNode(root, (val[1], val[2] + 1)) : NullNode(root)
+            new(root, val, rightmost, left, right)
         end 
     end
 end
 function DiagramNode(root::Tuple{Int64, Int64})
-    return DiagramNode(root, root)
+    return DiagramNode(root, (0, 0))
 end
-
+function DiagramNode(node::DiagramNode)
+    DiagramNode(node.rightmost)
+end
 """
     to_array(node::DiagramNode)
 
 Given a node, returns the diagram in array form where each entry corresponds to a different bubble.
 """
-function to_array(node::AbstractDiagramNode)
-    return [node.val, (node.root[1] - node.val[1], node.root[2] - node.val[2])]
+function to_array(node::DiagramNode)
+    return [node.val, node.rightmost]
 end
+to_array(node::NullNode) = []
 
 
 """
-    node_decomp(break_node::DiagramNode)
-
+    node_decomp(node::DiagramNode)
+    node_decomp!(node::AbstractDiagramNode, decomp_list)
 Uses the DiagramNode structure to give one level of decompositions explicitly using a recursive function.
 In other words, gives all ways one can break a bubble into two.
 
@@ -77,19 +79,20 @@ In other words, gives all ways one can break a bubble into two.
 - `decomp_list::Array{Int}`: a list of all nodes in the tree. 
 
 """
-function node_decomp(node::DiagramNode)
-    decomp_list = Array{}[]
-    function _node_decomp(node::DiagramNode)
+function node_decomp!(node::AbstractDiagramNode, decomp_list)
+    if (node isa DiagramNode)
         decomp = to_array(node)
-        if (decomp ∉ decomp_list && decomp isa DiagramNode)                           # changed for readability
+        if (decomp ∉ decomp_list)                           # changed for readability
             push!(decomp_list, decomp)
-            _node_decomp(node.left)
-            _node_decomp(node.right)
-        else
-            return decomp_list
         end
+        node_decomp!(node.left, decomp_list)
+        node_decomp!(node.right, decomp_list)
     end
-    return _node_decomp(node)
+end
+function node_decomp(node::DiagramNode)
+    decomp_list = []
+    node_decomp!(node, decomp_list)
+    return decomp_list
 end 
 
 """
@@ -98,36 +101,79 @@ end
 Uses the above `node_decomp()` to get all possible diagrams recursively.
 
 # Arguments
-- `init_diagram::Array`: The initial diagram including the first level of breakdowns (two bubble diagrams)
+- `node::AbstractDiagramNode`: The initial diagram including the first level of breakdowns (two bubble diagrams)
 
 # Returns
 - A list of all possible diagrams for a given contractions.
 """
-function get_diagrams(init_diagram::Array)
-    #diagrams_list = Array{}[]
-    diagrams_list = [init_diagram]
-    function _get_diagrams(diagram::Array)
-        if (last(diagram) == (1,0))                                         # stop rule: the stem-mode cannot be broken further.
-            return diagrams_list
-        else
-            right_bubble = DiagramNode(last(diagram), last(diagram))        # create a new tree with the rightmost bubble as the root
-            right_decomps = node_decomp(right_bubble)                       # returns all 2-bubble decompositions
-            level_list = Array{}[]                                          # list of diagrams to be broken further
-            for right_decomp in right_decomps
-                child_diagram = copy(diagram)
-                pop!(child_diagram)                                         # removes last bubble from the diagram
-                push!(child_diagram, right_decomp...)
-                push!(diagrams_list, child_diagram)
-                push!(level_list, child_diagram)
-            end
-            for child_diagram in level_list
-                _get_diagrams(child_diagram)
+function get_diagrams(node::AbstractDiagramNode)
+    diagrams_list = []
+    if (node isa DiagramNode)
+        node_decomp!(node, diagrams_list)                              # add all 2-bubble decompoisition to the list
+        for child in [node.left, node.right]                           # for both child nodes
+            if (child isa DiagramNode)
+                decomp = DiagramNode(child)                            # build a new decomposition tree out of the rightmost bubble
+                child_list = get_diagrams(decomp)                      # get all diagrams of the child node
+                for c in child_list
+                    pushfirst!(c, child.val)                          # for each decomposition, add the left bubble
+                end
+                push!(diagrams_list, child_list...)
             end
         end
-        return diagrams_list
     end
-    #pushfirst!(diagrams_list, init_diagram)
-    return _get_diagrams(init_diagram)
+    return diagrams_list
+end
+
+
+#=
+    function _get_diagrams!(node::AbstractDiagramNode, diagrams_list)
+        if (node isa DiagramNode)                                           # if we can break that diagram further
+            # get decomp tree of the node
+            push!(diagrams_list, node_decomp(node)...)
+            #push!(diagrams_list, to_array(node))                           # concatenate diagrams to the list
+            for child in [node.left, node.right]                            # for both child nodes
+                child_list = to_array(child)
+                pop!(child_list)
+                node_decomp!(child, child_list)
+            end
+
+            #= Probably not working
+            decomps = node_decomp(node)                                     
+            push!(diagrams_list, decomps...)                                # return all 2-bubble decompositions and list them
+
+            for child in [node.left, node.right]
+                child_list = []
+                _get_diagrams!(child, child_list)                           # add child decomposition
+
+            end
+
+            for decomp in decomps
+                diagram = copy(decomp)
+    
+                # Go over the next two nodes in the tree
+                for child_decomps in node_decomp.([node.left, node.right])
+                    # Break the rightmost bubble and replace with the decompositions
+                    pop!(diagram)
+                    push!(diagram, child_decomp)
+                end
+            end
+            =#
+
+            #=
+            for decomp in decomps                                           # add all our decompositions into an array
+                diagram = to_array(node)
+                pop!(diagram)                                               # removes last (rightmost) bubble from the diagram
+                push!(diagram, decomp...)                                   # replace with the two-bubble decomposition 
+                push!(diagrams_list, diagram)                               # add to master list                     
+            end
+            
+            _get_diagrams!(node.right, diagrams_list)
+            _get_diagrams!(node.left, diagrams_list)
+            =#
+        end
+    end
+    diagrams_list = [to_array(node)]
+    return _get_diagrams!(init_diagram, diagrams_list)
 end
 get_diagrams(root::DiagramNode) = get_diagrams(to_array(root))
-
+=#
