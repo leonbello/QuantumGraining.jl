@@ -1,7 +1,6 @@
 #=
 diagrams.jl contains all recursive functions that help produce all child diagrams from a given contraction.
 =#
-
 abstract type AbstractDiagramNode end
 
 """
@@ -55,6 +54,7 @@ end
 function DiagramNode(node::DiagramNode)
     DiagramNode(node.rightmost)
 end
+
 """
     to_array(node::DiagramNode)
 
@@ -65,10 +65,10 @@ function to_array(node::DiagramNode)
 end
 to_array(node::NullNode) = []
 
-
 """
     node_decomp(node::DiagramNode)
     node_decomp!(node::AbstractDiagramNode, decomp_list)
+
 Uses the DiagramNode structure to give one level of decompositions explicitly using a recursive function.
 In other words, gives all ways one can break a bubble into two.
 
@@ -77,12 +77,11 @@ In other words, gives all ways one can break a bubble into two.
 
 # Returns
 - `decomp_list::Array{Int}`: a list of all nodes in the tree. 
-
 """
 function node_decomp!(node::AbstractDiagramNode, decomp_list)
     if (node isa DiagramNode)
         decomp = to_array(node)
-        if (decomp ∉ decomp_list)                           # changed for readability
+        if (decomp ∉ decomp_list)                                        # changed for readability
             push!(decomp_list, decomp)
         end
         node_decomp!(node.left, decomp_list)
@@ -115,7 +114,7 @@ function get_diagrams(node::AbstractDiagramNode)
                 decomp = DiagramNode(child)                            # build a new decomposition tree out of the rightmost bubble
                 child_list = get_diagrams(decomp)                      # get all diagrams of the child node
                 for c in child_list
-                    pushfirst!(c, child.val)                          # for each decomposition, add the left bubble
+                    pushfirst!(c, child.val)                           # for each decomposition, add the left bubble
                 end
                 push!(diagrams_list, child_list...)
             end
@@ -123,57 +122,3 @@ function get_diagrams(node::AbstractDiagramNode)
     end
     return diagrams_list
 end
-
-
-#=
-    function _get_diagrams!(node::AbstractDiagramNode, diagrams_list)
-        if (node isa DiagramNode)                                           # if we can break that diagram further
-            # get decomp tree of the node
-            push!(diagrams_list, node_decomp(node)...)
-            #push!(diagrams_list, to_array(node))                           # concatenate diagrams to the list
-            for child in [node.left, node.right]                            # for both child nodes
-                child_list = to_array(child)
-                pop!(child_list)
-                node_decomp!(child, child_list)
-            end
-
-            #= Probably not working
-            decomps = node_decomp(node)                                     
-            push!(diagrams_list, decomps...)                                # return all 2-bubble decompositions and list them
-
-            for child in [node.left, node.right]
-                child_list = []
-                _get_diagrams!(child, child_list)                           # add child decomposition
-
-            end
-
-            for decomp in decomps
-                diagram = copy(decomp)
-    
-                # Go over the next two nodes in the tree
-                for child_decomps in node_decomp.([node.left, node.right])
-                    # Break the rightmost bubble and replace with the decompositions
-                    pop!(diagram)
-                    push!(diagram, child_decomp)
-                end
-            end
-            =#
-
-            #=
-            for decomp in decomps                                           # add all our decompositions into an array
-                diagram = to_array(node)
-                pop!(diagram)                                               # removes last (rightmost) bubble from the diagram
-                push!(diagram, decomp...)                                   # replace with the two-bubble decomposition 
-                push!(diagrams_list, diagram)                               # add to master list                     
-            end
-            
-            _get_diagrams!(node.right, diagrams_list)
-            _get_diagrams!(node.left, diagrams_list)
-            =#
-        end
-    end
-    diagrams_list = [to_array(node)]
-    return _get_diagrams!(init_diagram, diagrams_list)
-end
-get_diagrams(root::DiagramNode) = get_diagrams(to_array(root))
-=#
