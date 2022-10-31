@@ -103,9 +103,9 @@ end
 """
 function calculate_coeff(diagram::Array{Tuple{Int64, Int64}})
     h = []
-    for (i, bubble) in enumerate(diagram)
+    for bubble in enumerate(diagram)
         @definemodes bubble[1] bubble[2]
-        push!(h, _calculate_coeff(bubble))
+        push!(h, calculate_coeff(bubble))
     end
     return h
 end

@@ -1,7 +1,8 @@
-using QuantumGraining
 #using QuantumCumulants
-#using Test
-
+using Test
+include("../src/diagrams.jl")
+include("../src/contractions.jl")
+include("../src/printing.jl")
 #@testset "contractions" begin
 
 diagram = [(3, 4), (2, 1)]
