@@ -2,7 +2,7 @@ module QuantumGraining
 
 import SymbolicUtils
 import SymbolicUtils: substitute
-
+import QuantumCumulants
 import Symbolics
 #import TermInterface
 #import SciMLBase
