@@ -1,5 +1,6 @@
+using QuantumCumulants
 using QuantumGraining
-#using QuantumCumulants
+
 #using Test
 
 #@testset "contractions" begin
@@ -9,7 +10,7 @@ module Tst
     include("../src/contractions.jl")
     include("../src/printing.jl")
 
-    diagram = [(3, 4), (2, 1)]
+    diagram = [(3, 4), (5, 1)]
     for (i, bubble) in enumerate(diagram)
         println("bubble $i: ($(bubble[1]), $(bubble[2])) ")
         println("----")

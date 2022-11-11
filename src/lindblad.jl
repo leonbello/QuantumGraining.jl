@@ -25,6 +25,25 @@ function effective_hamiltonian(k::Int, ω::Array, h::Array, fmt=:QuantumCumulant
     return effective_ham
 end
 
+
+"""
+function checkHam(c::Tuple{Int64, Int64})
+    #Maybe a helper function 
+    contraction = Contraction(c)
+    effective_ham_diagrams = []
+    for diagram in contraction.diagrams
+        diagramInHam = 0
+        for node in diagram
+            if (node[2] == 0)
+                diagramInHam = 1
+            end
+        end
+        if (diagramInHam == 0)
+            push!(diagram,effective_ham_diagrams)
+        end
+    end
+end
+"""
 """
     effective_hamiltonian(d::Diagram) - Given a diagram object, returns all contributing terms.
     effective_hamiltonian(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
