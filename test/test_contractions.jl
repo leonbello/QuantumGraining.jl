@@ -17,7 +17,7 @@ module Tst
 
     @definemodes diagram[1][1] diagram[1][2]
     @show μ
-    @show ν
+    @show ν 
     @show τ
 
     @definemodes diagram[2][1] diagram[2][2]
@@ -32,6 +32,23 @@ module Tst
     @definemodes diagram
     c = calculate_coeff(diagram)
     @show c
+
+    diagram2 = [(3, 4), (2, 1)]
+    
+    @show μ
+    @show ν
+    @definemodes diagram2
+    c2 = calculate_coeff(diagram2)
+
+    diagram3 = [(3,3), (2,1)]
+    c3 = calculate_coeff(diagram3)
+
+    function test_definemodes(diagram::Array{Tuple{Int, Int}})
+        @macroexpand @definemodes diagram
+    end
+
+    typeof(diagram3)
+    print(test_definemodes(diagram3))
 end
 
 # if denominator goes to zero -> take limit
