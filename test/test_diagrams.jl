@@ -28,6 +28,7 @@ module Tst
     # get_diagrams() -- check that all sum up to the root
     node = DiagramNode((5, 4))
     diagrams = get_diagrams(node)
+    @show typeof(diagrams)
     @show diagrams
 end
 

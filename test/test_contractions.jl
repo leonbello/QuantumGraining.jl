@@ -16,14 +16,40 @@ module Tst
         println("----")
     end
 
-    n, m = get_max_modes(diagram)
-    @definemodes μ n
-    @definemodes ν m
-    c = coeff(μ, ν, τ)
-    C, h = calculate_coeff(μ, ν, τ, diagram)
-    @show h[1]
-    @show h[2]
-    @show C
+    @definemodes diagram[1][1] diagram[1][2]
+    @show μ
+    @show ν 
+    @show τ
+
+    @definemodes diagram[2][1] diagram[2][2]
+    @show μ
+    @show ν
+
+    umax, dmax = _maxmodes(diagram)                       # to avoid redundancy, we find the maximum amount of participating modes
+    @show umax
+    @show dmax
+    @definemodes umax dmax                                # define all the participating modes as symbols
+
+    @definemodes diagram
+    c = calculate_coeff(diagram)
+    @show c
+
+    diagram2 = [(3, 4), (2, 1)]
+    
+    @show μ
+    @show ν
+    @definemodes diagram2
+    c2 = calculate_coeff(diagram2)
+
+    diagram3 = [(3,3), (2,1)]
+    c3 = calculate_coeff(diagram3)
+
+    function test_definemodes(diagram::Array{Tuple{Int, Int}})
+        @macroexpand @definemodes diagram
+    end
+
+    typeof(diagram3)
+    print(test_definemodes(diagram3))
 end
 
 # if denominator goes to zero -> take limit
