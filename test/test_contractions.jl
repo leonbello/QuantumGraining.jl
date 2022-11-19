@@ -16,11 +16,18 @@ module Tst
         println("----")
     end
 
+    diagram2 = [(2,0), (3,0)]
+    @definemodes x 3
     @definemodes diagram[1][1] diagram[1][2]
+    @show x
     @show μ
     @show ν 
     @show τ
-
+    @show get_max_modes(diagram)
+    @show get_max_modes(diagram2)
+    @definemodes x get_max_modes(diagram2)[1]
+    @definemodes y get_max_modes(diagram2)[2]
+    c1 = calculate_coeff(x,y,τ,diagram2)
     @definemodes diagram[2][1] diagram[2][2]
     @show μ
     @show ν

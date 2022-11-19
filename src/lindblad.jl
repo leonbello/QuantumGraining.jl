@@ -26,36 +26,11 @@ function effective_hamiltonian(k::Int, ω::Array, h::Array, fmt=:QuantumCumulant
 end
 
 
-"""
-function checkHam(c::Tuple{Int64, Int64})
-    #Maybe a helper function 
-    contraction = Contraction(c)
-    effective_ham_diagrams = []
-    for diagram in contraction.diagrams
-        diagramInHam = 0
-        for node in diagram
-            if (node[2] == 0)
-                diagramInHam = 1
-            end
-        end
-        if (diagramInHam == 0)
-            push!(diagram,effective_ham_diagrams)
-        end
-    end
-end
-"""
-"""
-    effective_hamiltonian(d::Diagram) - Given a diagram object, returns all contributing terms.
-    effective_hamiltonian(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
-"""
-
 function effective_hamiltonian(diagram, ω_list::Array, h_list::Array)
-    effective_ham = 0
-    @definemodes diagram
-    print(μ)
-    print(ν)
-    #C0 = coeff(μ, ν)
-    C0 = calculate_coeff(diagram)
+    effective_ham = 0 
+    @definemodes μ get_max_modes(diagram)[1]
+    #@definemodes ν get_max_modes(diagram)[2]
+    C0, C0_list = calculate_coeff(μ,[],τ,diagram)
     for j in range(1, length(ω_list), length(ω_list))
         freqs = ω_list[j]
         g = (substitute(C0, Dict(μ .=> freqs)) + substitute(C0, Dict(μ .=> -reverse(freqs)))/2)*exp(1im*τ*sum(freqs))
@@ -94,9 +69,9 @@ end
 
 function effective_dissipator_rate(diagram::Array{Tuple{Int, Int}}, ω_list::Array)
     effective_disp = 0
-    @definemodes diagram
-    #C0 = coeff(μ, ν)
-    C0 = calculate_coeff(diagram)
+    @definemodes μ get_max_modes(diagram)[1]
+    @definemodes ν get_max_modes(diagram)[2]
+    C0, C0_list = calculate_coeff(μ,[],τ,diagram)
     for j in range(1, length(ω_list), length(ω_list))
         freqs = ω_list[j]
         effective_disp +=  substitute(C0, Dict(μ .=> freqs[1:length(μ)], ν .=> freqs[length(μ):length(freqs)]))*exp(1im*τ*sum(freqs))
