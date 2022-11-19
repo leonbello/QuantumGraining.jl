@@ -7,7 +7,7 @@ Simple helper function to calculate the normalization factor for the correction 
 function _Ω(freqs)
     n = length(freqs)
     terms = [sum(freqs[i:end]) for i in 1:n]
-    return prod(terms)
+    return n > 0 ? prod(terms) : 1
 end
 
 """
@@ -83,10 +83,12 @@ end
 function coeff(μ, ν, τ, endmode=0) 
     l = length(μ)
     r = length(ν)
+    sum_μ = l > 0 ? sum(μ) : 0
+    sum_ν = r > 0 ? sum(ν) : 0
     f(ω, τ) = exp(-1/2*ω^2*τ^2)                      # define filter function
     s = (-1)^(2*l + r)                               # symmetry sign factor
     #in general (-1)^(num_bubbles + l)
-    return s*f(sum(μ) + sum(ν), τ)/(_Ω(μ[1:(end-endmode)])*_Ω(ν)) 
+    return s*f(sum_μ + sum_ν, τ)/(_Ω(μ[1:(end-endmode)])*_Ω(ν)) 
 end
 
 """
