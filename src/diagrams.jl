@@ -88,6 +88,7 @@ function node_decomp!(node::AbstractDiagramNode, decomp_list)
         node_decomp!(node.right, decomp_list)
     end
 end
+
 function node_decomp(node::DiagramNode)
     decomp_list = []
     node_decomp!(node, decomp_list)

@@ -9,20 +9,37 @@ Lindblad.jl contains the functionalities to generate the final Lindbladian in op
 """
 
 # Helper function (NOTE: not sure what the protocol is to steal something from StackOverflow)
-repeatedCombinations(arr::Vector, n::Int) = 
+repeated_combinations(arr::Vector, n::Int) = 
     [ getindex.(Ref(arr), 1 .+ digits(i-1; base=length(arr), pad=n)) for i=1:length(arr)^n ]
 
 
+
+
 function effective_hamiltonian(k::Int, ω::Array, h::Array, fmt=:QuantumCumulants)
-    #Functionality to sum over all contractions of upto kth order 
-    #w and h are arrays of symbolic cnumbers from QuantumCumulants
-    effective_ham = 0
-    for n in 1:k
-        ω_list = repeatedCombinations(ω,n)
-        h_list = repeatedCombinations(h,n)
-        effective_ham += sum([effective_hamiltonian(diagram,ω_list,h_list) for diagram in get_diagrams(DiagramNode((n,0)))])    
+    # Functionality to sum over all contractions of upto kth order 
+    # w and h are arrays of symbolic cnumbers from QuantumCumulants
+    g_list = []
+    V_list = []
+    ω_list = repeated_combinations(ω, n)
+    h_list = repeated_combinations(h, n)
+    for i in 1:k
+        # --- WIP --- #
+        for (ω, h) in zip(ω_list, h_list)    
+            g += 1//2*(contraction_coeff(k, 0)(ω) + contraction_coeff(0, k)(ω))     # would be more efficient to calculate the coeff once
+            V = prod(h) #? 
+        end
+        push!(g_list, g) 
+        push!(V_list, V)
+        h_eff += g*V
     end
-    return effective_ham
+    return h_eff
+    # effective_ham = 0
+    # for n in 1:k
+    #     ω_list = repeated_combinations(ω,n)
+    #     h_list = repeated_combinations(h,n)
+    #     effective_ham += sum([effective_hamiltonian(diagram,ω_list,h_list) for diagram in get_diagrams(DiagramNode((n,0)))])    
+    # end
+    # return effective_ham
 end
 
 
@@ -50,8 +67,8 @@ function effective_dissipator(k::Int, ω::Array, h::Array, fmt=:QuantumCumulants
     effective_disp = []
 
     for n in range 1:k   
-        ω_list = repeatedCombinations(ω,n)
-        h_list = repeatedCombinations(h,n)
+        ω_list = repeated_combinations(ω,n)
+        h_list = repeated_combinations(h,n)
         for m in 0:n
             effective_disp_rate = 0
             for diagram in get_diagrams(DiagramNode((n-m,m)))     
