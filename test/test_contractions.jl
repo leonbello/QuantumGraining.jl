@@ -1,3 +1,4 @@
+using Revise
 using QuantumCumulants
 using QuantumGraining
 
@@ -13,14 +14,14 @@ module Tst
 
 
     ## coeff ##
-    c = coeff(3, 2)
+    c = bubble_coeff(3, 2)
     @definemodes μ 3
     @definemodes ν 2
     c(μ, ν)
     c([3, 2, 6], [1, 4, 7])
     typeof(c(μ,ν))
 
-    c = coeff(5, 0)
+    c = bubble_coeff(5, 0)
     c(μ, ν)
 
     ## contraction_coeff ##

@@ -11,7 +11,7 @@ function _Ω(freqs)
 end
 
 """
-    coeff(l, r, endmode, freqs...)
+    bubble_coeff(l, r, endmode)
 
     Calculates the coefficient of a single bubble, 
     returns a symbolic function that evaluates to the coefficient as a function of frequency.
@@ -21,9 +21,9 @@ end
     - ν: a vector of the symbolic down-mode frequencies in the bubble.
 
     Returns:
-    - C_{l,r}(μ, ν): a symbolic expression for the bubble coeffeicient.
+    - f_{l,r}(μ, ν): a symbolic expression for a single bubble coeffeicient.
 """
-function coeff(l, r, endmode=0) 
+function bubble_coeff(l, r, endmode=0) 
     @cnumbers τ
     f(ω, τ) = exp(-1/2*ω^2*τ^2)                      # define filter function
     s = (-1)^(2*l + r)                               # symmetry sign factor, in general (-1)^(num_bubbles + l)
@@ -37,7 +37,21 @@ function coeff(l, r, endmode=0)
     return _c                                                                    # should return a symbolic *function*
 end
 
-function contraction_coeff(left::Int, right::Int)
+"""
+    contraction_coeff(left::Int, right::Int)
+
+    Calculates the coefficient of a whole contraction, 
+    returns a symbolic function that evaluates to the coefficient as a function of frequency.
+
+    Arguments:
+    - left: the left-order of the contraction
+    - right: the right-order of the contraction
+    - divide_freqs: returns the coefficient as a function of only one frequency array ω
+
+    Returns:
+    - C_{l,r}(μ, ν): a symbolic expression for the contraction coeffeicient.
+"""
+function contraction_coeff(left::Int, right::Int, divide_freqs = false)
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
     function _c(μ, ν)
@@ -46,13 +60,22 @@ function contraction_coeff(left::Int, right::Int)
             diag_ex = 1
             for (i, bubble) in enumerate(diagram)
                 endmode = (i == length(diagram)) ? 1 : 0
-                diag_ex = diag_ex*(coeff(left, right, endmode))(μ, ν)        # calculate the bubble correction term and multiply it in
+                diag_ex = diag_ex*(bubble_coeff(left, right, endmode))(μ, ν)        # calculate the bubble correction term and multiply it in
             end
             ex = ex + diag_ex                                   # add the diagram to the contraction coefficient expression
         end
         return ex
     end
+    if divide_freqs
+        _c(ω) = _c(ω[1:left], ω[left+1:end])  
+    end
     return _c
+end
+
+
+function contraction_coeff(order::Tuple{Int, Int})
+    left, right = order
+    return contraction_coeff(left, right)
 end
 
 """
