@@ -29,7 +29,7 @@ module Tst
     node = DiagramNode((5, 4))
     diagrams = get_diagrams(node)
     @show typeof(diagrams)
-    @show diagrams
+    @show diagrams[1]
 end
 
 
