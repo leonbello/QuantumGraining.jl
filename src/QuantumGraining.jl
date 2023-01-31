@@ -4,6 +4,7 @@ import SymbolicUtils
 import SymbolicUtils: substitute
 import QuantumCumulants
 import Symbolics
+import IterTools
 #import TermInterface
 #import SciMLBase
 

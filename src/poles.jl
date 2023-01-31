@@ -7,7 +7,6 @@ taylor_coeff(n, k)
 Recursive function used to calculate finite contribution for Taylor expansion for diagrams with poles.
 
 """
-
 function taylor_coeff(n, k)
     # base cases
     if (k == -1) || (n < 2*k)
@@ -82,51 +81,48 @@ end
 
 
 """
-find_integer_solutions(k::Int, m::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
+find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
 
 Function that calculates combinations of k positive integers adding up to m. 
 
 """
-
-function find_integer_solutions(k::Int, m::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
+function find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
     res = []
-    if sum_so_far == m
-        if length(combination) == k
+    if sum_so_far == target_sum
+        if length(combination) == num_vars
             push!(res, combination)
             return res
         end
-    elseif sum_so_far > m
+    elseif sum_so_far > target_sum
         return res
     end
-    for i in 0:m
-        if length(combination) < k
-            res = vcat(res, find_integer_solutions(k, m, [combination..., i], sum_so_far+i))
+    for i in 0:target_sum
+        if length(combination) < num_vars
+            res = vcat(res, find_integer_solutions(num_vars, target_sum, [combination..., i], sum_so_far+i))
         end
     end
     return res
 end
 
-"""
-reshape_sols_vec(sols, k, m, num_bubbles, num_indices = 3)
-
-Helper function that reshapes integer combinations from find_integer_solutions() 
 
 """
+reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
 
-function reshape_sols_vec(sols, k, m, num_bubbles, num_indices = 3)
-    num_sols = floor(Int, factorial(k + m - 1)/(factorial(k)*factorial(m - 1)))
+Helper function that reshapes integer combinations from find_integer_solutions() into vectors
+"""
+function reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
+    num_vars = num_bubbles*num_indices
+    num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
     dim_sols = num_sols                # total number of solutions
     dim_indices = num_indices          # number of indices - u, n, l
     dim_bubbles = num_bubbles          # number of bubbles 
     
     vectors = Array{Array{Int64,1}, 2}(undef, dim_sols, dim_bubbles)
 
-    for i in 1:dim_sols           # loop over solutions
-        for j in 1:dim_bubbles    # loop over bubbles
-            for k in 1:dim_indices
-                end_idx = dim_indices*j < length(sols[i][:]) ? dim_indices*j : length(sols[i][:])
-                vectors[i, j] = sols[i][(1 + dim_indices*(j - 1)):end_idx]
-            end
+    for i in 1:dim_sols           
+        for j in 1:dim_bubbles    
+            end_idx = dim_indices*j < length(sols[i][:]) ? dim_indices*j : length(sols[i][:])
+            vectors[i, j] = sols[i][(1 + dim_indices*(j - 1)):end_idx]
         end
     end
     return vectors

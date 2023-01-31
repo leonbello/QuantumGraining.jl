@@ -7,6 +7,7 @@ module Tst
     include("../src/poles.jl")
     include("../src/printing.jl")
 
+    ## taylor_coeff() ##
     # base cases verification
     @show taylor_coeff(1, -1)
     @show taylor_coeff(231, -1)
@@ -25,6 +26,8 @@ module Tst
         end
     end
 
+    ## vec_factorial() ##
+    # numeric
     a = [1, 3, 5, 7]
     @show vec_factorial(a) 
     @show 1*(1+3)*(1+3+5)*(1+3+5+7)
@@ -33,12 +36,15 @@ module Tst
     @show vec_factorial(b)
     @show vec_factorial(b, include_poles=false)
 
+    # symbolic
     @cnumbers a b c d
 
     v = [a, b, c, -(a+b+c), d]
     @show vec_factorial(v, include_poles=false)
     @show vec_factorial(v, include_poles=true)
 
+
+    ## find_poles() ##
     μ1 = [a, b, -a-b] # pole at 3
     ν1 = [a, -a] # pole at 2
 
@@ -53,6 +59,8 @@ module Tst
     @show stag_list
     @show total_num_poles
 
+    ## find_integer_solutions() ##
+
     @show find_integer_solutions(1, 5)
     @show find_integer_solutions(2, 4)
 
@@ -62,11 +70,22 @@ module Tst
     sols = find_integer_solutions(k, m);
     num_sols = floor(Int, factorial(4 + 6 - 1)/(factorial(4)*factorial(5)));
 
-    vecs = reshape_sols_vec(sols, k, m, d);
-    #@show size(sols)[1] == num_sols
-    #@show sols
+    ## reshape_sols() ##
+    # 4 bubbles, each bubble with 3 indices that sum up to 4.
+    num_indices = 3
+    num_bubbles = 4
+    num_vars = num_indices*num_bubbles
+    target_sum = 4
 
-    #table = reshape_sols(sols, k, m, d)
-    #@show table
+    sols = find_integer_solutions(num_vars, target_sum);
+    num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
 
+    vecs = reshape_sols(sols, target_sum, num_bubbles)
+
+
+    @show size(vecs) 
+    @show num_sols
     @show vecs
+
+    
+end
