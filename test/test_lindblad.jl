@@ -41,9 +41,19 @@ module Tst
     t3 = diagram_correction(ω)
 
     # non-singular bubble
-    μ1 = [0, 2, -2]
+    μ1 = [1, 2, 3]     # 2*(2 + 3) -- 3*(2 + 3)
+    #μ1 = [1, 3, 2]
     ν1 = [7, 4]
     ω = [(μ1, ν1)]
+    diagram_correction(ω)
+    
+    
+    μ1 = [0, 2, -2]
+    ν1 = [4, -4]
+
+    μ2 = [1, 3]
+    ν2 = [5]
+    ω = [(μ1, ν1), (μ2, ν2)]
 
     test = diagram_correction(ω)
 

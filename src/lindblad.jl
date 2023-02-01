@@ -64,7 +64,7 @@ function calculate_bubble_factor(ω, bubble_idx, sols, total_num_poles, s, stag)
     # finite part of the bubble factor (not including the expansion terms)
     
     start_idx = bubble_idx != 1 ? 1 : 2
-    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ[start_idx:end], include_poles = false)*vec_factorial(ν, include_poles=false))
+    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ[end:-1:start_idx], include_poles = false)*vec_factorial(ν, include_poles=false))
 
     return prefac*sum(singular_expansion(μ, ν, sols, s, stag))
 end
