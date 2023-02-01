@@ -33,7 +33,7 @@ function diagram_correction(ω)
     bubble_factors = []                                                 # array holding the terms of the outer sum
     l_tot = 0
     for (i, (μ, ν)) in enumerate(ω)
-        fac = calculate_bubble_factor(ω, i, unl_list[:, i], total_num_poles, s_list[i], stag_list[i])
+        fac = calculate_bubble_factor(ω, i, unl_list[:, i], s_list[i], stag_list[i])
         push!(bubble_factors, fac)
         l_tot += length(μ)
     end
@@ -56,15 +56,17 @@ Returns the bubble factor for a single bubble.
 # Returns 
     - an array of all bubble factors.
 """
-function calculate_bubble_factor(ω, bubble_idx, sols, total_num_poles, s, stag)
+function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
     μ, ν = ω[bubble_idx]                      
     @cnumbers τ
     f(x) = exp(-1/2*τ^2*x^2)
 
     # finite part of the bubble factor (not including the expansion terms)
     
-    start_idx = bubble_idx != 1 ? 1 : 2
-    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ[end:-1:start_idx], include_poles = false)*vec_factorial(ν, include_poles=false))
+    start_idx = (bubble_idx == 1) ? 2 : 1
+    sum_μ = isempty(μ) ? 0 : sum(μ)
+    sum_ν = isempty(ν) ? 0 : sum(ν)  # explicity deal with the case where one the vectors is empty (up-bubble or down-bubble)
+    prefac = -f(sum_μ + sum_ν)/(vec_factorial(μ[end:-1:start_idx], include_poles = false)*vec_factorial(ν, include_poles=false))
 
     return prefac*sum(singular_expansion(μ, ν, sols, s, stag))
 end
@@ -91,11 +93,16 @@ function singular_expansion(μ, ν, sols, s, stag)
     jl_list = filter(x -> !(x in stag), 1:r)  # non-singular indices
     
     terms = []
-    
     for (idx, (n, u, d)) in enumerate(sols)
         # first inner sum
-        analytic_terms = [taylor_coeff(n, k)/factorial(n)*τ^(2*(n - k))*(sum(μ) + sum(ν))^(n - 2*k)*(d + r)^n for k = 0:floor(Int, n/2)]
-
+        analytic_terms = []
+        for k in 0:floor(Int, n/2)
+            sum_μ = isempty(μ) ? 0 : sum(μ)
+            sum_ν = isempty(ν) ? 0 : sum(ν)
+            freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
+            l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
+            push!(analytic_terms, taylor_coeff(n, k)/factorial(n)*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
+        end
         # second inner sum
         # mu_list and ml_list hold vectors of mu values
         mu_list = find_integer_solutions(length(ju_list), u)
@@ -104,7 +111,6 @@ function singular_expansion(μ, ν, sols, s, stag)
         # denominator normalization factor - equals to 1 if s or s' is empty.
         denominator = calculate_normalization(s, stag)
 
-        # numerator factors -- might be wrong
         pole_terms = []
         for (mu_vec, ml_vec) in product(mu_list, ml_list)   # for each solution vector   
             numerator = []
@@ -114,9 +120,11 @@ function singular_expansion(μ, ν, sols, s, stag)
                 fac = (norm_fac(μ, ju))^mu_vec[idx_u]*(norm_fac(ν, jl))^ml_vec[idx_l]
                 push!(numerator, fac)
             end
-            push!(pole_terms, prod(numerator)/denominator) # don't need an array for the pole terms
+            prod_numerator = isempty(numerator) ? 1 : prod(numerator)
+            push!(pole_terms, prod_numerator/denominator) # don't need an array for the pole terms
         end
-        push!(terms, sum(analytic_terms)*sum(pole_terms))
+        poles_sum = sum(pole_terms)
+        push!(terms, sum(analytic_terms)*poles_sum)
     end
     return terms
 end
@@ -185,64 +193,3 @@ end
 * effective_lindblad(d::Diagram) - Given a diagram object, returns all contributing terms.
 * effective_lindblad(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
-###
-function diagram_correction_old(ω)    
-    @cnumbers τ
-    f(x) = exp(-1/2*τ^2*x^2)
-
-    # find all singularities
-    num_bubbles = length(ω)
-    (s_list, stag_list) = find_all_poles(ω)
-    total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
-
-    bubble_factors = []                                                 # array holding the terms of the outer sum
-    l_tot = 0
-    unl_list = find_integer_solutions(3*length(ω), total_num_poles)     # first sum (n+u+l)_i = total_num_poles
-    for (i, (μ, ν)) in enumerate(ω)
-        l = length(μ)
-        r = length(ν)
-        l_tot += l
-        @show (l, r)
-        
-        s = s_list[i, :] 
-        stag = stag_list[i, :]                    # singular indices for current bubble
-
-        ju_list = filter(x -> !(x in s), 1:l)
-        jl_list = filter(x -> !(x in stag), 1:r)  # non-singular indices
-        
-        # finite part of the bubble factor (not including the expansion terms)
-        prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ, include_poles = false)*vec_factorial(ν, include_poles=false))
-        
-        # sum over (n_i + u_i + l_i) = total_num_poles
-        sols = find_integer_solutions(3*num_bubbles, total_num_poles)
-        unl_list = reshape_sols(sols, total_num_poles, length(ω))
-        inner_terms = []
-        for (idx, (n, u, d)) in enumerate(unl_list[:, i])
-            # first inner sum
-            analytic_terms = [taylor_coeff(n, k)/factorial(n)*τ^(2*(n - k))*(sum(μ) + sum(ν))^(n - 2*k)*(d + r)^n for k = 0:floor(Int, n/2)]
-
-            # second inner sum
-            # mu_list and ml_list hold vectors of mu values
-            pole_terms = []
-            mu_list = find_integer_solutions(length(ju_list), u)
-            ml_list = find_integer_solutions(length(jl_list), d)
-
-            # denominator normalization factor
-            denominator = prod([su*sl for (su, sl) in product(s_list[i], stag_list[i])])
-            
-            # numerator factors
-            numerator = []
-            for (mu_vec, ml_vec) in product(mu_list, ml_list)   # for each solution vector   
-                for (ju, jl) in product(ju_list, jl_list)   # for each non-singular factor
-                    idx_u = indexin(ju, ju_list)[1]         # pick up the corresponding index for m_{Ju}
-                    idx_l = indexin(jl, jl_list)[1]
-                    push!(numerator, (norm_fac(μ, ju))^mu_vec[idx_u]*(norm_fac(ν, jl))^ml_vec[idx_l])
-                end
-                push!(pole_terms, prod(numerator)/prod(denominator))
-            end
-            push!(inner_terms, sum(analytic_terms)*sum(pole_terms))
-        end
-        push!(bubble_factors, prefac*sum(inner_terms))
-    end
-    return (-1)^l_tot*prod(bubble_factors)
-end

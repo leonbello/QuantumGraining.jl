@@ -24,6 +24,9 @@ end
 Calculates vector factorial for a frequency list u. 
 """
 function vec_factorial(u; include_poles=true)
+    if isempty(u)
+        return 1
+    end
     temp_prod = u[1]
     for i = 2:length(u)
         temp_sum = sum(u[1:i])
@@ -48,11 +51,11 @@ Argument:
 """
 
 function find_poles(u)
-    poles_list = []
+    poles_list = Int[]
     for i = 1:length(u)
         temp_sum = sum(u[1:i])
         if isequal(temp_sum, 0)
-            push!(poles_list, i)
+            append!(poles_list, i)
         end
     end
     return poles_list
@@ -69,8 +72,9 @@ Argument:
 function find_all_poles(ω)
     μ_poles = []
     ν_poles = []
-    for (μ, ν) in ω
-        push!(μ_poles, find_poles(μ))
+    for (idx, (μ, ν)) in enumerate(ω)
+        start = (idx == 1) ? 2 : 1                  # omit the first mode in the first bubble
+        push!(μ_poles, find_poles(μ[end:-1:start]))
         push!(ν_poles, find_poles(ν))
     end
     return (μ_poles, ν_poles)

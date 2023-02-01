@@ -23,7 +23,7 @@ module Tst
     ω = [(μ1, ν1), (μ2, ν2)]
 
     s_list = [[1, 3], [4]]
-    stag_list = [[2], []]                          # singular indices
+    stag_list = [[2], []]  # singular indices
     total_num_poles = 4
     
     sols = find_integer_solutions(3*num_bubbles, total_num_poles)     
@@ -35,7 +35,7 @@ module Tst
     
     @show s, stag
     t1 = singular_expansion(μ1, ν1, unl_list[:, 1], s, stag)
-    t2 = calculate_bubble_factor(ω, 1, unl_list[:, 1], total_num_poles, s, stag)
+    t2 = calculate_bubble_factor(ω, 1, unl_list[:, 1], s, stag)
     
     ## diagram_correction(ω) ##
     t3 = diagram_correction(ω)
@@ -47,17 +47,35 @@ module Tst
     ω = [(μ1, ν1)]
     diagram_correction(ω)
     
-    
-    μ1 = [0, 2, -2]
-    ν1 = [4, -4]
+    μ1 = [1, 2, 3]
+    ν1 = [7, 4]
 
     μ2 = [1, 3]
     ν2 = [5]
     ω = [(μ1, ν1), (μ2, ν2)]
-
     test = diagram_correction(ω)
 
+    # only up-bubbles
+    μ1 = [1, 4]
+    ν1 = []
+    ω = [(μ1, ν1)]
+    test = diagram_correction(ω)
+
+    μ1 = []
+    ν1 = [1, 4]
+    ω = [(μ1, ν1)]
+    test = diagram_correction(ω)
+
+    # singular bubbles
+    μ1 = [0, 1, -1] # poles at 3
+    ν1 = [5]
+    ω = [(μ1, ν1)]
+    diagram_correction(ω)
+
+
+    """
     ## Old tests, may be irrelevant now ##
+    """
     diagram = [(2,1), (1,0)]
 
     N = 2 # number of atoms 

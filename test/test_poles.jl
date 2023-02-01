@@ -29,8 +29,12 @@ module Tst
     # comparison to Wentao's code -- works
     
 
-
+    """
     ## vec_factorial() ##
+    """
+    a = []
+    vec_factorial(a)
+    
     # numeric
     a = [1, 3, 5, 7]
     @show vec_factorial(a) 
@@ -48,11 +52,25 @@ module Tst
     @show vec_factorial(v, include_poles=true)
 
 
-    ## find_poles() ##
+    """
+    find_poles()
+    """
     μ1 = [a, b, c]
     ν1 = [2*a, -2*a]
     ω = [(μ1, ν1)]
 
+    @show find_poles(μ1[2:end], start=2)
+    @show find_poles(ν1)
+    
+    """
+    find_all_poles()
+    """
+    μ1 = [0, 1, -1] # pole at 3 -- should be regarded as 2 since the first mode is omitted
+    ν1 = [1, -2]
+    ω = [(μ1, ν1)]
+
+    find_poles(μ1[2:end], start=2)
+    
     s_list, stag_list = find_all_poles(ω)
     count_poles(s_list, stag_list)    
     
