@@ -40,6 +40,13 @@ module Tst
     ## diagram_correction(ω) ##
     t3 = diagram_correction(ω)
 
+    # non-singular bubble
+    μ1 = [0, 2, -2]
+    ν1 = [7, 4]
+    ω = [(μ1, ν1)]
+
+    test = diagram_correction(ω)
+
     ## Old tests, may be irrelevant now ##
     diagram = [(2,1), (1,0)]
 

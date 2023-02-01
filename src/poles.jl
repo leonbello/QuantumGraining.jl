@@ -19,12 +19,10 @@ function taylor_coeff(n, k)
 end
 
 """
-vec_factorial(u; include_poles=true)
+    vec_factorial(u; include_poles=true)
 
 Calculates vector factorial for a frequency list u. 
-
 """
-
 function vec_factorial(u; include_poles=true)
     temp_prod = u[1]
     for i = 2:length(u)
@@ -54,7 +52,7 @@ function find_poles(u)
     for i = 1:length(u)
         temp_sum = sum(u[1:i])
         if isequal(temp_sum, 0)
-            append!(poles_list, i)
+            push!(poles_list, i)
         end
     end
     return poles_list
@@ -68,7 +66,6 @@ Finds all poles in vector factorial for frequency list u.
 Argument: 
     - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
 """
-
 function find_all_poles(ω)
     μ_poles = []
     ν_poles = []
@@ -79,6 +76,26 @@ function find_all_poles(ω)
     return (μ_poles, ν_poles)
 end
 
+"""
+    find_all_poles(u)
+
+Given two lists of poles, counts the total number of poles by counting the non-empty lists.
+
+Argument: 
+    - s_list: list of upper poles
+    - stag_list: list of lower poles
+"""
+function count_poles(s_list, stag_list)
+    count = 0
+    for list in (s_list, stag_list)
+        if !isempty(list)
+            for vec in list
+                count += length(vec)
+            end
+        end
+    end
+    return count
+end
 
 """
 find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
@@ -112,7 +129,14 @@ Helper function that reshapes integer combinations from find_integer_solutions()
 """
 function reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
     num_vars = num_bubbles*num_indices
-    num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
+
+    if target_sum == 0
+        num_sols = 1                   # only the trivial solution
+    else
+        # number of ways to put `target_sum` objects into `num_vars` spots
+        num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
+    end
+
     dim_sols = num_sols                # total number of solutions
     dim_indices = num_indices          # number of indices - u, n, l
     dim_bubbles = num_bubbles          # number of bubbles 

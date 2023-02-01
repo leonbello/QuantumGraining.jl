@@ -26,6 +26,10 @@ module Tst
         end
     end
 
+    # comparison to Wentao's code -- works
+    
+
+
     ## vec_factorial() ##
     # numeric
     a = [1, 3, 5, 7]
@@ -45,6 +49,14 @@ module Tst
 
 
     ## find_poles() ##
+    μ1 = [a, b, c]
+    ν1 = [2*a, -2*a]
+    ω = [(μ1, ν1)]
+
+    s_list, stag_list = find_all_poles(ω)
+    count_poles(s_list, stag_list)    
+    
+    # non-singular cases
     μ1 = [a, b, -a-b] # pole at 3
     ν1 = [a, -a] # pole at 2
 

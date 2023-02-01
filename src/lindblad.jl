@@ -4,7 +4,7 @@ Lindblad.jl contains the functionalities to generate the final Lindbladian in op
 
 
 # helper function for the innermost sum
-norm_fac(v, j) = return j == 0 ? 0 : (j/sum(v[1:j]))
+norm_fac(v, j) = return j == 0 ? 0 : (-j/sum(v[1:j]))
 
 
 """
@@ -25,10 +25,10 @@ Gives an expression for the effective diagram correction.
 function diagram_correction(ω)
     # find all singularities
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
-    total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
+    total_num_poles = count_poles(s_list, stag_list)
 
     sols = find_integer_solutions(3*num_bubbles, total_num_poles)     
-    unl_list = reshape_sols(sols, total_num_poles, length(ω))           # partition for the inner sum
+    unl_list = reshape_sols(sols, total_num_poles, num_bubbles)           # partition for the inner sum
 
     bubble_factors = []                                                 # array holding the terms of the outer sum
     l_tot = 0
@@ -39,6 +39,8 @@ function diagram_correction(ω)
     end
     return (-1)^l_tot*prod(bubble_factors)
 end
+
+
 
 """
     calculate_bubble_factor(ω, bubble_idx, total_num_poles, s, stag)
@@ -60,7 +62,9 @@ function calculate_bubble_factor(ω, bubble_idx, sols, total_num_poles, s, stag)
     f(x) = exp(-1/2*τ^2*x^2)
 
     # finite part of the bubble factor (not including the expansion terms)
-    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ, include_poles = false)*vec_factorial(ν, include_poles=false))
+    
+    start_idx = bubble_idx != 1 ? 1 : 2
+    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ[start_idx:end], include_poles = false)*vec_factorial(ν, include_poles=false))
 
     return prefac*sum(singular_expansion(μ, ν, sols, s, stag))
 end
@@ -97,11 +101,10 @@ function singular_expansion(μ, ν, sols, s, stag)
         mu_list = find_integer_solutions(length(ju_list), u)
         ml_list = find_integer_solutions(length(jl_list), d)
 
-        
         # denominator normalization factor - equals to 1 if s or s' is empty.
         denominator = calculate_normalization(s, stag)
 
-        # numerator factors
+        # numerator factors -- might be wrong
         pole_terms = []
         for (mu_vec, ml_vec) in product(mu_list, ml_list)   # for each solution vector   
             numerator = []
