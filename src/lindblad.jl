@@ -24,11 +24,13 @@ Gives an expression for the effective diagram correction.
 """
 function diagram_correction(ω)
     # find all singularities
+    num_bubbles = length(ω)
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
     total_num_poles = count_poles(s_list, stag_list)
 
-    sols = find_integer_solutions(3*num_bubbles, total_num_poles)     
-    unl_list = reshape_sols(sols, total_num_poles, num_bubbles)           # partition for the inner sum
+    sols = find_integer_solutions(3*num_bubbles, total_num_poles)
+    unl_list = sols     
+    #unl_list = reshape_sols(sols, total_num_poles, num_bubbles)         # partition for the inner sum -- ##problem here##
 
     bubble_factors = []                                                 # array holding the terms of the outer sum
     l_tot = 0
@@ -80,7 +82,7 @@ function calculate_normalization(s, stag)
     elseif isempty(stag) && !isempty(s)
         return prod(s)
     elseif !isempty(s) && !isempty(stag)
-        return prod([su*sl for (su, sl) in product(s, stag)])
+        return prod([su*sl for (su, sl) in (s, stag)])
     end
 end
 
@@ -101,6 +103,7 @@ function singular_expansion(μ, ν, sols, s, stag)
             sum_ν = isempty(ν) ? 0 : sum(ν)
             freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
             l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
+
             push!(analytic_terms, taylor_coeff(n, k)/factorial(n)*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
         end
         # second inner sum
@@ -114,14 +117,15 @@ function singular_expansion(μ, ν, sols, s, stag)
         pole_terms = []
         for (mu_vec, ml_vec) in product(mu_list, ml_list)   # for each solution vector   
             numerator = []
-            for (ju, jl) in product(ju_list, jl_list)       # for each non-singular factor
+            for (ju, jl) in (ju_list, jl_list)              # for each non-singular factor
                 idx_u = indexin(ju, ju_list)[1]             # pick up the corresponding index for m_{Ju}
                 idx_l = indexin(jl, jl_list)[1]
                 fac = (norm_fac(μ, ju))^mu_vec[idx_u]*(norm_fac(ν, jl))^ml_vec[idx_l]
+                # make sure the first mode in the first bubble is omitted
                 push!(numerator, fac)
             end
             prod_numerator = isempty(numerator) ? 1 : prod(numerator)
-            push!(pole_terms, prod_numerator/denominator) # don't need an array for the pole terms
+            push!(pole_terms, prod_numerator/denominator) 
         end
         poles_sum = sum(pole_terms)
         push!(terms, sum(analytic_terms)*poles_sum)

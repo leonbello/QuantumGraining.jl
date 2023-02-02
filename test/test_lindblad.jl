@@ -67,11 +67,14 @@ module Tst
     test = diagram_correction(ω)
 
     # singular bubbles
-    μ1 = [0, 1, -1] # poles at 3
+    μ1 = [0, 1, -1] # poles at 2
     ν1 = [5]
     ω = [(μ1, ν1)]
     diagram_correction(ω)
 
+    # TODO:
+    # fix reshape_sols
+    # omitting \omega_1 mode in the numerator of equation (7)
 
     """
     ## Old tests, may be irrelevant now ##
