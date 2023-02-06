@@ -30,7 +30,15 @@ module Tst
     diagrams = get_diagrams(node)
     @show typeof(diagrams)
     @show diagrams[1]
+
+    diagram = diagrams[1]
+    for (i, bubble) in enumerate(diagram)
+        print(i)
+        print(bubble)
+    end
 end
+
+
 
 
 
