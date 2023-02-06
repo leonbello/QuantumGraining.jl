@@ -33,9 +33,8 @@ Gives an expression for the effective diagram correction.
     - A symbolic expression for the diagram contribution.
     # Example
     - For a diagram d = [(3, 2), (2, 1)] we would ω = [(μ1, ν1), (μ2, ν2)] where μi and νi are vectors containing mode values.
-    
+ """   
 function diagram_correction(ω)
-"""
     # find all singularities
     num_bubbles = length(ω)
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
@@ -68,8 +67,8 @@ Returns the bubble factor for a single bubble.
     - `stag`: a list of the singular poles in the lower modes.
 
 # Returns 
-"""
     - an array of all bubble factors.
+"""
 function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
     μ, ν = ω[bubble_idx]                      
     @cnumbers τ
@@ -82,22 +81,23 @@ function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
     sum_ν = isempty(ν) ? 0 : sum(ν)  # explicity deal with the case where one the vectors is empty (up-bubble or down-bubble)
     prefac = -f(sum_μ + sum_ν)/(vec_factorial(μ[end:-1:start_idx], include_poles = false)*vec_factorial(ν, include_poles=false))
 
-end
     return prefac*sum( singular_expansion( μ[start_idx:end], ν, sols, s, stag, first_bubble = (bubble_idx == 1) ) )
+end
 
 # Helper function for singular expansion
-    if isempty(s) && isempty(stag)
 function calculate_normalization(s, stag)
+    if isempty(s) && isempty(stag)
         return 1
-        return prod(stag)
     elseif isempty(s) && !isempty(stag)
+        return prod(stag)
     elseif isempty(stag) && !isempty(s)
         return prod(s)
     elseif !isempty(s) && !isempty(stag)
-    end
         return prod(s)*prod(stag)
-
+    end
 end
+
+
 function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
     l = length(μ)
     r = length(ν)
