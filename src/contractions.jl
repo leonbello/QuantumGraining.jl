@@ -107,8 +107,9 @@ function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
         
         start_idx = first_bubble ? 2 : 1
         for k in 0:floor(Int, n/2)
-            sum_μ = isempty(μ) ? 0 : sum(μ[start_idx:end])      # omit the first mode if it's the first bubble
+            sum_μ = isempty(μ) ? 0 : sum(μ)  
             sum_ν = isempty(ν) ? 0 : sum(ν)
+
             freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
             l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
 

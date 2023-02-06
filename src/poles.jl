@@ -27,18 +27,18 @@ function vec_factorial(u; include_poles=true)
     if isempty(u)
         return 1
     end
-    temp_prod = u[1]
-    for i = 2:length(u)
+    prod_terms = []
+    for i = 1:length(u)
         temp_sum = sum(u[1:i])
         if isequal(temp_sum, 0)
             if include_poles == true
                 temp_prod = 0
             end
         else
-            temp_prod *= temp_sum
+            push!(prod_terms, temp_sum)
         end
     end
-    return temp_prod
+    return isempty(prod_terms) ? 1 : prod(prod_terms)
 end
 
 """
