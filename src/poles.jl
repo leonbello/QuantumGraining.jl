@@ -2,7 +2,7 @@ using QuantumCumulants
 using SymbolicUtils
 
 """
-taylor_coeff(n, k)
+    taylor_coeff(n, k)
 
 Recursive function used to calculate finite contribution for Taylor expansion for diagrams with poles.
 
@@ -133,13 +133,7 @@ Helper function that reshapes integer combinations from find_integer_solutions()
 """
 function reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
     num_vars = num_bubbles*num_indices
-
-    if target_sum == 0
-        num_sols = 1                   # only the trivial solution
-    else
-        # number of ways to put `target_sum` objects into `num_vars` spots
-        num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
-    end
+    num_sols = binomial(target_sum + num_vars - 1, num_vars - 1)    
 
     dim_sols = num_sols                # total number of solutions
     dim_indices = num_indices          # number of indices - u, n, l

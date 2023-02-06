@@ -5,7 +5,6 @@ using Symbolics
 
 module Tst
     using Test
-    using IterTools
     include("../src/diagrams.jl")
     include("../src/contractions.jl")
     include("../src/lindblad.jl")
@@ -27,6 +26,8 @@ module Tst
     stag_list = [[2], []]  # singular indices
     total_num_poles = 4
     
+    num_vars = 3*num_bubbles
+    num_sols = binomial(total_num_poles + num_vars - 1, num_vars - 1)
     sols = find_integer_solutions(3*num_bubbles, total_num_poles)     
     unl_list = reshape_sols(sols, total_num_poles, num_bubbles)           # partition for the inner sum
 
@@ -68,18 +69,15 @@ module Tst
     test = diagram_correction(ω)
 
     # singular bubbles
-    μ1 = [0, 1, -1] # poles at 2
+    μ1 = [0, 1, -1] # pole at 2
     ν1 = [5]
     ω = [(μ1, ν1)]
+
     diagram_correction(ω)
 
-    # TODO:
-    # fix reshape_sols
-    # omitting \omega_1 mode in the numerator of equation (7)
-
-    """
-    ## Old tests, may be irrelevant now ##
-    """
+    #=
+        Old tests, may be irrelevant now ##
+    =#
     diagram = [(2,1), (1,0)]
 
     N = 2 # number of atoms 

@@ -1,8 +1,10 @@
 #Test file for poles.jl 
 using QuantumCumulants
+using IterTools
 
 module Tst
     using Test
+    using IterTools
     include("../src/diagrams.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
@@ -59,7 +61,7 @@ module Tst
     ν1 = [2*a, -2*a]
     ω = [(μ1, ν1)]
 
-    @show find_poles(μ1[2:end], start=2)
+    @show find_poles(μ1[2:end])
     @show find_poles(ν1)
     
     """
@@ -69,10 +71,16 @@ module Tst
     ν1 = [1, -2]
     ω = [(μ1, ν1)]
 
-    find_poles(μ1[2:end], start=2)
+    find_poles(μ1[2:end])
     
     s_list, stag_list = find_all_poles(ω)
-    count_poles(s_list, stag_list)    
+    count_poles(s_list, stag_list)
+    
+    # non-singular indices
+    s = s_list[1]
+    stag = stag_list[1]
+    ju_list = filter(x -> !(x in s), 1:3)      # should be [1, 3]
+    jl_list = filter(x -> !(x in stag), 1:2)   # should be [1, 2]
     
     # non-singular cases
     μ1 = [a, b, -a-b] # pole at 3
@@ -89,27 +97,24 @@ module Tst
     @show stag_list
     @show total_num_poles
 
-    ## find_integer_solutions() ##
-
+    #=
+        find_integer_solutions() 
+    weird mismatch between the number of solutions I expect and the number of solutions I get
+    =#
     @show find_integer_solutions(1, 5)
     @show find_integer_solutions(2, 4)
-
-    k = 3*4
-    m = 4
-    d = 4
-    sols = find_integer_solutions(k, m);
-    num_sols = floor(Int, factorial(4 + 6 - 1)/(factorial(4)*factorial(5)));
-
-    ## reshape_sols() ##
-    # 4 bubbles, each bubble with 3 indices that sum up to 4.
     num_indices = 3
-    num_bubbles = 4
+    num_bubbles = 2
     num_vars = num_indices*num_bubbles
-    target_sum = 4
+    target_sum = 6
 
-    sols = find_integer_solutions(num_vars, target_sum);
-    num_sols = floor(Int, factorial(num_vars + target_sum - 1)/(factorial(num_vars)*factorial(target_sum - 1)))
+    num_sols = binomial(target_sum + num_vars - 1, num_vars - 1)
+    sols = find_integer_solutions(num_vars, target_sum)
+    
 
+    #= 
+        reshape_sols() 
+    =#
     vecs = reshape_sols(sols, target_sum, num_bubbles)
 
 
