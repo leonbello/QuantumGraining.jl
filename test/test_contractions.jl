@@ -1,6 +1,5 @@
 using Revise
 using QuantumCumulants
-using QuantumGraining
 using SymbolicUtils
 using IterTools
 using Symbolics
@@ -9,7 +8,9 @@ using Symbolics
 #@testset "contractions" begin
 module Tst
     using Test
+    using IterTools
     include("../src/diagrams.jl")
+    include("../src/poles.jl")
     include("../src/contractions.jl")
     include("../src/printing.jl")
     include("../src/expressions.jl")
@@ -29,6 +30,8 @@ module Tst
     stag_list = [[2], []]  # singular indices
     total_num_poles = 4
     
+    num_vars = 3*num_bubbles
+    num_sols = binomial(total_num_poles + num_vars - 1, num_vars - 1)
     sols = find_integer_solutions(3*num_bubbles, total_num_poles)     
     unl_list = reshape_sols(sols, total_num_poles, num_bubbles)           # partition for the inner sum
 
@@ -70,80 +73,12 @@ module Tst
     test = diagram_correction(ω)
 
     # singular bubbles
-    μ1 = [0, 1, -1] # poles at 3
+    μ1 = [0, 1, -1] # pole at 2
     ν1 = [5]
     ω = [(μ1, ν1)]
+
     diagram_correction(ω)
-
-
-    ## OLD TESTS ##
-    c = bubble_coeff(3, 2)
-    @definemodes μ 3
-    @definemodes ν 2
-    c(μ, ν)
-    c([3, 2, 6], [1, 4, 7])
-    typeof(c(μ,ν))
-
-    c = bubble_coeff(5, 0)
-    c(μ, ν)
-
-    ## contraction_coeff ##
-    c = contraction_coeff(2, 3)
-    typeof(c(μ,ν))
-    c(μ, ν)
-    
-    diagram = [(3, 0), (5, 0)]
-    for (i, bubble) in enumerate(diagram)
-        println("bubble $i: ($(bubble[1]), $(bubble[2])) ")
-        println("----")
-    end
-
-    ## Hamiltonian contractions ##
-    # check macro for global scope
-    diagram2 = [(2,0), (3,0)]
-    @definemodes x 3
-    @show x
-    @show μ
-
-    @show get_max_modes(diagram)
-    @show get_max_modes(diagram2)
-    @definemodes x get_max_modes(diagram2)[1]
-    @definemodes y get_max_modes(diagram2)[2]
-    
-    c1, cprod = calculate_coeff(x, y, τ, diagram2)
-    @show c1
-    @show cprod
-    
-    # global scope works fine
-    m = 4
-    @definemodes x m
-    @show x
-
-    typeof(diagram3)
-    print(test_definemodes(diagram3))
-
-    @cnumbers e1 e2 e3 f1 f2 f3
-    ex = [(e1, f1),(e2,f2),(e3,f3)]
-    l, r = ex
-    @show l
-    @show r
-
-     @cnumbers a1 a2 a3 b1 b2 b3 b4 b5 b6 b7   
-    diagram = [(1,2), (3,4)]
-    ω = [a1,a2,a3,b1,b2,b3,b4,b5,b6,b7]
-    μ, ν = [],[]
-    ind = 0
-    for (i, bubble) in enumerate(diagram)
-        (μ_len, ν_len) = bubble
-        push!(μ, ω[ind+1:ind+μ_len])
-        ind += μ_len
-        push!(ν, ω[ind+1:ind+ν_len])
-        ind += ν_len
-    end
 end
-@show ν
-
-# if denominator goes to zero -> take limit
 
 
 #=
