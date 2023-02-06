@@ -1,7 +1,9 @@
 #"""
 #Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
 #"""
-
+"""
+Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
+"""
 """
     repeated_combinations(arr::Array, n::Int)
     
