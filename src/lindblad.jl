@@ -21,25 +21,35 @@ repeated_combinations(arr::Vector, n::Int) =
         Given a Hamiltonian as a list of operators and corresponding frequencies,
         returns the effective TCG Hamiltonian up to order `k`.
 """
-function effective_hamiltonian(k::Int, ω::Array, h::Array)
+function effective_hamiltonian(K::Int, ω::Array, h::Array)
     # Functionality to sum over all contractions of up to kth order 
     # w and h are arrays of symbolic cnumbers from QuantumCumulants
     g_list = []
     V_list = []
+    freq_list = []
+    @syms t::Real
     h_eff = 0
-    ω_list = repeated_combinations(ω, k)
-    h_list = repeated_combinations(h, k)
-    for i in 1:k
+    for k in 1:K
+        ω_list = repeated_combinations(ω, k)
+        h_list = repeated_combinations(h, k)
         g = 0
         V = 0                
         for (ω, h) in zip(ω_list, h_list) 
-            g += 1//2*(contraction_coeff((k,0),ω) + contraction_coeff((k,0),-reverse(ω)))
-            V += prod(h) #? 
+            g = (1/2)*(contraction_coeff((k,0),ω) + contraction_coeff((k,0),-reverse(ω)))*exp(1im*sum(ω)*t)
+            g = simplify(g)
+            V = prod(h) #? 
+            push!(g_list, g)
+            push!(V_list, V)
+            push!(freq_list, sum(ω))
+            h_eff += g*V
         end
-        push!(g_list, g) 
-        push!(V_list, V)
-        h_eff += g*V
     end
+    #H_eff = 0
+    #terms = tuple.(g_list, V_list)
+    #for (j,(g,V)) in enumerate(terms)
+    #    @syms f(j,t)
+    #    H_eff += g*V*f(j,t)
+    #end
     return h_eff
     # effective_ham = 0
     # for n in 1:k
@@ -56,28 +66,28 @@ end
 * effective_dissipator(d::Diagram) - Given a diagram object, returns all contributing terms.
 * effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
-function effective_dissipator(k::Int, ω::Array, h::Array)
+function effective_dissipator(K::Int, ω::Array, h::Array)
     # Functionality to sum over all contractions of up to kth order 
     # w and h are arrays of symbolic cnumbers from QuantumCumulants
     g_list = []
-    V_list = []
-    D_eff = 0
-    ω_list = repeated_combinations(ω, k)
-    h_list = repeated_combinations(h, k)
-    for i in 1:k
-        g = 0
-        V = 0                
+    J_list = []
+    Jd_list = []
+    @syms t::Real
+    for k in 1:K  
+        ω_list = repeated_combinations(ω, k)
+        h_list = repeated_combinations(h, k)              
         for (ω, h) in zip(ω_list, h_list) 
             for k1 in 1:(k-1)
-                g += (contraction_coeff((k1,k-k1),ω) - contraction_coeff((k-k1,k1),ω))
-                V += prod(h) # Dissipator 
-                D_eff += g*V
+                g = (contraction_coeff((k1,k-k1),ω) - contraction_coeff((k-k1,k1),ω))*exp(1im*sum(ω)*t)
+                J = prod(h[1:k1]) # Jump operator
+                Jd = prod(h[k1+1:k])
                 push!(g_list, g) 
-                push!(V_list, V)
+                push!(J_list, J)
+                push!(Jd_list, Jd)
             end
         end
     end
-    return D_eff
+    return g_list, J_list, Jd_list
 end
 
 # function effective_dissipator(k::Int, ω::Array, h::Array, fmt=:QuantumCumulants)
@@ -91,5 +101,5 @@ end
 """
 
 function effective_lindblad(k::Int, ω::Array, h::Array)
-    return effective_hamiltonian(k, ω, h) + effective_dissipator(k, ω, h)
+    return effective_hamiltonian(k, ω, h), effective_dissipator(k, ω, h)
 end
