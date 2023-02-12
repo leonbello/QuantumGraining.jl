@@ -15,6 +15,48 @@ end
 
 
 """
+    contraction_coeff(left::Int, right::Int)
+
+    Calculates the coefficient of a whole contraction, given the contraction and input frequencies
+
+    Arguments:
+    - left: the left-order of the contraction
+    - right: the right-order of the contraction
+    - freqs: the frequency array
+
+    Returns:
+    - c: a symbolic expression for the contraction coeffeicient.
+"""
+
+function contraction_coeff(left::Int, right::Int, freqs::Array)
+    node = DiagramNode((left, right))
+    diagrams = get_diagrams(node)           #Get all the diagrams for the contraction (left, right)
+    c = 0
+    for diagram in diagrams
+        μ, ν = [],[]
+        ind = 0
+        for (i, bubble) in enumerate(diagram)
+            (μ_len, ν_len) = bubble
+            push!(μ, freqs[ind+1:ind+μ_len])
+            ind += μ_len
+            push!(ν,freqs[ind+1:ind+ν_len]) 
+            ind += ν_len
+        end
+        ω = tuple.(μ, ν)
+
+        c += diagram_correction(ω)
+    end
+    return c
+end
+
+function contraction_coeff(order::Tuple{Int, Int}, ω::Array)
+    left, right = order
+    return contraction_coeff(left, right, ω)
+end
+
+
+
+"""
     diagram_correction(ω)
 
 
@@ -154,45 +196,8 @@ end
 #= old code, may be rdundant =#
 ##-----------------OLD FUNCTIONS--------------------##
 
-"""
-    contraction_coeff(left::Int, right::Int)
+#NOTE: contraction_coefficients is used in effective_hamiltonian - not redundant
 
-    Calculates the coefficient of a whole contraction, given the contraction and input frequencies
-
-    Arguments:
-    - left: the left-order of the contraction
-    - right: the right-order of the contraction
-    - freqs: the frequency array
-
-    Returns:
-    - c: a symbolic expression for the contraction coeffeicient.
-"""
-
-function contraction_coeff(left::Int, right::Int, freqs::Array)
-    node = DiagramNode((left, right))
-    diagrams = get_diagrams(node)           #Get all the diagrams for the contraction (left, right)
-    c = 0
-    for diagram in diagrams
-        μ, ν = [],[]
-        ind = 0
-        for (i, bubble) in enumerate(diagram)
-            (μ_len, ν_len) = bubble
-            push!(μ, freqs[ind+1:ind+μ_len])
-            ind += μ_len
-            push!(ν,freqs[ind+1:ind+ν_len]) 
-            ind += ν_len
-        end
-        ω = tuple.(μ, ν)
-
-        c += diagram_correction(ω)
-    end
-    return c
-end
-
-function contraction_coeff(order::Tuple{Int, Int}, ω::Array)
-    left, right = order
-    return contraction_coeff(left, right, ω)
-end
 
 """
     _Ω(freqs...)
