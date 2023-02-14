@@ -32,19 +32,28 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)           #Get all the diagrams for the contraction (left, right)
     c = 0
+    c_list = []
     for diagram in diagrams
         μ, ν = [],[]
-        ind = 0
+        ind_μ = 0
+        ind_ν = 0
+        bubs = tuple(map(sum, zip(diagram...)))[1]
+        ububs, dbubs = bubs[1], bubs[2]
+        print(length(freqs))
+        print((ububs, dbubs))
+        freqs_up = reverse(freqs[1:ububs])
+        freqs_dn = freqs[ububs+1:ububs+dbubs]
         for (i, bubble) in enumerate(diagram)
             (μ_len, ν_len) = bubble
-            push!(μ, freqs[ind+1:ind+μ_len])
-            ind += μ_len
-            push!(ν,freqs[ind+1:ind+ν_len]) 
-            ind += ν_len
+            push!(μ, freqs_up[ind_μ+1:ind_μ+μ_len])
+            ind_μ += μ_len
+            push!(ν,freqs_dn[ind_ν+1:ind_ν+ν_len]) 
+            ind_ν += ν_len
         end
         ω = tuple.(μ, ν)
 
         c += diagram_correction(ω)
+        push!(c_list, (diagram_correction(ω), diagram))
     end
     return c
 end

@@ -121,5 +121,6 @@ function get_diagrams(node::AbstractDiagramNode)
             end
         end
     end
-    return diagrams_list
+    diagrams_list = pushfirst!(filter!(x-> ((0,0) ∉ x), diagrams_list),[node.root]) #Removing redundant diagrams with (0,0) terms
+    return unique!(diagrams_list)
 end
