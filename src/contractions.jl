@@ -19,17 +19,17 @@ end
 Splits a frequency array into an array of `ububs` up-bubbles and `dbubs` down-bubbles 
 
 Arguments:
-    `fres`  - unified array of frequencies
-    `ububs` - number of up-modes
-    `dbubs` - number of down-modes
+    `fres`  - unified array of frequencies, should be of the form [μ1, μ2, ..., μl, ν1, ν2, ..., νr]
+    `l` - number of up-modes
+    `r` - number of down-modes
 
 Returns:
     freqs_up - array of only the up-modes
     freqs_dn - array of only the down-modes
 """
-function split_freqs(freqs::Array, ububs::Int, dbubs::Int)
-    freqs_up = reverse(freqs[1:ububs])
-    freqs_dn = freqs[ububs+1:ububs+dbubs]
+function split_freqs(freqs::Array, l::Int, r::Int)
+    freqs_up = freqs[1:l]
+    freqs_dn = freqs[l+1:l+r]
     return freqs_up, freqs_dn
 end
 
@@ -42,9 +42,16 @@ function count_modes(diagram)
     return bubs[1], bubs[2] 
 end
 
+
 """
     split_freqs_into_bubbles(freqs, diagram)
 Splits an array of frequencies into an array of tuples of frequencies, matching the dimensions of each bubble in `diagram`.
+
+Argument:
+    freqs - an array of frequencies in the form ω = [μ1..., μ2..., ..., μl..., ν1..., ν2..., ..., νr]
+    diagram - dimensions of each bubble, where each tuple is the dimension for the corresponding bubble.
+Returns:
+    ω - an array of frequencies in the form [(μ1, ν1), (μ2, ν2), ..., (μl, νl), ([], ν(l+1)), ..., ([], νr)]
 """
 function split_freqs_into_bubbles(freqs, diagram)
     μ, ν = [],[]
@@ -62,6 +69,7 @@ function split_freqs_into_bubbles(freqs, diagram)
     ω = tuple.(μ, ν)
     return ω
 end
+
 
 """
     contraction_coeff(left::Int, right::Int)
@@ -86,8 +94,10 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     diagrams = get_diagrams(node)
     c = 0
     c_list = []
+    
     for diagram in diagrams
-        ω = split_freqs_into_bubbles(freqs, diagram)
+        # reversing since the diagrams is ordered left-to-right instead of right-to-left
+        ω = reverse(split_freqs_into_bubbles(freqs, diagram))
         push!(c_list, (diagram_correction(ω), diagram))
         c += c_list[end][1] 
     end
@@ -213,7 +223,7 @@ function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
                 push!(fac_u, norm_fac(μ, ju - start_idx + 1, mu_vec[idx_u]))
             end
             prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
-            
+
             fac_v = []
             for jl in jl_list
                 idx_l = indexin(jl, jl_list)[1]             # pick up the corresponding index for m_{Jl}

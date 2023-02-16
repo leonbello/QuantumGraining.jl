@@ -85,9 +85,10 @@ module Tst
     =#
     left = 1
     right = 2
-    μ1 = [0] # pole at 2
+    μ1 = [0] 
     ν1 = [1, 1]
     ω = [μ1..., ν1...]
+    split_freqs_into_bubbles(ω, [(left, right)])
     c, c_list = contraction_coeff((left, right), ω)
     @show c_list
     @show c
