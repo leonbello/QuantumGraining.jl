@@ -78,6 +78,42 @@ module Tst
     ω = [(μ1, ν1)]
 
     diagram_correction(ω)
+
+
+    #= 
+        contraction_coeff
+    =#
+    left = 1
+    right = 2
+    μ1 = [0] # pole at 2
+    ν1 = [1, 1]
+    ω = [μ1..., ν1...]
+    c, c_list = contraction_coeff((left, right), ω)
+    @show c_list
+    @show c
+
+    # [(1, 2)]
+    μ1 = [0] # pole at 2
+    ν1 = [1, 1]
+    ω1 = [(μ1, ν1)]
+    @show diagram_correction(ω1)
+    @show c_list[1]
+
+    # [(0, 1), (1, 1)]
+    μ1 = [] # pole at 2
+    ν1 = [1]
+    μ2 = [0]
+    ν2 = [1]
+
+    μ1 = [0] # pole at 2
+    ν1 = [1]
+    μ2 = []
+    ν2 = [1]
+
+    ω2 = [(μ1, ν1), (μ2, ν2)]
+    diagram_correction(ω2)
+    @show c_list[2]
+
 end
 
 

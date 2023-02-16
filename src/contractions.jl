@@ -13,6 +13,55 @@ function norm_fac(v, j, mj)
     end
 end 
 
+"""
+    split_freqs(freqs::Array, ububs::Int, dbubs::Int)
+
+Splits a frequency array into an array of `ububs` up-bubbles and `dbubs` down-bubbles 
+
+Arguments:
+    `fres`  - unified array of frequencies
+    `ububs` - number of up-modes
+    `dbubs` - number of down-modes
+
+Returns:
+    freqs_up - array of only the up-modes
+    freqs_dn - array of only the down-modes
+"""
+function split_freqs(freqs::Array, ububs::Int, dbubs::Int)
+    freqs_up = reverse(freqs[1:ububs])
+    freqs_dn = freqs[ububs+1:ububs+dbubs]
+    return freqs_up, freqs_dn
+end
+
+"""
+    count_modes(diagram)
+Counts the total number of up-modes and down-modes in a given diagram
+"""
+function count_modes(diagram)
+    bubs = tuple(map(sum, zip(diagram...)))[1]
+    return bubs[1], bubs[2] 
+end
+
+"""
+    split_freqs_into_bubbles(freqs, diagram)
+Splits an array of frequencies into an array of tuples of frequencies, matching the dimensions of each bubble in `diagram`.
+"""
+function split_freqs_into_bubbles(freqs, diagram)
+    μ, ν = [],[]
+    ububs, dbubs = count_modes(diagram)
+    freqs_up, freqs_dn = split_freqs(freqs, ububs, dbubs)
+    ind_μ = 0
+    ind_ν = 0
+    for bubble in diagram
+        (μ_len, ν_len) = bubble
+        push!(μ, freqs_up[ind_μ+1:ind_μ+μ_len])
+        ind_μ += μ_len
+        push!(ν, freqs_dn[ind_ν+1:ind_ν+ν_len]) 
+        ind_ν += ν_len
+    end
+    ω = tuple.(μ, ν)
+    return ω
+end
 
 """
     contraction_coeff(left::Int, right::Int)
@@ -22,48 +71,28 @@ end
     Arguments:
     - left: the left-order of the contraction
     - right: the right-order of the contraction
-    - freqs: the frequency array
+    - freqs: array of frequencies to put in each mode
 
     Returns:
     - c: a symbolic expression for the contraction coeffeicient.
 """
-
-function contraction_coeff(left::Int, right::Int, freqs::Array)
-    node = DiagramNode((left, right))
-    diagrams = get_diagrams(node)           #Get all the diagrams for the contraction (left, right)
-    c = 0
-    c_list = []
-    for diagram in diagrams
-        μ, ν = [],[]
-        ind_μ = 0
-        ind_ν = 0
-        bubs = tuple(map(sum, zip(diagram...)))[1]
-        ububs, dbubs = bubs[1], bubs[2]
-        print(length(freqs))
-        print((ububs, dbubs))
-        freqs_up = reverse(freqs[1:ububs])
-        freqs_dn = freqs[ububs+1:ububs+dbubs]
-        for (i, bubble) in enumerate(diagram)
-            (μ_len, ν_len) = bubble
-            push!(μ, freqs_up[ind_μ+1:ind_μ+μ_len])
-            ind_μ += μ_len
-            push!(ν,freqs_dn[ind_ν+1:ind_ν+ν_len]) 
-            ind_ν += ν_len
-        end
-        ω = tuple.(μ, ν)
-
-        c += diagram_correction(ω)
-        push!(c_list, (diagram_correction(ω), diagram))
-    end
-    return c
-end
-
 function contraction_coeff(order::Tuple{Int, Int}, ω::Array)
     left, right = order
     return contraction_coeff(left, right, ω)
 end
 
-
+function contraction_coeff(left::Int, right::Int, freqs::Array)
+    node = DiagramNode((left, right))
+    diagrams = get_diagrams(node)
+    c = 0
+    c_list = []
+    for diagram in diagrams
+        ω = split_freqs_into_bubbles(freqs, diagram)
+        push!(c_list, (diagram_correction(ω), diagram))
+        c += c_list[end][1] 
+    end
+    return c, c_list
+end
 
 """
     diagram_correction(ω)
@@ -80,7 +109,6 @@ Gives an expression for the effective diagram correction.
     - For a diagram d = [(3, 2), (2, 1)] we would ω = [(μ1, ν1), (μ2, ν2)] where μi and νi are vectors containing mode values.
  """   
 function diagram_correction(ω)
-    # find all singularities
     num_bubbles = length(ω)
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
     total_num_poles = count_poles(s_list, stag_list)
@@ -184,8 +212,8 @@ function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
 
                 push!(fac_u, norm_fac(μ, ju - start_idx + 1, mu_vec[idx_u]))
             end
-
             prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
+            
             fac_v = []
             for jl in jl_list
                 idx_l = indexin(jl, jl_list)[1]             # pick up the corresponding index for m_{Jl}
