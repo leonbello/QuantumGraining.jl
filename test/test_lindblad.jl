@@ -17,28 +17,29 @@ module Tst
     =#
     diagram = [(2,1), (1,0)]
 
-    
-    N = 2 # number of atoms 
-    h = ⊗([NLevelSpace(Symbol(:atom,i),2) for i=1:N]...)
-    σ(i,j,k) = Transition(h,Symbol("σ_{$k}"),i,j,k)
+    h_cav = FockSpace(:cavity)
+    h_atom = NLevelSpace(:atom, (:g,:e))
+    h = tensor(h_cav, h_atom)
 
-    σz1 = 2*σ(1,1,1) - 1
-    σz2 = 2*σ(1,1,2) - 1
+    @qnumbers a::Destroy(h) σ::Transition(h)
+    @cnumbers ω_0 ω_d g κ γ ϵ ω_3 ω_1
 
-    σx1 = σ(1,2,1) + σ(2,1,1)
-    σx2 = σ(1,2,2) + σ(2,1,2)
+    σz = 2* σ(:e, :e)  - 1
+    σx = σ(:g, :e) + σ(:e, :g)
+    σy = 1im* (σ(:e, :g) - σ(:g, :e))
+    @syms t::Real
+    H_rab = ω_0 * a'*a + ω_d/2 * σz + g*(a' + a)*(σx) + ϵ*(a*exp(1im*ω_3*t) + a'*exp(-1im*ω_3*t))
+    #@register f(t)
+    ωs = [0,0,0,ω_3, -ω_3]
+    hs = [ω_0 * a'*a,ω_d/2 * σz,g*(a' + a)*(σx),ϵ*a, ϵ*a']
 
-    #@show typeof(σz1)
-    @cnumbers ω_1 ω_2 ω_d g ϵ_d
-    typeof(ω_1)
-    #Define ordered lists of frequencies and hamiltonian terms 
-    ωs = [0, 0, 0, ω_d, -ω_d]
-    hs = [ω_1*σz1/2,ω_2*σz2/2, g* σx1 * σx2, ϵ_d* σx2,ϵ_d* σx2]
-    typeof(hs[2])
+    ωs2 = [ω_1,-ω_1,ω_3, -ω_3]
+    hs2 = [0.5*ω_0 * a'*a,0.5*ω_0 * a'*a,ϵ*a, ϵ*a'] 
+   
 
     k=1
     @cnumbers t
-    H = simplify(effective_hamiltonian(k, ωs, hs,t))
+    H = simplify(effective_hamiltonian(k, ωs, hs))
     #collect_rule = @rule(+(~~xs) => ~~xs)
     #H_list = simplify(collect_rule(H))
     #typeof(ω_d*σz1)

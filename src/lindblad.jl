@@ -35,7 +35,7 @@ function effective_hamiltonian(K::Int, ω::Array, h::Array)
         g = 0
         V = 0                
         for (ω, h) in zip(ω_list, h_list) 
-            g = (1/2)*(contraction_coeff((k,0),ω) + contraction_coeff((k,0),-reverse(ω)))*exp(1im*sum(ω)*t)
+            g = (1//2)*(contraction_coeff((k,0),ω)[1] + contraction_coeff((k,0),-reverse(ω))[1])*exp(1im*sum(ω)*t)
             g = simplify(g)
             V = prod(h) #? 
             push!(g_list, g)
