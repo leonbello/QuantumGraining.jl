@@ -57,14 +57,20 @@ function split_freqs_into_bubbles(freqs, diagram)
     μ, ν = [],[]
     ububs, dbubs = count_modes(diagram)
     freqs_up, freqs_dn = split_freqs(freqs, ububs, dbubs)
+    #println(freqs_up)
+    #println(freqs_dn)
+    freqs_dn = reverse(freqs_dn)
     ind_μ = 0
     ind_ν = 0
     for bubble in diagram
+        #println(bubble)
         (μ_len, ν_len) = bubble
         push!(μ, freqs_up[ind_μ+1:ind_μ+μ_len])
         ind_μ += μ_len
         push!(ν, freqs_dn[ind_ν+1:ind_ν+ν_len]) 
         ind_ν += ν_len
+        #println(μ)
+        #println(ν)
     end
     ω = tuple.(μ, ν)
     return ω
@@ -97,7 +103,10 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     
     for diagram in diagrams
         # reversing since the diagrams is ordered left-to-right instead of right-to-left
-        ω = reverse(split_freqs_into_bubbles(freqs, diagram))
+        #println(reverse(diagram))
+        ω = split_freqs_into_bubbles(freqs, reverse(diagram))
+        #ω_old = reverse(split_freqs_into_bubbles(freqs, diagram))
+        #println(ω)
         push!(c_list, (diagram_correction(ω), diagram))
         c += c_list[end][1] 
     end
@@ -121,6 +130,8 @@ Gives an expression for the effective diagram correction.
 function diagram_correction(ω)
     num_bubbles = length(ω)
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
+    println(s_list)
+    println(stag_list)
     total_num_poles = count_poles(s_list, stag_list)
 
     sols = find_integer_solutions(3*num_bubbles, total_num_poles)    
@@ -153,10 +164,11 @@ Returns the bubble factor for a single bubble.
     - an array of all bubble factors.
 """
 function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
-    μ, ν = ω[bubble_idx]                      
+    μ, ν = ω[bubble_idx]   
+    ν = reverse(ν)                   
     @cnumbers τ
 
-    f(x) = exp(-1/2*τ^2*x^2)
+    f(x) = exp(-0.5*τ^2*x^2)
     # finite part of the bubble factor (not including the expansion terms)
     start_idx = (bubble_idx == 1) ? 2 : 1
     
@@ -202,7 +214,7 @@ function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
             freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
             l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
 
-            push!(analytic_terms, taylor_coeff(n, k)/factorial(n)*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
+            push!(analytic_terms, taylor_coeff(n, k)/Float64(factorial(n))*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
         end
         # second inner sum
         # mu_list and ml_list hold vectors of mu values

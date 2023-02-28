@@ -29,19 +29,28 @@ function effective_hamiltonian(K::Int, ω::Array, h::Array)
     freq_list = []
     @syms t::Real
     h_eff = 0
+    ks = []
+    ωs = []
+    contractions = []
     for k in 1:K
         ω_list = repeated_combinations(ω, k)
         h_list = repeated_combinations(h, k)
         g = 0
-        V = 0                
+        V = 0               
         for (ω, h) in zip(ω_list, h_list) 
-            g = (1//2)*(contraction_coeff((k,0),ω)[1] + contraction_coeff((k,0),-reverse(ω))[1])*exp(1im*sum(ω)*t)
+            push!(ks, k)
+            push!(ωs, ω)
+            g = 0.5*(contraction_coeff((k,0),ω)[1] + contraction_coeff((k,0),-reverse(ω))[1])*exp(1.0im*sum(ω)*t)
             g = simplify(g)
+            #println(typeof(g))
+            push!(contractions, contraction_coeff((k,0),ω)[1])
             V = prod(h) #? 
+            #println(typeof(V))
             push!(g_list, g)
             push!(V_list, V)
             push!(freq_list, sum(ω))
-            h_eff += g*V
+            h_eff += simplify(g*V)
+            #(typeof(g*V) == QuantumCumulants.QMul{Nothing}) ? h_eff += g*V : h_eff += 0
         end
     end
     #H_eff = 0
@@ -50,7 +59,7 @@ function effective_hamiltonian(K::Int, ω::Array, h::Array)
     #    @syms f(j,t)
     #    H_eff += g*V*f(j,t)
     #end
-    return h_eff
+    return h_eff, contractions, ks, ωs, g_list, V_list
     # effective_ham = 0
     # for n in 1:k
     #     ω_list = repeated_combinations(ω,n)

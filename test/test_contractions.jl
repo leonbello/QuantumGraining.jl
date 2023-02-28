@@ -16,6 +16,9 @@ module Tst
     include("../src/expressions.jl")
 
     ## problem definition ##
+    @cnumbers ω_1 ω_3
+    c, cs = contraction_coeff((2,0),[ω_1,ω_3])
+    
     num_bubbles = 2
     @cnumbers a b c
     μ1 = [0, a, -a] # pole at 1 and 3
@@ -47,11 +50,11 @@ module Tst
     t3 = diagram_correction(ω)
 
     # non-singular bubble
-    μ1 = [1, 2, 3]     # 2*(2 + 3) -- 3*(2 + 3)
-    #μ1 = [1, 3, 2]
-    ν1 = [7, 4]
+    μ1 = [0, 1, -1]    # 2*(2 + 3) -- 3*(2 + 3)
+    ν1 = [5]
     ω = [(μ1, ν1)]
     diagram_correction(ω)
+    diagram_correction(reverse(ω))
     
     μ1 = [1, 2, 3]
     ν1 = [7, 4]
@@ -67,9 +70,10 @@ module Tst
     ω = [(μ1, ν1)]
     test = diagram_correction(ω)
 
-    μ1 = []
-    ν1 = [1, 4]
-    ω = [(μ1, ν1)]
+    @cnumbers ω_1 ω_2
+    μ1 = [2],[]
+    ν1 = [],[1, -1]
+    ω = [([ω_1], []), ([], [ω_2, -ω_2])]#[(μ1, ν1)]
     test = diagram_correction(ω)
 
     # singular bubbles

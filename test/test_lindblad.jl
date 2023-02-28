@@ -21,7 +21,7 @@ module Tst
     h_atom = NLevelSpace(:atom, (:g,:e))
     h = tensor(h_cav, h_atom)
 
-    @qnumbers a::Destroy(h) σ::Transition(h)
+    @qnumbers a::Destroy(h_cav) σ::Transition(h)
     @cnumbers ω_0 ω_d g κ γ ϵ ω_3 ω_1
 
     σz = 2* σ(:e, :e)  - 1
@@ -37,16 +37,32 @@ module Tst
     hs2 = [0.5*ω_0 * a'*a,0.5*ω_0 * a'*a,ϵ*a, ϵ*a'] 
    
 
-    k=1
-    @cnumbers t
-    H = simplify(effective_hamiltonian(k, ωs, hs))
+    k=2
+    @syms t::Real
+    gs, Vs = simplify(effective_hamiltonian(k, ωs2, hs2))
+    @show Vs
+    @show gs
+    @show [typeof(g*V) for (g,V) in zip(gs, Vs)]
+    @show [g*V for (g,V) in zip(gs, Vs)]
+    @show (typeof(a'*a)==QuantumCumulants.QMul{Nothing})
+    sums = 0
+    for (g,V) in zip(gs, Vs)
+        if (typeof(g*V) != QuantumCumulants.QMul{Nothing})
+            sums+= 0
+        else
+            sums += g*V
+        end
+    end
+    @show(simplify(sums))
+    (typeof(1) == QuantumCumulants.QMul{Nothing}) ? print("yes") : print("no")
     #collect_rule = @rule(+(~~xs) => ~~xs)
     #H_list = simplify(collect_rule(H))
     #typeof(ω_d*σz1)
+    
     secondOrderRule = @acrule((~a)*(~y)*(~z) + (~b)*(~y)*(~z) => ((~a)+(~b))*(~y)*(~z))
     firstOrderRule = @acrule((~a)*(~y) + (~b)*(~y) => ((~a)+(~b))*(~y))
     rules = Chain([firstOrderRule,secondOrderRule])
-    H1 = Fixpoint(rules)(H)
+    H1 = Fixpoint(rules)(sums)
     #r = Chain[]
 
     typeof(H1)
