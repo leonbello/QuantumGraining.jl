@@ -10,12 +10,12 @@ up to some arbitrary order `k`.  A familiar example would be virtual processes s
 
 Moreover, the TCG method provides this description in terms of a generalized Linbdladian -- a Hamiltonian and a list of "dissipators" -- that fully generate these processes up to the desired order of approximation. In addition to the obvious benefits of a low-frequency description, this allows one to understand the effects of high-frequency modes directly as emergent dynamics on the relevant modes of interest.
 
+## QuantumGraining.jl
+
 The TCG method is very computationally involved, with the number of terms growing rapidly with the order of truncation. The main object of interest is the "contraction coefficient" which encapsulates the relative weight of each possible `k`-order process. Each of these coefficients requires the recursive calculation of lower-order contraction coefficients to compute, a process which is the repeated for each frequency mode in the original Hamiltonian.
 
 <img src="docs/imgs/decomp-tree.png" width=50% height=50%>
 
-
-## QuantumGraining.jl
 **QuantumGraining.jl** automates the TCG process, symbolically calculating the effective Lindbladians in terms of abstract operators that are easily integrated into other symbolic packages, such as **QuantumCumulants.jl** and **QuantumOptics.jl**.
 
 * The model (Hamiltonian) is specified, along with the time-coarse graining time-scale.
