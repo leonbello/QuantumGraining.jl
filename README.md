@@ -12,7 +12,8 @@ Moreover, the TCG method provides this description in terms of a generalized Lin
 
 The TCG method is very computationally involved, with the number of terms growing rapidly with the order of truncation. The main object of interest is the "contraction coefficient" which encapsulates the relative weight of each possible `k`-order process. Each of these coefficients requires the recursive calculation of lower-order contraction coefficients to compute, a process which is the repeated for each frequency mode in the original Hamiltonian.
 
-![image](docs/imgs/decomp-tree.png)
+<img src="docs/imgs/decomp-tree.png" width=50% height=50%>
+
 
 ## QuantumGraining.jl
 **QuantumGraining.jl** automates the TCG process, symbolically calculating the effective Lindbladians in terms of abstract operators that are easily integrated into other symbolic packages, such as **QuantumCumulants.jl** and **QuantumOptics.jl**.
