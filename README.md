@@ -11,7 +11,7 @@ The main challenge with the TCG approach is that the calculations are very invol
 ## Installation
 
 `QuantumGraining.jl` is in early stages of developemnt, and is still not registered in the Julia package registrator. For the time being, the package can be installed by cloning the repository from GitHub. 
-To install, clone the repository, then use the Julia package manager to `activate` and `build`. Since the build can take a while, you may prefer `using Pkg; Pkg.build(verbose=true)`.
+To install, clone the repository, then use the Julia package manager to `activate` and `build`.
 
 # Development Status
 Note that **QuantumGraining.jl** is still at an early stage of development.
