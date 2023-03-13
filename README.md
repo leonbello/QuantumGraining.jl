@@ -1,6 +1,10 @@
 # QuantumGraining
 
+![](docs/imgs/quantumgraining.png)
+
 **QuantumGraining.jl** offers a practical, generalized approach to the time-coarse graining (TCG) method in quantum optics. Often in quantum optics, we are not interested in the short time-scale dynamics -- these are either trivial, or unmeasurable, and keeping track of them is very computationally expensive. The time-coarse graning approach gives an effective description for the time-coarse grained dynamics, while preserving the slow time-scale effects of the short time-scale dynamics.
+
+One can think of the time-coarse graining method as a generalization of the rotating-wave approximation, where the time-averaging is performed at the propagator level rather than the Hamiltonian level. More technically, time-coarse graining 
 
 The main challenge with the TCG approach is that the calculations are very involved, with the number of terms growing rapidly with the order of truncation. **QuantumGraining.jl** automates this process, representing the effective Lindbladians in terms of abstract operators that are easily integrated into other symbolic packages, such as **QuantumCumulants.jl** and **QuantumOptics.jl**.
 
