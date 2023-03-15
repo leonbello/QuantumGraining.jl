@@ -15,10 +15,7 @@ module Tst
     include("../src/printing.jl")
     include("../src/expressions.jl")
 
-    ## problem definition ##
-    @cnumbers ω_1 ω_3
-    c, cs = contraction_coeff((2,0),[ω_1,ω_3])
-    
+ ## problem definition ##    
     num_bubbles = 2
     @cnumbers a b c
     μ1 = [0, a, -a] # pole at 1 and 3
@@ -54,7 +51,6 @@ module Tst
     ν1 = [5]
     ω = [(μ1, ν1)]
     diagram_correction(ω)
-    diagram_correction(reverse(ω))
     
     μ1 = [1, 2, 3]
     ν1 = [7, 4]
@@ -71,18 +67,30 @@ module Tst
     test = diagram_correction(ω)
 
     @cnumbers ω_1 ω_2
-    μ1 = [2],[]
-    ν1 = [],[1, -1]
-    ω = [([ω_1], []), ([], [ω_2, -ω_2])]#[(μ1, ν1)]
+    μ1 = [2]
+    ν1 = [1, -1]
+    ω = [(μ1, ν1)]
+    test = diagram_correction(ω)
+
+    # only down-bubbles
+    ν1 = [1, 4]
+    μ1 = []
+    ω = [(μ1, ν1)]
     test = diagram_correction(ω)
 
     # singular bubbles
     μ1 = [0, 1, -1] # pole at 2
     ν1 = [5]
     ω = [(μ1, ν1)]
+    test = diagram_correction(ω)
 
-    diagram_correction(ω)
-
+    @cnumbers ω_1 ω_2
+    μ1 = [ω_1]
+    ν1 = []
+    μ2 = []
+    ν2 = [-ω_2, ω_2]    
+    ω = [(μ1, ν1), (μ2, ν2)] #[([ω_1], []), ([], [ω_2, -ω_2])]
+    test = diagram_correction(ω)
 
     #= 
         contraction_coeff
@@ -96,6 +104,9 @@ module Tst
     c, c_list = contraction_coeff((left, right), ω)
     @show c_list
     @show c
+
+    @cnumbers ω_1 ω_3
+    c, cs = contraction_coeff((2,0),[ω_1,ω_3])
 
     # [(1, 2)]
     μ1 = [0] # pole at 2

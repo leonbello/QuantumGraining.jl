@@ -2,12 +2,8 @@
 
 ## [Contractions](@id API: Contractions)
 
-```@docs
+@docs
 Contraction
-```
-
-```@docs
-@definemodes
 ```
 
 ```@docs
