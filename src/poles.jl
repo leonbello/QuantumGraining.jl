@@ -19,38 +19,17 @@ function taylor_coeff(n, k)
 end
 
 """
-    vec_factorial(u; include_poles=true)
-
-Calculates vector factorial for a frequency list u. 
-"""
-function vec_factorial(u; include_poles=true)
-    if isempty(u)
-        return 1
-    end
-    prod_terms = []
-    for i = 1:length(u)
-        temp_sum = sum(u[1:i])
-        if isequal(temp_sum, 0)
-            if include_poles == true
-                temp_prod = 0
-            end
-        else
-            push!(prod_terms, temp_sum)
-        end
-    end
-    return isempty(prod_terms) ? 1 : prod(prod_terms)
-end
-
-"""
 find_poles(u)
 
 Finds all the factors of the vector factorial that evaluate to 0.
 
 Argument: 
     - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
-"""
 
-function find_poles(u)
+Returns:
+    - poles_list: list of indices of poles
+"""
+function find_poles(u::Vector{T}) where {T}
     poles_list = Int[]
     for i = 1:length(u)
         temp_sum = sum(u[1:i])
@@ -68,20 +47,27 @@ Finds all poles in vector factorial for frequency list u.
 
 Argument: 
     - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
+Returns:
+    - up_poles: list of indices of poles in upper modes
+    - down_poles: list of indices of poles in lower modes
 """
-function find_all_poles(ω)
-    μ_poles = []
-    ν_poles = []
+function find_all_poles(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+    up_poles = Vector{Vector{Int}}()
+    down_poles = Vector{Vector{Int}}()
     for (idx, (μ, ν)) in enumerate(ω)
         start = (idx == 1) ? 2 : 1                  # omit the first mode in the first bubble
-        push!(μ_poles, find_poles(μ[end:-1:start]))
-        push!(ν_poles, find_poles(ν))
+        push!(up_poles, find_poles(μ[end:-1:start]))
+        push!(down_poles, find_poles(ν[start:end]))
     end
-    return (μ_poles, ν_poles)
+    return (up_poles, down_poles)
+end
+
+function find_all_poles(ω::Diagram{T1, T2}) where {T1, T2}
+    return find_all_poles(ω.freqs)
 end
 
 """
-    find_all_poles(u)
+    count_poles(u)
 
 Given two lists of poles, counts the total number of poles by counting the non-empty lists.
 

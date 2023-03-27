@@ -122,7 +122,7 @@ Gives an expression for the effective diagram correction.
     # Example
     - For a diagram d = [(3, 2), (2, 1)] we would ω = [(μ1, ν1), (μ2, ν2)] where μi and νi are vectors containing mode values.
  """   
-function diagram_correction(ω)
+function diagram_correction(ω::Vector{Tuple{Vector{Int}, Vector{Int}}})
     num_bubbles = length(ω)
     (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
     println(s_list)
@@ -133,13 +133,34 @@ function diagram_correction(ω)
     sols = reshape_sols(sols, total_num_poles, num_bubbles)         
     bubble_factors = []                                                 # array holding the terms of the outer sum
     
-    l_tot = 0
+    l_tot, r_tot = 0, 0
     for (i, (μ, ν)) in enumerate(ω)
         fac = calculate_bubble_factor(ω, i, sols[:, i], s_list[i], stag_list[i])
         push!(bubble_factors, fac)
         l_tot += length(μ)
+        r_tot += length(ν)
     end
     return (-1)^l_tot*prod(bubble_factors)
+end
+
+function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
+    num_bubbles = length(d)
+    sols = find_integer_solutions(3*num_bubbles, d.num_poles)    
+    sols = reshape_sols(sols, d.num_poles, num_bubbles)         
+    bubble_factors = []                                                 # array holding the terms of the outer sum
+    
+    l_tot, r_tot = 0, 0
+    for (i, (μ, ν)) in enumerate(d)
+        fac = calculate_bubble_factor(d, sols[:, i])
+        push!(bubble_factors, fac)
+        l_tot += length(μ)
+        r_tot += length(ν)
+    end
+    return (-1)^l_tot*prod(bubble_factors)
+end
+
+function calculate_bubble_factor(d::Diagram{T1, T2}, sols) where {T1,T2}
+
 end
 
 """

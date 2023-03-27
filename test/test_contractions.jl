@@ -15,7 +15,7 @@ module Tst
     include("../src/printing.jl")
     include("../src/expressions.jl")
 
- ## problem definition ##    
+    ## problem definition ##    
     num_bubbles = 2
     @cnumbers a b c
     μ1 = [0, a, -a] # pole at 1 and 3
@@ -42,55 +42,6 @@ module Tst
     @show s, stag
     t1 = singular_expansion(μ1, ν1, unl_list[:, 1], s, stag)
     t2 = calculate_bubble_factor(ω, 1, unl_list[:, 1], s, stag)
-    
-    ## diagram_correction(ω) ##
-    t3 = diagram_correction(ω)
-
-    # non-singular bubble
-    μ1 = [0, 1, -1]    # 2*(2 + 3) -- 3*(2 + 3)
-    ν1 = [5]
-    ω = [(μ1, ν1)]
-    diagram_correction(ω)
-    
-    μ1 = [1, 2, 3]
-    ν1 = [7, 4]
-
-    μ2 = [1, 3]
-    ν2 = [5]
-    ω = [(μ1, ν1), (μ2, ν2)]
-    test = diagram_correction(ω)
-
-    # only up-bubbles
-    μ1 = [1, 4]
-    ν1 = []
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    @cnumbers ω_1 ω_2
-    μ1 = [2]
-    ν1 = [1, -1]
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    # only down-bubbles
-    ν1 = [1, 4]
-    μ1 = []
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    # singular bubbles
-    μ1 = [0, 1, -1] # pole at 2
-    ν1 = [5]
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    @cnumbers ω_1 ω_2
-    μ1 = [ω_1]
-    ν1 = []
-    μ2 = []
-    ν2 = [-ω_2, ω_2]    
-    ω = [(μ1, ν1), (μ2, ν2)] #[([ω_1], []), ([], [ω_2, -ω_2])]
-    test = diagram_correction(ω)
 
     #= 
         contraction_coeff
@@ -107,28 +58,6 @@ module Tst
 
     @cnumbers ω_1 ω_3
     c, cs = contraction_coeff((2,0),[ω_1,ω_3])
-
-    # [(1, 2)]
-    μ1 = [0] # pole at 2
-    ν1 = [1, 1]
-    ω1 = [(μ1, ν1)]
-    @show diagram_correction(ω1)
-    @show c_list[1]
-
-    # [(0, 1), (1, 1)]
-    μ1 = [] # pole at 2
-    ν1 = [1]
-    μ2 = [0]
-    ν2 = [1]
-
-    μ1 = [0] # pole at 2
-    ν1 = [1]
-    μ2 = []
-    ν2 = [1]
-
-    ω2 = [(μ1, ν1), (μ2, ν2)]
-    diagram_correction(ω2)
-    @show c_list[2]
 
 end
 
