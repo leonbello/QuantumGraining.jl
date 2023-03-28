@@ -9,29 +9,52 @@ using Test
 module Tst
     using Test
     using IterTools
+    include("../src/bvector.jl")
     include("../src/diagrams.jl")
+    include("../src/diagram.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
     include("../src/expressions.jl")
-    include("../src/bvector.jl")
-    include("../src/contractions.jl")
     
-    # write tests for all basic possible diagram structures
-    ## no singularities ##
-
-    # only up-bubbles
-    begin   # [(3, 0), (2, 0)], singularity in the first bubble should be omitted
+   
+    begin  #singularity in the first bubble should be omitted
         μ1 = UVec([0, 1, -2], special=true);  
-        ν1 = DVec([]);
+        ν1 = DVec([])
         μ2 = UVec([1, 3]);
         ν2 = DVec([]);
-        ω = Diagram([(μ1, ν1), (μ2, ν2)]);
         
-        @show typeof(ω)
-        @show ω.shape
-        @show ω.up_poles
-        @show ω.down_poles
-        @show ω.num_poles
-        diagram_correction(ω)     
+        @show μ1[1]
+        @show μ1[2]
+        @show μ1[3]
+        @show ν1
+        @show μ1
+
+        @show vec_factorial(μ1)
+        @show vec_factorial(μ2)
+        
+        @show μ1.special
+        @show μ1.type
+        @show ν1.type
+        @show μ1.poles
+        @show ν1.poles
+
+        @show sum(μ1)
+        @show sum(ν1)
+        @show sum(μ2)
+        @show sum(ν2)
+
+        @show length(μ1)
+        @show length(ν1)
+
+        @show μ1[2]
+        @show size(μ1)
+    end
+
+    begin
+        μ1 = UVec([0, 1, -1], special=true);    
+        ν1 = DVec([1]);
+
+        @show vec_factorial(μ1)
+        @show vec_factorial(ν1)
     end
 end

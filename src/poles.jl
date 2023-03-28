@@ -39,11 +39,11 @@ function find_poles(u::Vector{T}) where {T}
     end
     return poles_list
 end
+find_poles(u::BVector) = u.special ? find_poles(u.freqs[2:end]) : find_poles(u.freqs)
 
 """
-find_all_poles(u)
-
-Finds all poles in vector factorial for frequency list u.
+    find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+Finds all poles in vector factorial for frequency list `d`. Assumes that the first tuple in the list is the special mode.
 
 Argument: 
     - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
@@ -51,10 +51,10 @@ Returns:
     - up_poles: list of indices of poles in upper modes
     - down_poles: list of indices of poles in lower modes
 """
-function find_all_poles(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+function find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
     up_poles = Vector{Vector{Int}}()
     down_poles = Vector{Vector{Int}}()
-    for (idx, (μ, ν)) in enumerate(ω)
+    for (idx, (μ, ν)) in enumerate(d)
         start = (idx == 1) ? 2 : 1                  # omit the first mode in the first bubble
         push!(up_poles, find_poles(μ[end:-1:start]))
         push!(down_poles, find_poles(ν[start:end]))
@@ -62,9 +62,20 @@ function find_all_poles(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2
     return (up_poles, down_poles)
 end
 
-function find_all_poles(ω::Diagram{T1, T2}) where {T1, T2}
-    return find_all_poles(ω.freqs)
+"""
+    find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+Finds all vector factorial poles for a list of BVectors. 
+"""
+function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+    up_poles = Vector{Vector{Int}}()
+    down_poles = Vector{Vector{Int}}()
+    for (μ, ν) in d
+        push!(up_poles, find_poles(μ))
+        push!(down_poles, find_poles(ν))
+    end
+    return (up_poles, down_poles)
 end
+find_all_poles(d::Diagram{T1, T2}) where {T1, T2} = find_all_poles(d.freqs)
 
 """
     count_poles(u)

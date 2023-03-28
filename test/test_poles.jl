@@ -5,6 +5,7 @@ using IterTools
 module Tst
     using Test
     using IterTools
+    include("../src/bvector.jl")
     include("../src/diagrams.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
