@@ -48,6 +48,9 @@ module Tst
 
         @show μ1[2]
         @show size(μ1)
+
+        @show sum(μ1)
+        @show sum(ν1)
     end
 
     begin

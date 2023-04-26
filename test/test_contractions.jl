@@ -13,7 +13,6 @@ module Tst
     include("../src/poles.jl")
     include("../src/contractions.jl")
     include("../src/printing.jl")
-    include("../src/expressions.jl")
 
     ## problem definition ##    
     num_bubbles = 2

@@ -14,36 +14,6 @@ function norm_fac(v, j, mj)
 end 
 
 """
-    split_freqs(freqs::Array, ububs::Int, dbubs::Int)
-
-Splits a frequency array into an array of `ububs` up-bubbles and `dbubs` down-bubbles 
-
-Arguments:
-    `fres`  - unified array of frequencies, should be of the form [μ1, μ2, ..., μl, ν1, ν2, ..., νr]
-    `l` - number of up-modes
-    `r` - number of down-modes
-
-Returns:
-    freqs_up - array of only the up-modes
-    freqs_dn - array of only the down-modes
-"""
-function split_freqs(freqs::Array, l::Int, r::Int)
-    freqs_up = freqs[1:l]
-    freqs_dn = freqs[l+1:l+r]
-    return freqs_up, freqs_dn
-end
-
-"""
-    count_modes(diagram)
-Counts the total number of up-modes and down-modes in a given diagram
-"""
-function count_modes(diagram)
-    bubs = tuple(map(sum, zip(diagram...)))[1]
-    return bubs[1], bubs[2] 
-end
-
-
-"""
     split_freqs_into_bubbles(freqs, diagram)
 Splits an array of frequencies into an array of tuples of frequencies, matching the dimensions of each bubble in `diagram`.
 
@@ -85,11 +55,6 @@ end
     Returns:
     - c: a symbolic expression for the contraction coeffeicient.
 """
-function contraction_coeff(order::Tuple{Int, Int}, ω::Array)
-    left, right = order
-    return contraction_coeff(left, right, ω)
-end
-
 function contraction_coeff(left::Int, right::Int, freqs::Array)
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
@@ -107,42 +72,20 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     end
     return c, c_list
 end
+contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
 """
     diagram_correction(ω)
-
-
 Gives an expression for the effective diagram correction.
-
-    - `ω`: A list of vector (μi, νi) with the frequency values for each mode.
+    
     # Arguments
+    - `ω`: A list of vectors (μi, νi) with the frequency values for each mode.
 
     # Returns
     - A symbolic expression for the diagram contribution.
     # Example
     - For a diagram d = [(3, 2), (2, 1)] we would ω = [(μ1, ν1), (μ2, ν2)] where μi and νi are vectors containing mode values.
  """   
-function diagram_correction(ω::Vector{Tuple{Vector{Int}, Vector{Int}}})
-    num_bubbles = length(ω)
-    (s_list, stag_list) = find_all_poles(ω)                             # singular indices for current bubble
-    println(s_list)
-    println(stag_list)
-    total_num_poles = count_poles(s_list, stag_list)
-
-    sols = find_integer_solutions(3*num_bubbles, total_num_poles)    
-    sols = reshape_sols(sols, total_num_poles, num_bubbles)         
-    bubble_factors = []                                                 # array holding the terms of the outer sum
-    
-    l_tot, r_tot = 0, 0
-    for (i, (μ, ν)) in enumerate(ω)
-        fac = calculate_bubble_factor(ω, i, sols[:, i], s_list[i], stag_list[i])
-        push!(bubble_factors, fac)
-        l_tot += length(μ)
-        r_tot += length(ν)
-    end
-    return (-1)^l_tot*prod(bubble_factors)
-end
-
 function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
     num_bubbles = length(d)
     sols = find_integer_solutions(3*num_bubbles, d.num_poles)    
@@ -150,18 +93,19 @@ function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
     bubble_factors = []                                                 # array holding the terms of the outer sum
     
     l_tot, r_tot = 0, 0
-    for (i, (μ, ν)) in enumerate(d)
-        fac = calculate_bubble_factor(d, sols[:, i])
+    for (i, b) in enumerate(d)
+        fac = calculate_bubble_factor(b, sols[:, i], d.up_poles[i], d.down_poles[i])
         push!(bubble_factors, fac)
-        l_tot += length(μ)
-        r_tot += length(ν)
+        l_tot += length(b.up)
+        r_tot += length(b.down)
     end
     return (-1)^l_tot*prod(bubble_factors)
 end
-
-function calculate_bubble_factor(d::Diagram{T1, T2}, sols) where {T1,T2}
-
+function diagram_correction(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+    d = Diagram(ω)
+    return diagram_correction(d)
 end
+
 
 """
     calculate_bubble_factor(ω, bubble_idx, total_num_poles, s, stag)
@@ -171,19 +115,31 @@ Returns the bubble factor for a single bubble.
     - `ω`: the frequency values for the whole diagram.
     - `total_num_poles`: the total number of singular poles in the diagram
     - `bubble_idx`: the index of the bubble for which we want to calculate the correction factor.
-    - `s`: a list of the singular poles in the upper modes.
-    - `stag`: a list of the singular poles in the lower modes.
+    - `s`: a list of the singular poles in the upper modes of the bubble.
+    - `stag`: a list of the singular poles in the lower modes of the bubble.
 
 # Returns 
     - an array of all bubble factors.
 """
-function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
+function calculate_bubble_factor(b::Bubble{T1, T2}, sols, s, stag) where {T1, T2}
+    μ, ν = b.up, b.down
+    l, r = b.shape
+    
+    @cnumbers τ
+    f(x) = exp(-0.5*τ^2*x^2) # Gaussian filter function
+
+    prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ)*vec_factorial(ν))
+    singular_terms = singular_expansion(μ, ν, sols, s, stag)
+    return prefac*sum( singular_terms )
+end
+
+function calculate_bubble_factor(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}, bubble_idx::Int, sols, s, stag) where {T1, T2}
     μ, ν = ω[bubble_idx]   
     ν = reverse(ν)
     l = length(μ)
     r = length(ν)
+    
     @cnumbers τ
-
     f(x) = exp(-0.5*τ^2*x^2)
     
     # finite part of the bubble factor (not including the expansion terms)
@@ -195,19 +151,6 @@ function calculate_bubble_factor(ω, bubble_idx, sols, s, stag)
     prefac = -f(sum_μ + sum_ν)/(vec_factorial(μ[end:-1:μ0], include_poles = false)*vec_factorial(ν[end:-1:ν0], include_poles=false))
 
     return prefac*sum( singular_expansion( μ[μ0:end], ν[ν0:end], sols, s, stag, first_bubble = first_bubble) )
-end
-
-# Helper function for singular expansion
-function calculate_normalization(s, stag)
-    if isempty(s) && isempty(stag)
-        return 1
-    elseif isempty(s) && !isempty(stag)
-        return prod(stag)
-    elseif isempty(stag) && !isempty(s)
-        return prod(s)
-    elseif !isempty(s) && !isempty(stag)
-        return prod(s)*prod(stag)
-    end
 end
 
 function calc_analytic_terms(μ, ν, n)
@@ -228,6 +171,7 @@ function calc_analytic_terms(μ, ν, n)
     return analytic_terms
 end
 
+# probably can be deprecated
 function set_indices(l, r, first_bubble)
     if first_bubble && !iszero(l)
         μ0, ν0 = 2, 1
@@ -238,7 +182,7 @@ function set_indices(l, r, first_bubble)
     end 
 end
 
-function calc_pole_terms(μ, ν, s, stag, mu_list, ml_list, ju_list, jl_list, first_bubble)
+function calc_pole_terms(μ, ν, s, stag, mu_list, ml_list, ju_list, jl_list, first_bubble)    
     pole_terms = []
     l = length(μ)
     r = length(ν)
@@ -247,7 +191,18 @@ function calc_pole_terms(μ, ν, s, stag, mu_list, ml_list, ju_list, jl_list, fi
 
     # denominator normalization factor - equals to 1 if s or s' is empty.
     # does not depend on m and mtag, so we can pull it out of the sum
-    denominator = calculate_normalization(s, stag)
+    #denominator = calculate_normalization(s, stag)
+    denominator = begin
+        if isempty(s) && isempty(stag)
+            return 1
+        elseif isempty(s) && !isempty(stag)
+            return prod(stag)
+        elseif isempty(stag) && !isempty(s)
+            return prod(s)
+        elseif !isempty(s) && !isempty(stag)
+            return prod(s)*prod(stag)
+        end
+    end
 
     for (mu_vec, ml_vec) in product(mu_list, ml_list)   # for each solution vector   
 

@@ -10,12 +10,13 @@ module Tst
     using Test
     using IterTools
     include("../src/diagrams.jl")
+    include("../src/bvector.jl")
+    include("../src/bubble.jl")
+    include("../src/diagram.jl")
     include("../src/poles.jl")
     include("../src/contractions.jl")
     include("../src/printing.jl")
-    include("../src/expressions.jl")
-    include("../src/bvector.jl")
-    
+
     # write tests for all basic possible diagram structures
     ## no singularities ##
 
@@ -39,8 +40,9 @@ module Tst
         ν1 = [0, 1, -2];   
         μ1 = [];
         ν2 = [1, 3];
-        μ1 = [];
+        μ2 = [];
         ω = [(μ1, ν1), (μ2, ν2)];
+        
 
         s, st = find_all_poles(ω);
         @show s

@@ -64,13 +64,13 @@ struct Diagram{T1, T2} <: AbstractVector{Tuple{T1, T2}}
     function Diagram(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1,T2}
         bubbles = Vector{Bubble{T1, T2}}()
         for (idx, (μ, ν)) in enumerate(freqs)
-            push!(bubbles, Bubble(UVec(μ), DVec(ν), idx == 1))
+            push!(bubbles, Bubble(UVec(μ), DVec(ν), special=(idx == 1)))
         end
         return Diagram(bubbles)
     end
 end
 Base.size(d::Diagram) = size(d.freqs)
-Base.getindex(d::Diagram, i::Int) = d.freqs[i]
+Base.getindex(d::Diagram, i::Int) = d.bubbles[i]
 Base.length(d::Diagram) = length(d.freqs)
 Base.push!(d::Diagram, freq::Tuple{BVector{T1}, BVector{T2}}) where {T1,T2} = push!(d.freqs, freq)
 

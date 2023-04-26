@@ -51,10 +51,10 @@ Returns:
     - up_poles: list of indices of poles in upper modes
     - down_poles: list of indices of poles in lower modes
 """
-function find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
-    up_poles = Vector{Vector{Int}}()
-    down_poles = Vector{Vector{Int}}()
-    for (idx, (μ, ν)) in enumerate(d)
+function find_all_poles(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+    up_poles = Vector{Vector{T1}}()
+    down_poles = Vector{Vector{T2}}()
+    for (idx, (μ, ν)) in enumerate(freqs)
         start = (idx == 1) ? 2 : 1                  # omit the first mode in the first bubble
         push!(up_poles, find_poles(μ[end:-1:start]))
         push!(down_poles, find_poles(ν[start:end]))
