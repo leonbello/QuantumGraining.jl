@@ -15,11 +15,7 @@ mutable struct BVector{T} <: AbstractVector{T}
     type::Symbol
 
     function BVector(vec::Vector{T}, type::Symbol, special::Bool) where {T}
-        if type == :down
-            vec = reverse(vec)
-        elseif type == :up
-            vec = vec
-        else
+        if type != :down && type != :up
             error("type must be :up or :down")
         end
         start = (special == true) ? 2 : 1
@@ -48,15 +44,19 @@ end
     vec_factorial(u; include_poles=true)
 Calculates vector factorial for a BVector u. If the vector includes the edge mode, then the first term is omitted.
 """
-function vec_factorial(u::BVector; special = false, include_poles=false)
+function vec_factorial(u::BVector; include_poles=false)
+    if u.type == :down
+        reverse!(u.freqs)
+    end    
+
     if include_poles && !isempty(u.poles)
         return 0
     end
     prod_terms = []
-    start = (special == true) ? 2 : 1
-    for i = start:length(u)
-        temp_sum = sum(u.freqs[start:i])
-        if !iszero(temp_sum) push!(prod_terms, temp_sum) end
+    start = (u.special == true) ? 2 : 1
+    for i = length(u):-1:start
+        temp_sum = sum(u.freqs[length(u):-1:i])
+        if !isequal(temp_sum, 0) push!(prod_terms, temp_sum) end
     end
     return isempty(prod_terms) ? 1 : prod(prod_terms)
 end

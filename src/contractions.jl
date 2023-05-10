@@ -43,7 +43,7 @@ end
 
 
 """
-    contraction_coeff(left::Int, right::Int)
+    contraction_coeff(left::Int, right::Int, freqs::Array)
 
     Calculates the coefficient of a whole contraction, given the contraction and input frequencies
 
@@ -128,11 +128,17 @@ function calculate_bubble_factor(b::Bubble{T1, T2}, sols, s, stag) where {T1, T2
     @cnumbers τ
     f(x) = exp(-0.5*τ^2*x^2) # Gaussian filter function
 
+    # maybe change the format from a symbolic one to a numerical one, where we keep a list
+    # of the exponents of each factor and the coefficients of the polynomial. 
+    # Could speed up calculations and make the thing simpler to work with
+    
+    # TODO: problem in the prefactor, should be fixed
     prefac = -f(sum(μ) + sum(ν))/(vec_factorial(μ)*vec_factorial(ν))
     singular_terms = singular_expansion(μ, ν, sols, s, stag)
     return prefac*sum( singular_terms )
 end
 
+# old version, may need to be deprecated
 function calculate_bubble_factor(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}, bubble_idx::Int, sols, s, stag) where {T1, T2}
     μ, ν = ω[bubble_idx]   
     ν = reverse(ν)

@@ -17,10 +17,23 @@ module Tst
     include("../src/contractions.jl")
     include("../src/printing.jl")
 
-    # write tests for all basic possible diagram structures
-    ## no singularities ##
+    
+    # one common bubble and one up-bubble
+    # no singularities
+    begin
+        μ1 = [1, 1, 3];  
+        ν1 = [1, -2];
+        μ2 = [3, 1];
+        ν2 = Int[];
+        ω = [(μ1, ν1), (μ2, ν2)];
+        
+        @show count_poles(find_all_poles(ω)...)
+        diagram_correction(ω)  
+    end
+    ## CORRECT: 1//48*exp(-16*τ^2) = 1//48*(exp(-8*τ^2))^2
 
     # only up-bubbles
+    # no singularities
     begin   # [(3, 0), (2, 0)], singularity in the first bubble should be omitted
         μ1 = [0, 1, -2];  
         ν1 = [];
@@ -34,13 +47,16 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         diagram_correction(ω)     
     end
+    ## CORRECT! -1//24*exp(-8.5τ^2) ##
 
     # only down-bubbles
+    # no singularities
     begin   # [(0, 3), (0, 2)], singularity in the first bubble should be omitted
-        ν1 = [0, 1, -2];   
         μ1 = [];
-        ν2 = [1, 3];
+        ν1 = [0, 1, -2];   
         μ2 = [];
+        ν2 = [1, 3];
+        
         ω = [(μ1, ν1), (μ2, ν2)];
         
 
@@ -50,8 +66,10 @@ module Tst
         @show count_poles(find_all_poles(ω)...);
         diagram_correction(ω)     
     end
+    ## Not sure about this one, need to think ##
 
-    # general bubbles
+    # single common bubble
+    # no singularities
     begin   # single bubble [(3, 1)], singularity in the first bubble should be omitted
         μ1 = [0, 1, 2];    
         ν1 = [5];
@@ -60,8 +78,11 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         diagram_correction(ω)     
     end
+    ## CORRECT! 1/30*exp(-32τ^2) ##
 
-    begin   # two bubbles [(3, 2), (2, 1)], singularity in the first bubble should be omitted
+    # two common bubbles
+    # no singularities
+    begin
         μ1 = [0, 1, 2]
         ν1 = [7, 4]
         μ2 = [1, 3]
@@ -71,11 +92,11 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         diagram_correction(ω)     
     end
+    ## CORRECT! 1/27720*exp(-277/2*τ^2) ##
 
-    ## singularities in the first bubble ##
-    # up-singularity in the first up-bubble 
+    # only up-bubbles
+    # single singularity in the first bubble
     begin   # [(3, 0), (2, 0)], single singularity in the first bubble
-        bubble = [(3,0), (2,0)];
         μ1 = [0, 1, -1];  
         ν1 = [];
         μ2 = [1, 3];
@@ -85,101 +106,34 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         diagram_correction(ω)     
     end
+    ## WRONG COEFFICIENTS: 1/144*exp(-8*τ^2)*(1-48τ^2) ##
 
-
-    # down-singularity in the first bubble
+    # up-singularity in the second bubble 
     begin
-        bubble = [(0, 3), (2,0)];    
-    end
+        μ1 = [1, 3];
+        ν1 = [];
+        μ2 = [0, 1, -1];  
+        ν2 = [];
+        
+        ω = [(μ1, ν1), (μ2, ν2)];
     
+        @show count_poles(find_all_poles(ω)...)
+        diagram_correction(ω)
+    end
+
 
     # up and down singularities in the first bubble
     begin
-        bubble = [(3, 2), (1, 2)];    
+        μ1 = [0, 1, -1];  
+        ν1 = [1, 2, -3];
+        μ2 = [1, 3];
+        ν2 = Int[]; 
+        
+        ω = [(μ1, ν1), (μ2, ν2)];
+        @show count_poles(find_all_poles(ω)...)
+        simplify(diagram_correction(ω))
     end
-
-    ## singularities in the second bubble ##
-
-    # up-singularity in the second bubble 
-
-    # down-singularity in the second bubble 
-
-    # up and down singularities in the second bubble
+    ## WRONG COEFFICIENTS
 
 
-    # singularities in both bubbles - up-up, up-down, down-up, down-down
-
-
-    ## singularities in the first (up) bubble ##
-
-
-
-    # singularities in the first (down) bubble
-
-
-
-
-
-
-    # only up-bubbles
-    μ1 = [1, 4]
-    ν1 = []
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    @cnumbers ω_1 ω_2
-    μ1 = [2]
-    ν1 = [1, -1]
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    # only down-bubbles
-    ν1 = [1, 4]
-    μ1 = []
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    # singular bubbles
-    μ1 = [0, 1, -1] # pole at 2
-    ν1 = [5]
-    ω = [(μ1, ν1)]
-    test = diagram_correction(ω)
-
-    @cnumbers ω_1 ω_2
-
-    μ1 = [ω_1, -ω_1]
-    ν1 = []
-    μ2 = []
-    ν2 = [ω_2]
-    ω = [(μ1, ν1), (μ2, ν2)] 
-    test = diagram_correction(ω)
-
-    μ1 = [ω_1]
-    ν1 = []
-    μ2 = []
-    ν2 = [-ω_2, ω_2]    
-    ω = [(μ1, ν1), (μ2, ν2)] #[([ω_1], []), ([], [ω_2, -ω_2])]
-    test = diagram_correction(ω)
-
-    # [(1, 2)]
-    μ1 = [0] # pole at 2
-    ν1 = [1, 1]
-    ω1 = [(μ1, ν1)]
-    @show diagram_correction(ω1)
-    @show c_list[1]
-
-    # [(0, 1), (1, 1)]
-    μ1 = [] # pole at 2
-    ν1 = [1]
-    μ2 = [0]
-    ν2 = [1]
-
-    μ1 = [0] # pole at 2
-    ν1 = [1]
-    μ2 = []
-    ν2 = [1]
-
-    ω2 = [(μ1, ν1), (μ2, ν2)]
-    diagram_correction(ω2)
-    @show c_list[2]
 end

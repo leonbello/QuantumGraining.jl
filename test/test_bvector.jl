@@ -11,10 +11,10 @@ module Tst
     using IterTools
     include("../src/bvector.jl")
     include("../src/diagrams.jl")
+    include("../src/bubble.jl")
     include("../src/diagram.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
-    include("../src/expressions.jl")
     
    
     begin  #singularity in the first bubble should be omitted
@@ -54,10 +54,18 @@ module Tst
     end
 
     begin
-        μ1 = UVec([0, 1, -1], special=true);    
+        μ1 = UVec([0, 1, -1]; special=true);    
         ν1 = DVec([1]);
 
         @show vec_factorial(μ1)
         @show vec_factorial(ν1)
+    end
+
+    begin
+        @cnumbers ω1 ω2 ω3 ω4
+        μ1 = UVec([ω1, ω2, ω3, ω4]; special=true);
+        
+        result = vec_factorial(μ1)
+        @show result
     end
 end
