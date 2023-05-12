@@ -4,7 +4,7 @@ using SymbolicUtils
 using IterTools
 using Symbolics
 using Test
-
+using DSP
 #@testset "corrections" begin
 module Tst
     using Test
@@ -16,7 +16,7 @@ module Tst
     include("../src/poles.jl")
     include("../src/contractions.jl")
     include("../src/printing.jl")
-
+    include("../src/corrections.jl")
     
     # one common bubble and one up-bubble
     # no singularities

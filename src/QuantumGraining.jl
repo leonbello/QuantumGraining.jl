@@ -5,6 +5,7 @@ import SymbolicUtils: substitute
 import QuantumCumulants
 import Symbolics
 import IterTools
+import DSP
 #import TermInterface
 #import SciMLBase
 
