@@ -7,7 +7,7 @@ using SymbolicUtils
 Recursive function used to calculate finite contribution for Taylor expansion for diagrams with poles.
 
 """
-function taylor_coeff(n, k)
+function taylor_coeff(n::Int, k::Int)
     # base cases
     if (k == -1) || (n < 2*k)
         return 0
@@ -41,23 +41,10 @@ function find_poles(u::Vector{T}) where {T}
 end
 find_poles(u::BVector) = u.special ? find_poles(u.freqs[2:end]) : find_poles(u.freqs)
 
-"""
-    find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
-Finds all poles in vector factorial for frequency list `d`. Assumes that the first tuple in the list is the special mode.
 
-Argument: 
-    - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
-Returns:
-    - up_poles: list of indices of poles in upper modes
-    - down_poles: list of indices of poles in lower modes
-"""
-function find_all_poles(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
-    d = Diagram(freqs)
-    return find_all_poles(d)
-end
 
 """
-    find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+    find_all_poles(d::Vector{Tuple{BVector, BVector}})
 Finds all vector factorial poles for a list of BVectors. 
 """
 function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
@@ -69,11 +56,28 @@ function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T
     end
     return (up_poles, down_poles)
 end
-find_all_poles(d::Diagram{T1, T2}) where {T1, T2} = find_all_poles(d.freqs)
+
+"""
+    find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+Finds all poles in vector factorial for frequency list `d`. Assumes that the first tuple in the list is the special mode.
+
+Argument: 
+    - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
+Returns:
+    - up_poles: list of indices of poles in upper modes
+    - down_poles: list of indices of poles in lower modes
+"""
+function find_all_poles(freqs::Vector)#::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+    d = Diagram(freqs)
+    return find_all_poles(d)
+end
+find_all_poles(d::Diagram) = find_all_poles(d.freqs)
+
+
 
 
 """
-    count_poles(u)
+    count_poles(s_list::Vector{Int}, stag_list::Vector{Int})
 
 Given two lists of poles, counts the total number of poles by counting the non-empty lists.
 
@@ -81,7 +85,7 @@ Argument:
     - s_list: list of upper poles
     - stag_list: list of lower poles
 """
-function count_poles(s_list, stag_list)
+function count_poles(s_list::Vector{Vector{Int}}, stag_list::Vector{Vector{Int}})
     count = 0
     for list in (s_list, stag_list)
         if !isempty(list)
@@ -94,10 +98,9 @@ function count_poles(s_list, stag_list)
 end
 
 """
-find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
+    find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
 
 Function that calculates combinations of k positive integers adding up to m. 
-
 """
 function find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
     res = []
@@ -123,7 +126,7 @@ reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
 
 Helper function that reshapes integer combinations from find_integer_solutions() into vectors
 """
-function reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
+function reshape_sols(sols, target_sum, num_bubbles, num_indices=3)
     num_vars = num_bubbles*num_indices
     num_sols = binomial(target_sum + num_vars - 1, num_vars - 1)    
 

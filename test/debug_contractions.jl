@@ -12,7 +12,6 @@ include("../src/diagram.jl")
 include("../src/poles.jl")
 include("../src/contractions.jl")
 include("../src/printing.jl")
-include("../src/expressions.jl")
 
 
 # tests for calculate_bubble_factor

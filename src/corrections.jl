@@ -1,17 +1,22 @@
+using Symbolics
+
 struct Correction
     prefac
     exponent
-    poly
+    poly::Vector{Float64}
     order::Int64
 
     function Correction(prefac, exponent, poly=[1,], order=length(poly))
+        if !(poly isa Array)
+            poly = [poly]
+        end
         new(prefac, exponent, poly, order)
     end
 end
 Base.show(io::IO, c::Correction) = print(io, to_symbol(c))
 
 function to_symbol(c::Correction)
-    @cnumbers τ
+    @variables τ
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]^(τ^(n-1)) for n in 1:c.order])
     return sym

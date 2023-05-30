@@ -77,7 +77,6 @@ struct Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}
         return Bubble(UVec(up), DVec(down); special=special)
     end
 end
-Base.size(b::Bubble) = b.shape
 Base.length(b::Bubble) = prod(b.shape)
 
 function Base.getindex(b::Bubble, i::Int)

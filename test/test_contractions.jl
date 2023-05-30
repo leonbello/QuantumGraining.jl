@@ -10,9 +10,13 @@ module Tst
     using Test
     using IterTools
     include("../src/diagrams.jl")
+    include("../src/bvector.jl")
+    include("../src/bubble.jl")
+    include("../src/diagram.jl")
     include("../src/poles.jl")
     include("../src/contractions.jl")
     include("../src/printing.jl")
+    include("../src/corrections.jl")
 
     ## problem definition ##    
     num_bubbles = 2
@@ -24,6 +28,7 @@ module Tst
     ν2 = [3*c, 2*b] # no poles
 
     ω = [(μ1, ν1), (μ2, ν2)]
+    d = Diagram(ω)
 
     s_list = [[1, 3], [4]]
     stag_list = [[2], []]  # singular indices
@@ -39,25 +44,8 @@ module Tst
     stag = stag_list[1]
     
     @show s, stag
-    t1 = singular_expansion(μ1, ν1, unl_list[:, 1], s, stag)
-    t2 = calculate_bubble_factor(ω, 1, unl_list[:, 1], s, stag)
-
-    #= 
-        contraction_coeff
-    =#
-    left = 1
-    right = 2
-    μ1 = [0] 
-    ν1 = [1, 1]
-    ω = [μ1..., ν1...]
-    split_freqs_into_bubbles(ω, [(left, right)])
-    c, c_list = contraction_coeff((left, right), ω)
-    @show c_list
-    @show c
-
-    @cnumbers ω_1 ω_3
-    c, cs = contraction_coeff((2,0),[ω_1,ω_3])
-
+    t1 = singular_expansion(d[1], unl_list[:, 1], s, stag)
+    t2 = calculate_bubble_factor(d, 1, unl_list[:, 1], s, stag)
 end
 
 

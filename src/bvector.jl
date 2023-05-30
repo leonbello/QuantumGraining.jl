@@ -28,7 +28,7 @@ end
     UVec(u::Vector; special=false)
 Creates a BVector with type :up. Assumes the frequency ordering is clockwise
 """
-function UVec(u::Vector; special=false)
+function UVec(u::Vector{T}; special=false) where {T}
     return BVector(u, :up, special)
 end
 
@@ -36,7 +36,7 @@ end
     DVec(u::Vector; special=false)
 Creates a BVector with type :down. Assumes the frequency ordering is clockwise
 """
-function DVec(u::Vector; special=false)
+function DVec(u::Vector{T}; special=false) where T
     return BVector(u, :down, special)
 end
 
@@ -60,6 +60,16 @@ function vec_factorial(u::BVector; include_poles=false)
     end
     return isempty(prod_terms) ? 1 : prod(prod_terms)
 end
+
+function norm_fac(v::BVector, j::Int, mj::Int)
+    j = v.special ? j - 1 : j
+    
+    if j == 0 || mj == 0
+        return 1
+    else 
+        return (-j/sum(v[1:j]))^mj
+    end
+end 
 
 Base.sum(u::BVector) = isempty(u) ? 0 : sum(u.freqs) 
 Base.length(u::BVector) = length(u.freqs)

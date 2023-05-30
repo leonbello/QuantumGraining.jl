@@ -1,14 +1,70 @@
-#Test file for poles.jl 
-using QuantumCumulants
+using Symbolics
+using SymbolicUtils
 using IterTools
 
 module Tst
     using Test
     using IterTools
     include("../src/bvector.jl")
+    include("../src/bubble.jl")
+    include("../src/diagram.jl")
     include("../src/diagrams.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
+
+    #===
+    find_poles()
+    ===#
+    #@cnumbers a b c
+
+    # Using QuantumCumulants for symbolic variables is generally not a good idea, 
+    # since it creates type inconsistencies between the vectors. Should only switch right before having to use the operator algebra capabilities.
+    @variables a b c
+    μ1 = [a, b, c]
+    ν1 = [2*a, -2*a]
+    ω = [(μ1, ν1)]
+
+    @show find_poles(μ1[2:end])
+    @show find_poles(ν1)
+    
+    #===
+    find_all_poles()
+    ===#
+    μ1 = [0, 1, -1] # pole at 3 -- should be regarded as 2 since the first mode is omitted
+    ν1 = [1, -2]
+    ω = [(μ1, ν1)]
+
+    find_poles(μ1[2:end])
+    
+    @show typeof(ω)
+    s_list, stag_list = find_all_poles(ω)
+    count_poles(s_list, stag_list)
+    
+    # non-singular indices
+    s = s_list[1]
+    stag = stag_list[1]
+    ju_list = filter(x -> !(x in s), 1:3)      # should be [1, 3]
+    jl_list = filter(x -> !(x in stag), 1:2)   # should be [1, 2]
+    
+    # non-singular cases
+    μ1 = [a, b, -a-b] # pole at 3
+    ν1 = [a, -a] # pole at 2
+
+    μ2 = [a, a, -2*a] # pole at 1 and 4
+
+    ν2 = [-a, b, a-b] # poles at 3
+    
+    (μ1, ν1)
+    (μ2, ν2)
+    ω = [(μ1, ν1), (μ2, ν2)]
+
+    # problem with bubble vectors being different types... need to find a robust way of handling this
+    s_list, stag_list = find_all_poles(ω)
+    total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
+
+    @show s_list
+    @show stag_list
+    @show total_num_poles
 
     ## taylor_coeff() ##
     # base cases verification
@@ -30,74 +86,7 @@ module Tst
     end
 
     # comparison to Wentao's code -- works
-    
-
-    """
-    ## vec_factorial() ##
-    """
-    a = []
-    vec_factorial(a)
-    
-    # numeric
-    a = [1, 3, 5, 7]
-    @show vec_factorial(a) 
-    @show 1*(1+3)*(1+3+5)*(1+3+5+7)
-
-    b = [1, 3, 5, 7, -(1+ 3 + 5 + 7)]
-    @show vec_factorial(b)
-    @show vec_factorial(b, include_poles=false)
-
-    # symbolic
-    @cnumbers a b c d
-
-    v = [a, b, c, -(a+b+c), d]
-    @show vec_factorial(v, include_poles=false)
-    @show vec_factorial(v, include_poles=true)
-
-
-    """
-    find_poles()
-    """
-    μ1 = [a, b, c]
-    ν1 = [2*a, -2*a]
-    ω = [(μ1, ν1)]
-
-    @show find_poles(μ1[2:end])
-    @show find_poles(ν1)
-    
-    """
-    find_all_poles()
-    """
-    μ1 = [0, 1, -1] # pole at 3 -- should be regarded as 2 since the first mode is omitted
-    ν1 = [1, -2]
-    ω = [(μ1, ν1)]
-
-    find_poles(μ1[2:end])
-    
-    s_list, stag_list = find_all_poles(ω)
-    count_poles(s_list, stag_list)
-    
-    # non-singular indices
-    s = s_list[1]
-    stag = stag_list[1]
-    ju_list = filter(x -> !(x in s), 1:3)      # should be [1, 3]
-    jl_list = filter(x -> !(x in stag), 1:2)   # should be [1, 2]
-    
-    # non-singular cases
-    μ1 = [a, b, -a-b] # pole at 3
-    ν1 = [a, -a] # pole at 2
-
-    μ2 = [0, a, a, -2a] # pole at 1 and 4
-    ν2 = [-a, b, a-b] # poles at 3
-    ω = [(μ1, ν1), (μ2, ν2)]
-
-    s_list, stag_list = find_all_poles(ω)
-    total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
-
-    @show s_list
-    @show stag_list
-    @show total_num_poles
-
+ 
     #=
         find_integer_solutions() 
     weird mismatch between the number of solutions I expect and the number of solutions I get

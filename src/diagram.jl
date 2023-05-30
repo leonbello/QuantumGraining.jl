@@ -11,7 +11,7 @@ Arguments:
     - num_poles: An integer representing the number of poles in the diagram.
 """
 struct Diagram{T1, T2} <: AbstractVector{Tuple{T1, T2}}
-    bubbles::Vector{Bubble{T1, T2}}
+    bubbles::Vector{Bubble}
     freqs::Vector{Tuple{BVector{T1}, BVector{T2}}}
     shape::Vector{Tuple{Int, Int}}
     up_poles::Vector{Vector{Int}}
@@ -43,8 +43,8 @@ struct Diagram{T1, T2} <: AbstractVector{Tuple{T1, T2}}
     Returns:
         - Diagram: A Diagram struct. Note that the first bubble must be denoted special for normal operation.
     """
-    function Diagram(freqs::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1,T2}
-        bubbles = Vector{Bubble{T1, T2}}()
+    function Diagram(freqs::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+        bubbles = Vector{Bubble}()
         for (μ, ν) in freqs
             special = μ.special || ν.special
             push!(bubbles, Bubble(μ, ν, special))
@@ -61,7 +61,7 @@ struct Diagram{T1, T2} <: AbstractVector{Tuple{T1, T2}}
     Returns:
         - Diagram: A Diagram struct. Note that the first bubble is denoted a special edge mode bubble automatically.
     """
-    function Diagram(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1,T2}
+    function Diagram(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
         bubbles = Vector{Bubble{T1, T2}}()
         for (idx, (μ, ν)) in enumerate(freqs)
             push!(bubbles, Bubble(UVec(μ), DVec(ν), special=(idx == 1)))

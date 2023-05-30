@@ -15,7 +15,6 @@ module Tst
     include("../src/diagram.jl")
     include("../src/poles.jl")
     include("../src/printing.jl")
-    include("../src/expressions.jl")
     
     μ1 = [0, 1, -2]
     ν1 = []
