@@ -1,5 +1,7 @@
 module QuantumGraining
 
+# "we do things not because they are easy, but because we thought they were"
+
 import SymbolicUtils
 import SymbolicUtils: substitute
 import QuantumCumulants
@@ -11,6 +13,9 @@ import DSP
 import ModelingToolkit
 const MTK = ModelingToolkit
 
+# bvector.jl
+export DVec, UVec
+
 # diagrams.jl
 export DiagramNode, node_decomp,
         node_decomp, get_diagrams                                 
@@ -21,7 +26,7 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff
+export diagram_correction, contraction_coeff, calc_pole_corrections
 
 
 include("bvector.jl")

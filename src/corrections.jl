@@ -3,10 +3,10 @@ using Symbolics
 struct Correction
     prefac
     exponent
-    poly::Vector{Float64}
+    poly::Vector{Num}
     order::Int64
 
-    function Correction(prefac, exponent, poly=[1,], order=length(poly))
+    function Correction(prefac, exponent, poly=Num[1,], order=length(poly))
         if !(poly isa Array)
             poly = [poly]
         end
@@ -20,6 +20,14 @@ function to_symbol(c::Correction)
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]^(τ^(n-1)) for n in 1:c.order])
     return sym
+end
+
+function extend_correction(c::Correction, poly::Vector{<:Number})
+    return Correction(poly[1]*c.prefac,
+                    c.exponent,
+                    1/poly[1]*poly,
+                    length(poly)
+                    )
 end
 
 import Base: *
@@ -39,3 +47,16 @@ function *(c::Correction, n::Number)
     return Correction(prefac, exponent, poly, order)
 end
 *(n::Number, c::Correction) = c*n
+
+function conv(u::Vector{<:Number}, v::Vector{<:Number})
+    m, n = length(u), length(v)
+    result = zeros(eltype(u), m + n - 1)
+
+    for i in 1:m
+        for j in 1:n
+            result[i+j-1] += u[i] * v[j]
+        end
+    end
+
+    return result
+end

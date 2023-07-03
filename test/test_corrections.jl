@@ -2,22 +2,12 @@ using Revise
 using IterTools
 using Symbolics
 using Test
-using DSP
-using IterTools
 using QuantumGraining
 
 #@testset "corrections" begin
 module Tst
     using Test
     using QuantumGraining
-    # include("../src/diagrams.jl")
-    # include("../src/bvector.jl")
-    # include("../src/bubble.jl")
-    # include("../src/diagram.jl")
-    # include("../src/poles.jl")
-    # include("../src/contractions.jl")
-    # include("../src/printing.jl")
-    # include("../src/corrections.jl")
 
     # one common bubble and one up-bubble
     # no singularities
@@ -118,10 +108,10 @@ module Tst
 
         @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)
-        corr
-        #@test corr.exponent ≈ 2*8
-        #@test corr.poly ≈ [1, 0, -48]
-        #@test corr.prefac ≈ 1//144
+
+        @test corr.exponent ≈ 2*8
+        @test corr.poly ≈ [1, 0, -48]
+        @test corr.prefac ≈ 1//144
     end
 
     # single singularity in the first bubble
@@ -135,9 +125,9 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)
         corr
-        #@test corr.exponent ≈ 2*8
-        #@test corr.poly ≈ [1, 0, -48]
-        #@test corr.prefac ≈ 1//144
+        @test corr.exponent ≈ 2*8
+        @test corr.poly ≈ [1, 0, -48]
+        @test corr.prefac ≈ 1//144
     end
     ## WRONG COEFFICIENTS AND POLY: 1/144*exp(-8*τ^2)*(1-48τ^2) ##
 
@@ -153,9 +143,9 @@ module Tst
         @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)
 
-        #@test corr.exponent ≈ 2*8
-        #@test corr.poly ≈ [1, 0, -48]
-        #@test corr.prefac ≈ 1//144
+        @test corr.exponent ≈ 2*8
+        @test corr.poly ≈ [1, 0, -48]
+        @test corr.prefac ≈ 1//144
     end
 
 
@@ -168,7 +158,11 @@ module Tst
         
         ω = [(μ1, ν1), (μ2, ν2)];
         @show count_poles(find_all_poles(ω)...)
-        simplify(diagram_correction(ω))
+        corr = diagram_correction(ω)
+
+        @test corr.exponent ≈ 2*8
+        @test corr.poly ≈ [1, 0, -48]
+        @test corr.prefac ≈ 1//144
     end
     ## WRONG COEFFICIENTS
 

@@ -1,5 +1,4 @@
-using DSP
-
+using IterTools
 
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -70,26 +69,140 @@ Gives an expression for the effective diagram correction.
     # Returns
     - A Correction struct representing the effective diagram correction.
     
- """   
-function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
-    num_bubbles = length(d)
-    sols = find_integer_solutions(3*num_bubbles, d.num_poles)    
-    sols = reshape_sols(sols, d.num_poles, num_bubbles)         
-    bubble_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
-    
-    l_tot, r_tot = 0, 0
-    for (i, b) in enumerate(d)
-        fac = calculate_bubble_factor(b, sols[:, i], d.up_poles[i], d.down_poles[i])
-        push!(bubble_factors, fac)
-        l_tot += length(b.up)
-        r_tot += length(b.down)
+ """
+ ## New and corrected
+function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
+    # calculate an array of simple factor terms -- taylor_factors
+    simple_factors = calc_simple_factors(diagram)
+    total_correction = prod(simple_factors)
+
+    # if there are poles we need to calculate
+    if diagram.num_poles != 0
+        num_bubbles = length(diagram)
+        sols = find_integer_solutions(3*num_bubbles, diagram.num_poles)    
+        sols = reshape_sols(sols, diagram.num_poles, num_bubbles)
+
+        order = 2*diagram.num_poles + 1
+        total_poly = zeros(Number, order)
+        for (i, (n, u, d)) in enumerate(sols)
+            idx = (i - 1) % num_bubbles + 1  #1 -> 1, 2 -> 2, ..., n -> n, n + 1 -> 1
+            μ, ν = diagram[idx].up, diagram[idx].down
+            poly = calc_expansion_factors(μ, ν, order, n)
+            prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
+            total_poly += isempty(prefac) ? zeros(Num, length(total_poly)) : sum(prefac).*poly
+        end
+        total_correction = extend_correction(total_correction, total_poly)
     end
-    return (-1)^l_tot*prod(bubble_factors)
-end
+    
+    return total_correction
+end 
 function diagram_correction(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
     d = Diagram(ω)
     return diagram_correction(d)
 end
+
+function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
+    taylor_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
+    for b in d
+        μ, ν = b.up, b.down
+        l = length(b.up)
+
+        exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
+        prefac =  (-1)^l*1/(vec_factorial(μ)*vec_factorial(ν))
+        poly = Num[1,]
+        push!(taylor_factors, Correction(prefac, exponent, poly))
+    end
+    #taylor_factors[1] *= -1
+    return taylor_factors
+end
+
+function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+    l, r = length(μ), length(ν)
+
+    #order = 2*(length(μ.poles) + length(ν.poles)) + 1
+    poly = zeros(Num, order)
+    for k in 0:floor(Int, n/2)
+        freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
+        l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
+        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
+        poly[2*(n-k) + 1] = coeff
+    end
+    return poly
+end
+    
+function calc_pole_normalization(up_poles, down_poles)
+    if isempty(up_poles) && isempty(down_poles)
+        return 1
+    elseif isempty(up_poles) && !isempty(down_poles)
+        return prod(down_poles)
+    elseif isempty(down_poles) && !isempty(up_poles)
+        return prod(up_poles)
+    elseif !isempty(up_poles) && !isempty(down_poles)
+        return prod(up_poles)*prod(down_poles)
+    end
+end
+
+pole_fac(v, regular, j, m) = (-j/sum(v[regular]))^m
+
+function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+    norm = calc_pole_normalization(up_poles, down_poles)
+
+    pole_terms = []
+    l, r = length(μ), length(ν)
+
+    up_regular = filter(x -> !(x in up_poles), 1:l)
+    down_regular = filter(x -> !(x in down_poles), 1:r)  # non-singular indices
+    # change to a more informative name like up_regular and down_regular
+
+    # mu_list and ml_list hold vectors of mu values
+    mu_list = find_integer_solutions(length(up_regular), u)
+    ml_list = find_integer_solutions(length(down_regular), d)
+
+    for (mu_vec, ml_vec) in product(mu_list, ml_list)   
+        fac_u = []
+        for (u, ju) in enumerate(up_regular)
+            #idx = indexin(ju, up_regular)[1]                 # pick up the corresponding index for m_{Ju}
+            push!(fac_u, pole_fac(μ, up_regular, ju, mu_vec[u]))
+            #push!(fac_u, norm_fac(μ, ju, mu_vec[idx]))
+        end
+        prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
+
+        fac_v = []
+        for (l, jl) in enumerate(down_regular)
+            #idx = indexin(jl, down_regular)[1]                 # pick up the corresponding index for m_{Jl}
+            push!(fac_u, pole_fac(ν, down_regular, jl, ml_vec[l]))
+            #push!(fac_v, norm_fac(ν, jl, ml_vec[idx]))
+        end
+        prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
+
+        push!(pole_terms, prod_fac_u*prod_fac_v/norm) 
+    end
+    return pole_terms   
+end
+
+
+
+
+
+
+######################################
+### May also need to be deprecated ###
+######################################
+# function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
+#     num_bubbles = length(d)
+#     sols = find_integer_solutions(3*num_bubbles, d.num_poles)    
+#     sols = reshape_sols(sols, d.num_poles, num_bubbles)         
+#     bubble_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
+    
+#     l_tot, r_tot = 0, 0
+#     for (i, b) in enumerate(d)
+#         fac = calculate_bubble_factor(b, sols[:, i], d.up_poles[i], d.down_poles[i])
+#         push!(bubble_factors, fac)
+#         l_tot += length(b.up)
+#         r_tot += length(b.down)
+#     end
+#     return (-1)^l_tot*prod(bubble_factors)
+# end
 
 
 """
@@ -112,7 +225,6 @@ function calculate_bubble_factor(b::Bubble{T1, T2}, sols, up_poles::Vector{Int},
     prefac =  1/(vec_factorial(μ)*vec_factorial(ν))
     poly = Float64[1,]
     if !isempty(up_poles) || !isempty(down_poles)
-        #poly = singular_expansion(μ, ν, sols, s, stag)
         poly = singular_expansion(b, sols, up_poles, down_poles)
     end
     correction = Correction(prefac, exponent, poly)
@@ -135,8 +247,6 @@ Calculates the taylor expansion coefficients for a singular bubble.
     
 """
 function singular_expansion(b::Bubble{T1, T2}, sols, up_poles::Vector{Int}, down_poles::Vector{Int}) where {T1, T2}
-    #μ, ν = b.up, b.down
-
     # not sure the order is correct here
     order = 2*(length(up_poles) + length(down_poles)) + 1
     terms = zeros(order)
@@ -152,6 +262,31 @@ function singular_expansion(b::Bubble{T1, T2}, sols, up_poles::Vector{Int}, down
         terms = [terms[i] + correction_sum*taylor_terms[i] for i in 1:order]
     end
     return terms
+end
+
+"""
+    calc_analytic_terms(b::Bubble{T1, T2}, n)
+Calculates the analytic part of the expansion for the diagram, returns an array representing a polynomial.
+
+# Arguments
+- `b::Bubble{T1, T2}`: vector of up mode frequencies
+- `n::Int`: index for the sum
+"""
+function calc_analytic_terms(b::Bubble{T1, T2}, order, n) where {T1, T2}
+    μ, ν = b.up, b.down
+    l, r = length(μ), length(ν)
+
+    #poly = convert(Array{Any}, [1, zeros(2*n)...])
+    # freq_sum is not over all frequencies, just those that do not sum up to 0
+    poly = zeros(Float64, order)
+    for k in 0:floor(Int, n/2)
+        freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
+        l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
+        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
+
+        poly[2*(n-k) + 1] += coeff
+    end
+    return poly
 end
 
 function calc_pole_factor(b::Bubble{T1, T2}, u::Int, d::Int, up_poles::Vector{Int}, down_poles::Vector{Int}) where {T1, T2}
@@ -197,31 +332,6 @@ function calc_pole_factor(b::Bubble{T1, T2}, u::Int, d::Int, up_poles::Vector{In
         push!(pole_terms, prod_fac_u*prod_fac_v/denominator) 
     end
     return pole_terms
-end
-
-"""
-    calc_analytic_terms(b::Bubble{T1, T2}, n)
-Calculates the analytic terms for a single bubble, returns an array representing a polynomial.
-
-# Arguments
-- `b::Bubble{T1, T2}`: vector of up mode frequencies
-- `n::Int`: index for the sum
-"""
-function calc_analytic_terms(b::Bubble{T1, T2}, order, n) where {T1, T2}
-    μ, ν = b.up, b.down
-    l, r = length(μ), length(ν)
-
-    #poly = convert(Array{Any}, [1, zeros(2*n)...])
-    # freq_sum is not over all frequencies, just those that do not sum up to 0
-    poly = zeros(Float64, order)
-    for k in 0:floor(Int, n/2)
-        freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
-        l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
-        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
-
-        poly[2*(n-k) + 1] += coeff
-    end
-    return poly
 end
 
 
