@@ -38,13 +38,4 @@ module Tst
     end
 end
 
-
-
-
-
-#= for automatic testing later
-@testset "diagrams" begin
- 
-    
-end #testset
-=#
+# end testset

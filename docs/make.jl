@@ -10,7 +10,6 @@ pages = [
         "tutorial.md",
         "api.md",
         "Examples" => [
-            "examples/driven-dissipative_coupled_qubits.md"
             ]
     ]
 

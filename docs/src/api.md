@@ -1,13 +1,11 @@
 # [API](@id API)
 
 ## [Contractions](@id API: Contractions)
+# write a full API for each file in /src folder
+
 
 ```@docs
 Contraction
-```
-
-```@docs
-@definemodes
 ```
 
 ```@docs
