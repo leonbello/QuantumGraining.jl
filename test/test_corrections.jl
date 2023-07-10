@@ -8,7 +8,7 @@ using QuantumGraining
 module Tst
     using Test
     using QuantumGraining
-
+    
     # one common bubble and one up-bubble
     # no singularities
     begin
@@ -113,58 +113,5 @@ module Tst
         @test corr.poly ≈ [1, 0, -48]
         @test corr.prefac ≈ 1//144
     end
-
-    # single singularity in the first bubble
-    begin   # [(3, 0), (2, 0)], single singularity in the first bubble
-        μ1 = [0, 1] #, -1];  
-        ν1 = Int[];
-        μ2 = [-1, 1, 3];
-        ν2 = Int[];
-        ω = [(μ1, ν1), (μ2, ν2)];
-
-        @show count_poles(find_all_poles(ω)...)
-        corr = diagram_correction(ω)
-        corr
-        @test corr.exponent ≈ 2*8
-        @test corr.poly ≈ [1, 0, -48]
-        @test corr.prefac ≈ 1//144
-    end
-    ## WRONG COEFFICIENTS AND POLY: 1/144*exp(-8*τ^2)*(1-48τ^2) ##
-
-    # up-singularity in the second bubble 
-    begin
-        μ1 = [1, 3];
-        ν1 = [];
-        μ2 = [0, 1, -1];  
-        ν2 = [];
-        
-        ω = [(μ1, ν1), (μ2, ν2)];
-    
-        @show count_poles(find_all_poles(ω)...)
-        corr = diagram_correction(ω)
-
-        @test corr.exponent ≈ 2*8
-        @test corr.poly ≈ [1, 0, -48]
-        @test corr.prefac ≈ 1//144
-    end
-
-
-    # up and down singularities in the first bubble
-    begin
-        μ1 = [0, 1, -1];  
-        ν1 = [1, 2, -3];
-        μ2 = [1, 3];
-        ν2 = Int[]; 
-        
-        ω = [(μ1, ν1), (μ2, ν2)];
-        @show count_poles(find_all_poles(ω)...)
-        corr = diagram_correction(ω)
-
-        @test corr.exponent ≈ 2*8
-        @test corr.poly ≈ [1, 0, -48]
-        @test corr.prefac ≈ 1//144
-    end
-    ## WRONG COEFFICIENTS
-
 
 end

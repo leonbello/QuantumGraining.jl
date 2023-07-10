@@ -122,9 +122,9 @@ end
 
 
 """
-reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
+    reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
 
-Helper function that reshapes integer combinations from find_integer_solutions() into vectors
+Helper function that reshapes integer combinations from find_integer_solutions() into vectors [nᵢ, uᵢ, dᵢ] for each bubble i.
 """
 function reshape_sols(sols, target_sum, num_bubbles, num_indices=3)
     num_vars = num_bubbles*num_indices
@@ -142,7 +142,7 @@ function reshape_sols(sols, target_sum, num_bubbles, num_indices=3)
             vectors[i, j] = sols[i][(1 + dim_indices*(j - 1)):end_idx]
         end
     end
-    return vectors
+    return vectors'
 end
 
 

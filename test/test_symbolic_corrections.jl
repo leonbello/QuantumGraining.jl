@@ -13,18 +13,19 @@ begin
     μ1 = [ω4]
     ν1 = [ω5, -ω5]
 
-    μ2 = [ω1, ω2, ω3, -ω3]
+    μ2 = [0, -ω3, ω3, -ω2]
     ν2 = Num[];
 
     ω = [(μ1, ν1), (μ2, ν2)]
 
     up_poles, down_poles = find_all_poles(ω);
-    @test up_poles == [Int[], Int[]]
+    @test up_poles == [Int[], [1,3]]
     @test down_poles == [[2], []]
-    @test count_poles(find_all_poles(ω)...) == 1
+    @test count_poles(find_all_poles(ω)...) == 3
+    @test calc_pole_normalization(up_poles[1], down_poles[1]) == 2
+    @test calc_pole_normalization(up_poles[2], down_poles[2]) == 3
 
     corr = diagram_correction(ω)
-    @show corr
 end
 
 begin
