@@ -19,7 +19,11 @@ mutable struct BVector{T} <: AbstractVector{T}
             error("type must be :up or :down")
         end
         start = (special == true) ? 2 : 1
-        poles = find_poles(vec[start:end])
+        if type == :up
+            poles = find_poles(vec[end:-1:start])
+        else
+            poles = find_poles(vec)
+        end
         return new{T}(vec, poles, special, type)
     end
 end
@@ -58,6 +62,11 @@ function vec_factorial(u::BVector; include_poles=false)
         temp_sum = sum(u.freqs[length(u):-1:i])
         if !isequal(temp_sum, 0) push!(prod_terms, temp_sum) end
     end
+
+    if u.type == :down
+        reverse!(u.freqs)
+    end
+
     return isempty(prod_terms) ? 1 : prod(prod_terms)
 end
 
