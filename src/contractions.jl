@@ -84,12 +84,22 @@ function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
 
         order = 2*diagram.num_poles + 1
         total_poly = zeros(Number, order)
-        for (i, (n, u, d)) in enumerate(sols)
-            idx = (i - 1) % num_bubbles + 1  #1 -> 1, 2 -> 2, ..., n -> n, n + 1 -> 1
-            μ, ν = diagram[idx].up, diagram[idx].down
-            poly = calc_expansion_factors(μ, ν, order, n)
-            prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
-            total_poly += isempty(prefac) ? zeros(Num, length(total_poly)) : sum(prefac).*poly
+        for i in 1:size(sols)[1]
+            poly = zeros(Number, order)
+            poly[1] = 1
+            Prefac = zeros(Number, num_bubbles)
+
+            for idx in 1:num_bubbles
+                μ, ν = diagram[idx].up, diagram[idx].down
+                n = sols[i, idx][1]
+                u = sols[i, idx][2]
+                d = sols[i, idx][3]
+                poly = poly_multiplication(poly, calc_expansion_factors(μ, ν, order, n))
+                prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
+                Prefac[idx] = isempty(prefac) ? 0 : sum(prefac)
+            end
+
+            total_poly += prod(Prefac).*poly
         end
         total_correction = extend_correction(total_correction, total_poly)
     end
@@ -108,7 +118,7 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
         l = length(b.up)
 
         exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
-        prefac =  (-1)^l*1/(vec_factorial(μ)*vec_factorial(ν))
+        prefac = (-1)^l*1/(vec_factorial(μ)*vec_factorial(ν))
         poly = Num[1,]
         push!(taylor_factors, Correction(prefac, exponent, poly))
     end
@@ -116,7 +126,13 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
     return taylor_factors
 end
 
-function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+function calc_expansion_factors(mu::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+    if mu.special
+        μ = mu[2:end]
+    else
+        μ = mu
+    end
+
     l, r = length(μ), length(ν)
 
     #order = 2*(length(μ.poles) + length(ν.poles)) + 1
@@ -128,6 +144,19 @@ function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int)
         poly[2*(n-k) + 1] = coeff
     end
     return poly
+end
+
+function poly_multiplication(poly1::Vector, poly2::Vector)
+    len = length(poly1)
+    poly_product = zeros(Number, order)
+    for i in 1:len
+        for j in 1:len
+            if poly1[i]*poly2[j] != 0
+                poly_product[(i-1) + (j-1) + 1] = poly1[i]*poly2[j]
+            end
+        end
+    end
+    return poly_product
 end
     
 function calc_pole_normalization(up_poles, down_poles)
@@ -142,16 +171,22 @@ function calc_pole_normalization(up_poles, down_poles)
     end
 end
 
-pole_fac(v, regular, j, m) = (-j/sum(v[regular]))^m
+pole_fac(v, regular, j, m) = (-j/sum(v[1:regular]))^m
 
-function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+    if mu.special
+        μ = mu[2:end]
+    else
+        μ = mu
+    end
+    μ = reverse(μ)
+
     norm = calc_pole_normalization(up_poles, down_poles)
 
     pole_terms = []
-    l, r = length(μ), length(ν)
 
-    up_regular = filter(x -> !(x in up_poles), 1:l)
-    down_regular = filter(x -> !(x in down_poles), 1:r)  # non-singular indices
+    up_regular = filter(x -> !(x in up_poles), 1:length(μ))
+    down_regular = filter(x -> !(x in down_poles), 1:length(ν))  # non-singular indices
     # change to a more informative name like up_regular and down_regular
 
     # mu_list and ml_list hold vectors of mu values
@@ -160,23 +195,44 @@ function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vecto
 
     for (mu_vec, ml_vec) in product(mu_list, ml_list)   
         fac_u = []
-        for (u, ju) in enumerate(up_regular)
-            #idx = indexin(ju, up_regular)[1]                 # pick up the corresponding index for m_{Ju}
-            push!(fac_u, pole_fac(μ, up_regular, ju, mu_vec[u]))
-            #push!(fac_u, norm_fac(μ, ju, mu_vec[idx]))
+        
+        if length(up_regular) == 0
+            if u == 0
+                push!(fac_u,1)
+            else
+                push!(fac_u,0)
+            end
+        else
+            for (u, ju) in enumerate(up_regular)
+                #idx = indexin(ju, up_regular)[1]                 # pick up the corresponding index for m_{Ju}
+                push!(fac_u, pole_fac(μ, up_regular[ju], ju, mu_vec[u]))
+                #push!(fac_u, norm_fac(μ, ju, mu_vec[idx]))
+            end
         end
+
         prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
 
         fac_v = []
-        for (l, jl) in enumerate(down_regular)
-            #idx = indexin(jl, down_regular)[1]                 # pick up the corresponding index for m_{Jl}
-            push!(fac_u, pole_fac(ν, down_regular, jl, ml_vec[l]))
-            #push!(fac_v, norm_fac(ν, jl, ml_vec[idx]))
+        
+        if length(down_regular) == 0
+            if d == 0
+                push!(fac_v,1)
+            else
+                push!(fac_v,0)
+            end
+        else
+            for (l, jl) in enumerate(down_regular)
+                #idx = indexin(jl, down_regular)[1]                 # pick up the corresponding index for m_{Jl}
+                push!(fac_v, pole_fac(ν, down_regular[jl], jl, ml_vec[l]))
+                #push!(fac_v, norm_fac(ν, jl, ml_vec[idx]))
+            end
         end
+
         prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
 
         push!(pole_terms, prod_fac_u*prod_fac_v/norm) 
     end
+
     return pole_terms   
 end
 
