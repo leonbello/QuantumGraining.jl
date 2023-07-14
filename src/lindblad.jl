@@ -1,6 +1,3 @@
-#"""
-#Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
-#"""
 """
 Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
 """
@@ -15,13 +12,16 @@ repeated_combinations(arr::Vector, n::Int) =
     [ getindex.(Ref(arr), 1 .+ digits(i-1; base=length(arr), pad=n)) for i=1:length(arr)^n ]
 
 
-"""
-    effective_hamiltonian(k::Int, ω::Array, h::Array)
-    
-        Given a Hamiltonian as a list of operators and corresponding frequencies,
-        returns the effective TCG Hamiltonian up to order `k`.
-"""
+
 function effective_hamiltonian(K::Int, ω::Array, h::Array)
+    """
+        effective_hamiltonian(k::Int, ω::Array, h::Array)
+    
+    Given a Hamiltonian as a list of operators and corresponding frequencies,
+    returns the effective TCG Hamiltonian up to order `k` as a dictionary of operators and corresponding frequencies.
+
+    "O1" => exp1, "O2" => exp2...
+    """
     # Functionality to sum over all contractions of up to kth order 
     # w and h are arrays of symbolic cnumbers from QuantumCumulants
     g_list = []
@@ -69,13 +69,17 @@ function effective_hamiltonian(K::Int, ω::Array, h::Array)
     # return effective_ham
 end
 
-
-"""
-* effective_dissipator(c::Tuple{int, int}) - Given a contraction, returns all contributing terms.
-* effective_dissipator(d::Diagram) - Given a diagram object, returns all contributing terms.
-* effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
-"""
 function effective_dissipator(K::Int, ω::Array, h::Array)
+    """
+    effective_dissipator(k::Int, ω::Array, h::Array)
+
+    Given a Hamiltonian as a list of operators and corresponding frequencies,
+    returns the effective TCG dissipators up to order `k` as a dictionary of jump operators and corresponding rates and frequencies.
+
+    * effective_dissipator(c::Tuple{int, int}) - Given a contraction, returns all contributing terms.
+    * effective_dissipator(d::Diagram) - Given a diagram object, returns all contributing terms.
+    * effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
+    """
     # Functionality to sum over all contractions of up to kth order 
     # w and h are arrays of symbolic cnumbers from QuantumCumulants
     g_list = []
@@ -98,8 +102,6 @@ function effective_dissipator(K::Int, ω::Array, h::Array)
     end
     return g_list, J_list, Jd_list
 end
-
-# function effective_dissipator(k::Int, ω::Array, h::Array, fmt=:QuantumCumulants)
 
 
 
