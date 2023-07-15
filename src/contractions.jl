@@ -232,42 +232,6 @@ function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vecto
         push!(pole_terms, prod_u*prod_v/norm)
     end
 
-#=     for (mu_vec, ml_vec) in product(mu_list, ml_list)   
-        fac_u = []
-        
-        if length(up_regular) == 0
-            if u == 0
-                push!(fac_u,1)
-            else
-                push!(fac_u,0)
-            end
-        else
-            for (u, ju) in enumerate(up_regular)
-                push!(fac_u, pole_fac(μ, ju, ju, mu_vec[u]))
-            end
-        end
-
-        prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
-
-        fac_v = []
-        
-        if length(down_regular) == 0
-            if d == 0
-                push!(fac_v,1)
-            else
-                push!(fac_v,0)
-            end
-        else
-            for (l, jl) in enumerate(down_regular)
-                push!(fac_v, pole_fac(ν, jl, jl, ml_vec[l]))
-            end
-        end
-
-        prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
-
-        push!(pole_terms, prod_fac_u*prod_fac_v/norm) 
-    end =#
-
     return pole_terms   
 end
 
