@@ -118,7 +118,7 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
         l = length(b.up)
 
         exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
-        prefac = (-1)^l*1/(vec_factorial(μ)*vec_factorial(ν))
+        prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))
         poly = Num[1,]
         push!(taylor_factors, Correction(prefac, exponent, poly))
     end
