@@ -18,7 +18,7 @@ export DVec, UVec
 
 # diagrams.jl
 export DiagramNode, node_decomp,
-        node_decomp, get_diagrams                                 
+        node_decomp, get_diagrams, Diagram                                 
 
 # poles.jl
 export Contraction, count_poles,
