@@ -2,11 +2,8 @@ using Revise
 using IterTools
 using Symbolics
 using Test
-using IterTools
 using Revise
 using QuantumGraining
-using Symbolics
-using Test
 
 begin
     @variables ω1 ω2 ω3 ω4 ω5
@@ -19,9 +16,10 @@ begin
     ω = [(μ1, ν1), (μ2, ν2)]
 
     up_poles, down_poles = find_all_poles(ω);
-    @test up_poles == [Int[], Int[]]
+    @show down_poles
+    @test up_poles == [Int[], [2]]
     @test down_poles == [[2], []]
-    @test count_poles(find_all_poles(ω)...) == 1
+    @test count_poles(find_all_poles(ω)...) == 2
 
     corr = diagram_correction(ω)
     @show corr

@@ -77,9 +77,6 @@ function find_all_poles(freqs::Vector)#::Vector{Tuple{Vector{T1}, Vector{T2}}}) 
 end
 find_all_poles(d::Diagram) = find_all_poles(d.freqs)
 
-
-
-
 """
     count_poles(s_list::Vector{Int}, stag_list::Vector{Int})
 
