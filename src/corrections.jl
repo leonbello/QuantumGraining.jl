@@ -30,6 +30,19 @@ function extend_correction(c::Correction, poly::Vector{<:Number})
                     )
 end
 
+import Base: +
+function  +(c1::Correction, c2::Correction)
+    return ContractionCoefficient()
+end
+
+function  +(c1::ContractionCoefficient, c2::Correction)
+    return ContractionCoefficient()
+end
+
+function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
+    return ContractionCoefficient()
+end
+
 import Base: *
 function *(c1::Correction, c2::Correction)
     exponent = c1.exponent + c2.exponent

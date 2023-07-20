@@ -1,4 +1,5 @@
 using IterTools
+using QuantumGraining
 
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -28,6 +29,19 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     return ω
 end
 
+struct ContractionCoefficient{T1, T2}
+    corrections::Vector{Correction}
+    exponents::Vector{Number}
+    prefacs::Vector{Number}
+    diagrams::Vector{Diagram{T1, T2}}
+    expression
+
+    # function ContractionCoefficient(corrs, diags) where {T1, T2}
+    #     expression = sum(to_symbol.(corrections))
+    #     new{T1,T2}(corrs, diags, expression)
+    # end
+end
+
 
 function contraction_coeff(left::Int, right::Int, freqs::Array)
     """
@@ -41,20 +55,25 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     - freqs: array of frequencies to put in each mode
 
     Returns:
-    - c: a symbolic expression for the contraction coeffeicient.
+    - c: a contraction coefficient struct, symbolic expression for the contraction coeffeicient.
     """
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
     c = 0
     c_list = []
+    d_list = []
     
     for diagram in diagrams
         reverse!(diagram)                               # reversing since Wentao's order is right-to-left, rather than left-to-right
         ω = split_freqs_into_bubbles(freqs, diagram)
-        push!(c_list, (diagram_correction(ω), diagram))
-        c += c_list[end][1] 
+        
+        push!(d_list, diagram)
+        push!(c_list, diagram_correction(ω))
+        #c += c_list[end]
     end
-    return c, c_list
+    contraction_coeff = ContractionCoefficient(c_list, c)
+    #return c, c_list, d_list
+    return ContractionCoefficient
 end
 contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
