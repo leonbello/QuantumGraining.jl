@@ -26,7 +26,7 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections
+export diagram_correction, contraction_coeff, calc_pole_corrections,ContractionCoefficient
 
 
 include("bvector.jl")

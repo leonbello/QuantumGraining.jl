@@ -29,17 +29,18 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     return ω
 end
 
-struct ContractionCoefficient{T1, T2}
-    corrections::Vector{Correction}
+struct ContractionCoefficient #{T1,T2}
+    #corrections::Vector{Correction}
     exponents::Vector{Number}
     prefacs::Vector{Number}
-    diagrams::Vector{Diagram{T1, T2}}
-    expression
+    polys::Vector{Number}
+    #diagrams::Vector{Diagram{T1, T2}}
+    #expression
 
-    # function ContractionCoefficient(corrs, diags) where {T1, T2}
-    #     expression = sum(to_symbol.(corrections))
-    #     new{T1,T2}(corrs, diags, expression)
-    # end
+    function ContractionCoefficient(exponents, prefacs, polys)
+         #expression = sum(to_symbol.(corrections))
+         new(exponents,prefacs,polys)
+    end
 end
 
 
