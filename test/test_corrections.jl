@@ -2,12 +2,22 @@ using Revise
 using IterTools
 using Symbolics
 using Test
-using QuantumGraining
+#using QuantumGraining
 
 #@testset "corrections" begin
 module Tst
     using Test
-    using QuantumGraining
+    include("../src/bvector.jl")
+    include("../src/bubble.jl")
+    include("../src/diagram.jl")
+    include("../src/diagrams.jl")
+    include("../src/contractions.jl")
+    include("../src/corrections.jl")
+    include("../src/lindblad.jl")
+    include("../src/poles.jl")
+    include("../src/printing.jl")
+    include("../src/utils.jl")
+    #using QuantumGraining
 
     # one common bubble and one up-bubble
     # no singularities
@@ -152,6 +162,8 @@ module Tst
         @test isapprox(corr.prefac, 91//7776, atol = 1e-13)
     end
     ## WRONG COEFFICIENTS
+
+
 
     begin
         μ1 = [0, 1, -1];  

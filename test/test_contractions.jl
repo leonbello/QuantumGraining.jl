@@ -46,7 +46,43 @@ module Tst
     @show s, stag
     t1 = singular_expansion(d[1], unl_list[:, 1], s, stag)
     t2 = calculate_bubble_factor(d, 1, unl_list[:, 1], s, stag)
+
+    #Testing ContractionCoefficient 
+    
+    μ1 = [1, 1, 3];  
+    ν1 = [1, -2];
+    μ2 = [3, 1];
+    ν2 = Int[];
+    ω = Diagram([(μ1, ν1), (μ2, ν2)]);
+
+    μ1 = [0, 1, -2];  
+    ν1 = [];
+    μ2 = [1, 3];
+    ν2 = [];
+    ω2 = Diagram([(μ1, ν1), (μ2, ν2)]);
+
+    μ1 = [0, 2, -2];  
+    ν1 = [];
+    μ2 = [1, 3];
+    ν2 = [];
+    ω3 = Diagram([(μ1, ν1), (μ2, ν2)]);
+
+    corr1 = diagram_correction(ω)
+    corr2 = diagram_correction(ω2)
+    corr3 = diagram_correction(ω3)
+    typeof(corr1.poly)
+    c1 = corr1 + corr2 
+    c1.prefacs
+    c2 = c1 + corr2
+    contract2.exponents
+    contract2.prefacs
+    contract = c1 + contract2
+    contract.exponents
+
+    corr1 + corr2 + corr2 + corr1 + corr3
+
 end
+
 
 
 #=
