@@ -71,16 +71,40 @@ module Tst
     corr2 = diagram_correction(ω2)
     corr3 = diagram_correction(ω3)
     typeof(corr1.poly)
+    
     c1 = corr1 + corr2 
     c1.prefacs
     c2 = c1 + corr2
+    """
     contract2.exponents
     contract2.prefacs
-    contract = c1 + contract2
+    contract = c1 + c2
     contract.exponents
+
+
 
     corr1 + corr2 + corr2 + corr1 + corr3
 
+    c1.prefacs
+    c2.prefacs
+    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+    common_exponents = intersect(c1.exponents, c2.exponents)
+    for expon in common_exponents
+        print(expon)
+        ind1 = findfirst(item -> item ≈ expon, c1.exponents)
+        ind2 = findfirst(item -> item ≈ expon, c2.exponents)
+        prefac_og = prefacs[ind1]
+        replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
+        replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
+        deleteat!(c2.exponents, ind2)
+        deleteat!(c2.prefacs, ind2)
+        deleteat!(c2.polys, ind2)
+    end
+    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+    append!(exponents, c2.exponents)
+    append!(prefacs, c2.prefacs)
+    append!(polys, c2.polys)
+    """
 end
 
 
