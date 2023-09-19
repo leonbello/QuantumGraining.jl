@@ -151,7 +151,6 @@ module Tst
         # @test corr.prefac ≈ 91//7776
         @test isapprox(corr.prefac, 91//7776, atol = 1e-13)
     end
-    ## WRONG COEFFICIENTS
 
     begin
         μ1 = [0, 1, -1];  

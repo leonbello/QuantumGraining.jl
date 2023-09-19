@@ -1,4 +1,5 @@
 using Symbolics
+using QuantumGraining
 
 struct Correction
     prefac
@@ -51,7 +52,6 @@ function  +(c1::ContractionCoefficient, c2::Correction)
         prefac_og = prefacs[ind]
         replace(prefacs, prefacs[ind] => prefacs[ind] + c2.prefac)
         replace(polys, polys[ind] => (prefac_og*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
-    
     else
         push!(exponents, c2.exponent)
         push!(prefacs, c2.prefac)

@@ -44,6 +44,7 @@ struct ContractionCoefficient #{T1,T2}
 end
 
 
+# Possibly, this should be a `ContractionCoefficient` constructor.
 function contraction_coeff(left::Int, right::Int, freqs::Array)
     """
     contraction_coeff(left::Int, right::Int, freqs::Array)

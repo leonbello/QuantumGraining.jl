@@ -56,19 +56,20 @@ returns new frequencies, coupling strengths and operators represneting the new H
 # STILL WORK IN PROGRESS, DO NOT RUN
 function effective_hamiltonian(h::Vector, Ω::Vector{Number}, k::Int)
     perm_h, perm_Ω = coresponding_combinations(h, Ω, k)
-
-    ops_eff = []
+    # [a, a, a] [ω, ω, ω]
+    # [a', a, a'] [-ω, ω, -ω]
+    h_eff = []
     ωs_eff  = []
     gs_eff  = []
 
     for i in enumerate(perm_h)        
-        push!(ops_eff, normal_order(perm_h[i])) # not sure this works, may be better to keep ops_eff have only unique operators
+        push!(h_eff, normal_order(perm_h[i])) # not sure this works, may be better to keep ops_eff have only unique operators
         ω = sum(perm_Ω[i])
         push!(ωs_eff, ω)
         push!(gs_eff, 1/2*(contraction_coeff(k, 0, ω) + contraction_coeff(0, k, ω)))
     end
 
-    return ops_eff, ωs_eff, gs_eff
+    return h_eff, ωs_eff, gs_eff
 end
 
 """
