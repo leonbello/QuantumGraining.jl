@@ -33,7 +33,7 @@ struct ContractionCoefficient #{T1,T2}
     #corrections::Vector{Correction}
     exponents::Vector{Number}
     prefacs::Vector{Number}
-    polys::Vector{Vector{Num}}
+    polys::Vector{Vector{Number}}
     #diagrams::Vector{Diagram{T1, T2}}
     #expression
 

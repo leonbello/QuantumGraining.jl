@@ -60,27 +60,28 @@ function  +(c1::ContractionCoefficient, c2::Correction)
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
-"""
-function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    common_exponents = intersect(c1.exponents, c2.exponents)
-    for expon in common_exponents
-        ind1 = findfirst(item -> item ≈ expon, c1.exponents)
-        ind2 = findfirst(item -> item ≈ expon, c2.exponents)
-        prefac_og = prefacs[ind1]
-        replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
-        replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
-        deleteat!(c2.exponents, ind2)
-        deleteat!(c2.prefacs, ind2)
-        deleteat!(c2.polys, ind2)
-    end
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    append!(exponents, c2.exponents)
-    append!(prefacs, c2.prefacs)
-    append!(polys, c2.polys)
-    return ContractionCoefficient(exponents, prefacs, polys)
-end
-"""
+
+# function +(c1::ContractionCoefficient, c2::ContractionCoefficient)
+#     prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+#     common_exponents = intersect(c1.exponents, c2.exponents)
+#     for expon in common_exponents
+#         ind1 = findfirst(item -> item ≈ expon, c1.exponents)
+#         ind2 = findfirst(item -> item ≈ expon, c2.exponents)
+#         prefac_og = prefacs[ind1]
+#         replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
+#         replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
+#         deleteat!(c2.exponents, ind2)
+#         deleteat!(c2.prefacs, ind2)
+#         deleteat!(c2.polys, ind2)
+#     end
+#     prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+#     append!(exponents, c2.exponents)
+#     append!(prefacs, c2.prefacs)
+#     append!(polys, c2.polys)
+#     return ContractionCoefficient(exponents, prefacs, polys)
+# end
+
+
 import Base: *
 function *(c1::Correction, c2::Correction)
     exponent = c1.exponent + c2.exponent
