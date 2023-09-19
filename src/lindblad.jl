@@ -8,12 +8,69 @@ Lindblad.jl contains the functionalities to generate the final Lindbladian in op
 """
     repeated_combinations(arr::Array, n::Int)
     
-        Given a collection of terms and a number `n`, returns all possible `n` repetitions of the elements in the collection.
+Given a collection of terms and a number `n`, returns all possible `n` repetitions of the elements in the collection.
 """
 # Helper function (NOTE: not sure what the protocol is to steal something from StackOverflow)
-repeated_combinations(arr::Vector, n::Int) = 
-    [ getindex.(Ref(arr), 1 .+ digits(i-1; base=length(arr), pad=n)) for i=1:length(arr)^n ]
+# repeated_combinations(arr::Vector, n::Int) = 
+#     [ getindex.(Ref(arr), 1 .+ digits(i-1; base=length(arr), pad=n)) for i=1:length(arr)^n ]
+function repeated_combinations(h::Vector, Ω::Vector, n::Int)
+    perm_h = []
+    perm_Ω = []
+    total_combinations = length(h)^n
 
+    # Generate combinations
+    for i in 1:total_combinations
+        combination_index = digits(i-1; base=length(h), pad=n)    # Convert the integer i to a combination index in base `length(arr)` with `n` digits
+        curr_h = []
+        curr_Ω = []
+
+        # Use the combination index to pick elements from the input array and form the combination
+        for index in combination_index
+            # Add the element at the selected index to the current combination
+            push!(curr_h, h[index + 1])  
+            push!(curr_Ω, Ω[index + 1]) # Add 1 to the index because Julia arrays are 1-based
+        end
+
+        # Add the current combination to the list of combinations
+        push!(perm_Ω, curr_Ω)
+        push!(perm_h, curr_h)
+    end
+
+    return perm_h, perm_Ω
+end
+
+"""
+    normal_order(ops::Vector)
+Given an array of operators, returns the normal ordered product of them.
+"""
+function normal_order(ops::Vector)
+    # if we use QuantumCumulants, the product is enough since they would be automatically normal ordered.
+    return prod(ops)
+end
+
+"""
+    effective_hamiltonian(h::Vector, g::Vector{Number}, Ω::Vector{Number}, k::Int)
+Given a truncation order `k`, and a list of frequencies `Ω`, couplings `g` and operators `h`` representing the raw Hamiltonian, 
+returns new frequencies, coupling strengths and operators represneting the new Hamiltonian.
+"""
+# STILL WORK IN PROGRESS, DO NOT RUN
+function effective_hamiltonian(h::Vector, Ω::Vector{Number}, k::Int)
+    perm_h, perm_Ω = coresponding_combinations(h, Ω, k)
+    # [a, a, a] [ω, ω, ω]
+    # [a', a, a'] [-ω, ω, -ω]
+    h_eff = []
+    ωs_eff  = []
+    gs_eff  = []
+
+    for i in enumerate(perm_h)        
+        push!(h_eff, normal_order(perm_h[i])) # not sure this works, may be better to keep ops_eff have only unique operators
+        ω = sum(perm_Ω[i])
+        push!(ωs_eff, ω)
+        push!(gs_eff, 1/2*(contraction_coeff(k, 0, ω) + contraction_coeff(0, k, ω)))
+    end
+
+    return h_eff, ωs_eff, gs_eff
+end
 
 """
     effective_hamiltonian(k::Int, ω::Array, h::Array)

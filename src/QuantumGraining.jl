@@ -7,18 +7,17 @@ import SymbolicUtils: substitute
 import QuantumCumulants
 import Symbolics
 import IterTools
-import DSP
 #import SciMLBase
 
 import ModelingToolkit
 const MTK = ModelingToolkit
 
 # bvector.jl
-export DVec, UVec
+export DVec, UVec, BVector
 
 # diagrams.jl
 export DiagramNode, node_decomp,
-        node_decomp, get_diagrams                                 
+        node_decomp, get_diagrams, Diagram                                 
 
 # poles.jl
 export Contraction, count_poles,
@@ -26,17 +25,18 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections
+export diagram_correction, contraction_coeff, calc_pole_corrections, ContractionCoefficient
 
 
 include("bvector.jl")
 include("bubble.jl")
 include("diagram.jl")
-include("diagrams.jl")
+include("contractions.jl")
 include("corrections.jl")
+
+include("diagrams.jl")
 include("lindblad.jl")
 include("poles.jl")
 include("printing.jl")
-include("contractions.jl")
 include("utils.jl")
 end

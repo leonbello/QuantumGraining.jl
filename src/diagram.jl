@@ -64,7 +64,7 @@ struct Diagram{T1, T2} <: AbstractVector{Tuple{T1, T2}}
     function Diagram(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
         bubbles = Vector{Bubble{T1, T2}}()
         for (idx, (μ, ν)) in enumerate(freqs)
-            push!(bubbles, Bubble(UVec(μ), DVec(ν), special=(idx == 1)))
+            push!(bubbles, Bubble(UVec(μ, special=(idx == 1)), DVec(ν), special=(idx == 1)))
         end
         return Diagram(bubbles)
     end

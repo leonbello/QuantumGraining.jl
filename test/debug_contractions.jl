@@ -1,17 +1,8 @@
 using Revise
-using QuantumCumulants
-using SymbolicUtils
 using IterTools
 using Symbolics
 using Test
-
-include("../src/diagrams.jl")
-include("../src/bvector.jl")
-include("../src/bubble.jl")
-include("../src/diagram.jl")
-include("../src/poles.jl")
-include("../src/contractions.jl")
-include("../src/printing.jl")
+using QuantumGraining
 
 
 # tests for calculate_bubble_factor
@@ -32,3 +23,9 @@ calculate_bubble_factor(b, sols, b.up.poles, b.down.poles)
 ν2 = [];
 d = [(μ1, ν1), (μ2, ν2)];
 diagram_correction(d) 
+
+
+left = 2
+right = 3
+freqs = ones(left + right)
+contraction_coeff(left, right, freqs::Array)

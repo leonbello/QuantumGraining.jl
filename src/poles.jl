@@ -51,6 +51,10 @@ function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T
     up_poles = Vector{Vector{Int}}()
     down_poles = Vector{Vector{Int}}()
     for (μ, ν) in d
+        if μ.special
+            μ = μ[2:end]
+        end
+        μ = reverse(μ)
         push!(up_poles, find_poles(μ))
         push!(down_poles, find_poles(ν))
     end
@@ -72,9 +76,6 @@ function find_all_poles(freqs::Vector)#::Vector{Tuple{Vector{T1}, Vector{T2}}}) 
     return find_all_poles(d)
 end
 find_all_poles(d::Diagram) = find_all_poles(d.freqs)
-
-
-
 
 """
     count_poles(s_list::Vector{Int}, stag_list::Vector{Int})

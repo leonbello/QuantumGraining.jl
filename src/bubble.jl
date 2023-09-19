@@ -1,3 +1,5 @@
+using QuantumGraining
+
 """
     Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}    
 A struct representing a bubble, also takes care of the edge case.
@@ -8,7 +10,7 @@ Arguments:
     - shape: A tuple representing the shape of the bubble.
     - special: A boolean representing whether the bubble is a special edge mode bubble.
 """
-struct Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}
+mutable struct Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}
     up::BVector{T1}
     down::BVector{T2}
     shape::Tuple{Int, Int}
@@ -74,7 +76,7 @@ struct Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}
         - special: A boolean representing whether the bubble is a special edge mode bubble.
     """
     function Bubble(up::Vector{T1}, down::Vector{T2}; special::Bool=false) where {T1, T2}
-        return Bubble(UVec(up), DVec(down); special=special)
+        return Bubble(UVec(up,special=special), DVec(down); special=special)
     end
 end
 Base.length(b::Bubble) = prod(b.shape)

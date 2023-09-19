@@ -1,4 +1,5 @@
 using IterTools
+#using QuantumGraining
 
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -28,11 +29,27 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     return ω
 end
 
+struct ContractionCoefficient #{T1,T2}
+    #corrections::Vector{Correction}
+    exponents::Vector{Number}
+    prefacs::Vector{Number}
+    polys::Vector{Vector{Num}}
+    #diagrams::Vector{Diagram{T1, T2}}
+    #expression
 
-"""
+    function ContractionCoefficient(exponents, prefacs, polys)
+         #expression = sum(to_symbol.(corrections))
+         new(exponents,prefacs,polys)
+    end
+end
+
+
+# Possibly, this should be a `ContractionCoefficient` constructor.
+function contraction_coeff(left::Int, right::Int, freqs::Array)
+    """
     contraction_coeff(left::Int, right::Int, freqs::Array)
 
-    Calculates the coefficient of a whole contraction, given the contraction and input frequencies
+    Calculates the coefficient of a whole contraction, given the contraction and input frequencies. Calculates equation (7) in the paper.
 
     Arguments:
     - left: the left-order of the contraction
@@ -40,21 +57,25 @@ end
     - freqs: array of frequencies to put in each mode
 
     Returns:
-    - c: a symbolic expression for the contraction coeffeicient.
-"""
-function contraction_coeff(left::Int, right::Int, freqs::Array)
+    - c: a contraction coefficient struct, symbolic expression for the contraction coeffeicient.
+    """
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
     c = 0
     c_list = []
+    d_list = []
     
     for diagram in diagrams
         reverse!(diagram)                               # reversing since Wentao's order is right-to-left, rather than left-to-right
         ω = split_freqs_into_bubbles(freqs, diagram)
-        push!(c_list, (diagram_correction(ω), diagram))
-        c += c_list[end][1] 
+        
+        push!(d_list, diagram)
+        push!(c_list, diagram_correction(ω))
+        #c += c_list[end]
     end
-    return c, c_list
+    contraction_coeff = ContractionCoefficient(c_list, c)
+    #return c, c_list, d_list
+    return ContractionCoefficient
 end
 contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
@@ -84,12 +105,22 @@ function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
 
         order = 2*diagram.num_poles + 1
         total_poly = zeros(Number, order)
-        for (i, (n, u, d)) in enumerate(sols)
-            idx = (i - 1) % num_bubbles + 1  #1 -> 1, 2 -> 2, ..., n -> n, n + 1 -> 1
-            μ, ν = diagram[idx].up, diagram[idx].down
-            poly = calc_expansion_factors(μ, ν, order, n)
-            prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
-            total_poly += isempty(prefac) ? zeros(Num, length(total_poly)) : sum(prefac).*poly
+        for i in 1:size(sols)[1]
+            poly = zeros(Number, order)
+            poly[1] = 1
+            total_prefac = zeros(Number, num_bubbles)
+
+            for idx in 1:num_bubbles
+                μ, ν = diagram[idx].up, diagram[idx].down
+                n = sols[i, idx][1]
+                u = sols[i, idx][2]
+                d = sols[i, idx][3]
+                poly = poly_multiplication(poly, calc_expansion_factors(μ, ν, order, n), order)
+                prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
+                total_prefac[idx] = isempty(prefac) ? 0 : sum(prefac)
+            end
+
+            total_poly += prod(total_prefac).*poly
         end
         total_correction = extend_correction(total_correction, total_poly)
     end
@@ -108,7 +139,7 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
         l = length(b.up)
 
         exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
-        prefac =  (-1)^l*1/(vec_factorial(μ)*vec_factorial(ν))
+        prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))
         poly = Num[1,]
         push!(taylor_factors, Correction(prefac, exponent, poly))
     end
@@ -116,18 +147,38 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
     return taylor_factors
 end
 
-function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+function calc_expansion_factors(mu::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+    if mu.special
+        μ = mu[2:end]
+    else
+        μ = mu
+    end
+
     l, r = length(μ), length(ν)
 
     #order = 2*(length(μ.poles) + length(ν.poles)) + 1
     poly = zeros(Num, order)
     for k in 0:floor(Int, n/2)
-        freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
+        freq_sum = isequal(sum(mu) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(mu) + sum(ν))
         l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
         coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
         poly[2*(n-k) + 1] = coeff
     end
     return poly
+end
+
+function poly_multiplication(poly1::Vector, poly2::Vector, order::Int)
+    len1 = length(poly1)
+    len2 = length(poly2)
+    poly_product = zeros(Number, order)
+    for i in 1:len1
+        for j in 1:len2
+            if !isequal(abs(poly1[i]*poly2[j]), 0.0) && !isequal(abs(poly1[i]*poly2[j]), -0.0)  # weird comparison issues with Num types
+                poly_product[(i-1) + (j-1) + 1] = poly1[i]*poly2[j]
+            end
+        end
+    end
+    return poly_product
 end
     
 function calc_pole_normalization(up_poles, down_poles)
@@ -142,67 +193,70 @@ function calc_pole_normalization(up_poles, down_poles)
     end
 end
 
-pole_fac(v, regular, j, m) = (-j/sum(v[regular]))^m
+pole_fac(v, regular, j, m) = (-j/sum(v[1:regular]))^m
 
-function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+    if mu.special
+        μ = mu[2:end]
+    else
+        μ = mu
+    end
+    μ = reverse(μ)
+
     norm = calc_pole_normalization(up_poles, down_poles)
 
     pole_terms = []
-    l, r = length(μ), length(ν)
 
-    up_regular = filter(x -> !(x in up_poles), 1:l)
-    down_regular = filter(x -> !(x in down_poles), 1:r)  # non-singular indices
+    up_regular = filter(x -> !(x in up_poles), 1:length(μ))
+    down_regular = filter(x -> !(x in down_poles), 1:length(ν))  # non-singular indices
     # change to a more informative name like up_regular and down_regular
 
     # mu_list and ml_list hold vectors of mu values
     mu_list = find_integer_solutions(length(up_regular), u)
     ml_list = find_integer_solutions(length(down_regular), d)
 
-    for (mu_vec, ml_vec) in product(mu_list, ml_list)   
-        fac_u = []
-        for (u, ju) in enumerate(up_regular)
-            #idx = indexin(ju, up_regular)[1]                 # pick up the corresponding index for m_{Ju}
-            push!(fac_u, pole_fac(μ, up_regular, ju, mu_vec[u]))
-            #push!(fac_u, norm_fac(μ, ju, mu_vec[idx]))
+    if length(up_regular) == 0
+        if u == 0
+            prod_fac_u = [1]
+        else
+            prod_fac_u = [0]
         end
-        prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
-
-        fac_v = []
-        for (l, jl) in enumerate(down_regular)
-            #idx = indexin(jl, down_regular)[1]                 # pick up the corresponding index for m_{Jl}
-            push!(fac_u, pole_fac(ν, down_regular, jl, ml_vec[l]))
-            #push!(fac_v, norm_fac(ν, jl, ml_vec[idx]))
+    else
+        prod_fac_u = []
+        for mu_vec in mu_list
+            fac_u = []
+            for (u, ju) in enumerate(up_regular)
+                push!(fac_u, pole_fac(μ, ju, ju, mu_vec[u]))
+            end
+            push!(prod_fac_u, isempty(fac_u) ? 1 : prod(fac_u))
         end
-        prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
-
-        push!(pole_terms, prod_fac_u*prod_fac_v/norm) 
     end
+
+    if length(down_regular) == 0
+        if d == 0
+            prod_fac_v = [1]
+        else
+            prod_fac_v = [0]
+        end
+    else
+        prod_fac_v = []
+        for ml_vec in ml_list
+            fac_v = []
+            for (l, jl) in enumerate(down_regular)
+                push!(fac_v, pole_fac(ν, jl, jl, ml_vec[l]))
+            end
+            push!(prod_fac_v, isempty(fac_v) ? 1 : prod(fac_v))
+        end
+    end
+
+    for (prod_u, prod_v) in product(prod_fac_u, prod_fac_v)
+        push!(pole_terms, prod_u*prod_v/norm)
+    end
+
     return pole_terms   
 end
 
 
-
-
-
-
-######################################
-### May also need to be deprecated ###
-######################################
-# function diagram_correction(d::Diagram{T1, T2}) where {T1, T2}
-#     num_bubbles = length(d)
-#     sols = find_integer_solutions(3*num_bubbles, d.num_poles)    
-#     sols = reshape_sols(sols, d.num_poles, num_bubbles)         
-#     bubble_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
-    
-#     l_tot, r_tot = 0, 0
-#     for (i, b) in enumerate(d)
-#         fac = calculate_bubble_factor(b, sols[:, i], d.up_poles[i], d.down_poles[i])
-#         push!(bubble_factors, fac)
-#         l_tot += length(b.up)
-#         r_tot += length(b.down)
-#     end
-#     return (-1)^l_tot*prod(bubble_factors)
-# end
 
 
 """
@@ -276,7 +330,6 @@ function calc_analytic_terms(b::Bubble{T1, T2}, order, n) where {T1, T2}
     μ, ν = b.up, b.down
     l, r = length(μ), length(ν)
 
-    #poly = convert(Array{Any}, [1, zeros(2*n)...])
     # freq_sum is not over all frequencies, just those that do not sum up to 0
     poly = zeros(Float64, order)
     for k in 0:floor(Int, n/2)
@@ -340,142 +393,142 @@ end
 ### CODE TO BE DEPRECATED ###
 #############################
 
-function calc_pole_factor(b::Bubble{T1, T2}, s, stag, mu_list, ml_list, ju_list, jl_list) where {T1, T2}
-    pole_terms = []
-    μ, ν = b.up, b.down
-    l, r = length(μ), length(ν)
+# function calc_pole_factor(b::Bubble{T1, T2}, s, stag, mu_list, ml_list, ju_list, jl_list) where {T1, T2}
+#     pole_terms = []
+#     μ, ν = b.up, b.down
+#     l, r = length(μ), length(ν)
 
-    # denominator normalization factor - equals to 1 if s or s' is empty.
-    denominator = begin
-        if isempty(s) && isempty(stag)
-            return 1
-        elseif isempty(s) && !isempty(stag)
-            return prod(stag)
-        elseif isempty(stag) && !isempty(s)
-            return prod(s)
-        elseif !isempty(s) && !isempty(stag)
-            return prod(s)*prod(stag)
-        end
-    end
+#     # denominator normalization factor - equals to 1 if s or s' is empty.
+#     denominator = begin
+#         if isempty(s) && isempty(stag)
+#             return 1
+#         elseif isempty(s) && !isempty(stag)
+#             return prod(stag)
+#         elseif isempty(stag) && !isempty(s)
+#             return prod(s)
+#         elseif !isempty(s) && !isempty(stag)
+#             return prod(s)*prod(stag)
+#         end
+#     end
 
-    for (mu_vec, ml_vec) in product(mu_list, ml_list)   
-        fac_u = []
-        for ju in ju_list
-            idx_u = indexin(ju, ju_list)[1]                 # pick up the corresponding index for m_{Ju}
-            push!(fac_u, norm_fac(μ, ju, mu_vec[idx_u]))
-        end
-        prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
+#     for (mu_vec, ml_vec) in product(mu_list, ml_list)   
+#         fac_u = []
+#         for ju in ju_list
+#             idx_u = indexin(ju, ju_list)[1]                 # pick up the corresponding index for m_{Ju}
+#             push!(fac_u, norm_fac(μ, ju, mu_vec[idx_u]))
+#         end
+#         prod_fac_u = isempty(fac_u) ? 1 : prod(fac_u)
 
-        fac_v = []
-        for jl in jl_list
-            idx_l = indexin(jl, jl_list)[1]                 # pick up the corresponding index for m_{Jl}
-            push!(fac_v, norm_fac(ν, jl, ml_vec[idx_l]))
-        end
-        prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
+#         fac_v = []
+#         for jl in jl_list
+#             idx_l = indexin(jl, jl_list)[1]                 # pick up the corresponding index for m_{Jl}
+#             push!(fac_v, norm_fac(ν, jl, ml_vec[idx_l]))
+#         end
+#         prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
 
-        push!(pole_terms, prod_fac_u*prod_fac_v/denominator) 
-    end
-    return pole_terms
-end
+#         push!(pole_terms, prod_fac_u*prod_fac_v/denominator) 
+#     end
+#     return pole_terms
+# end
 
-# old version, may need to be deprecated
-function calculate_bubble_factor(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}, bubble_idx::Int, sols, s, stag) where {T1, T2}
-    μ, ν = ω[bubble_idx]   
-    ν = reverse(ν)
-    l = length(μ)
-    r = length(ν)
+# # old version, may need to be deprecated
+# function calculate_bubble_factor(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}, bubble_idx::Int, sols, s, stag) where {T1, T2}
+#     μ, ν = ω[bubble_idx]   
+#     ν = reverse(ν)
+#     l = length(μ)
+#     r = length(ν)
     
-    @cnumbers τ
-    f(x) = exp(-0.5*τ^2*x^2)
+#     @cnumbers τ
+#     f(x) = exp(-0.5*τ^2*x^2)
     
-    # finite part of the bubble factor (not including the expansion terms)
-    first_bubble = (bubble_idx == 1)
-    μ0, ν0 = set_indices(l, r, first_bubble)
+#     # finite part of the bubble factor (not including the expansion terms)
+#     first_bubble = (bubble_idx == 1)
+#     μ0, ν0 = set_indices(l, r, first_bubble)
 
-    sum_μ = isempty(μ) ? 0 : sum(μ)
-    sum_ν = isempty(ν) ? 0 : sum(ν)  # explicity deal with the case where one the vectors is empty (up-bubble or down-bubble)
-    prefac = -f(sum_μ + sum_ν)/(vec_factorial(μ[end:-1:μ0], include_poles = false)*vec_factorial(ν[end:-1:ν0], include_poles=false))
+#     sum_μ = isempty(μ) ? 0 : sum(μ)
+#     sum_ν = isempty(ν) ? 0 : sum(ν)  # explicity deal with the case where one the vectors is empty (up-bubble or down-bubble)
+#     prefac = -f(sum_μ + sum_ν)/(vec_factorial(μ[end:-1:μ0], include_poles = false)*vec_factorial(ν[end:-1:ν0], include_poles=false))
 
-    return prefac*sum( singular_expansion( μ[μ0:end], ν[ν0:end], sols, s, stag, first_bubble = first_bubble) )
-end
+#     return prefac*sum( singular_expansion( μ[μ0:end], ν[ν0:end], sols, s, stag, first_bubble = first_bubble) )
+# end
 
-"""
-    singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
-Calculates the taylor expansion coefficients for a singular bubble.
+# """
+#     singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
+# Calculates the taylor expansion coefficients for a singular bubble.
 
-# Arguments
-- `μ::Vector{Int}`: vector of up mode frequencies
-- `ν::Vector{Int}`: vector of down mode frequencies
-- `sols::Vector{Tuple{Int, Int, Int}}`: vector of solutions to the partition problem
-- `s::Vector{Int}`: vector of singular indices in the up-bubbles
-- `stag::Vector{Int}`: vector of singular indices in the down-bubbles
-- `first_bubble::Bool`: true if this is the first bubble in the chain
+# # Arguments
+# - `μ::Vector{Int}`: vector of up mode frequencies
+# - `ν::Vector{Int}`: vector of down mode frequencies
+# - `sols::Vector{Tuple{Int, Int, Int}}`: vector of solutions to the partition problem
+# - `s::Vector{Int}`: vector of singular indices in the up-bubbles
+# - `stag::Vector{Int}`: vector of singular indices in the down-bubbles
+# - `first_bubble::Bool`: true if this is the first bubble in the chain
 
-# Returns
-- `terms::Vector{Complex{Float64}}`: vector of taylor expansion coefficients
+# # Returns
+# - `terms::Vector{Complex{Float64}}`: vector of taylor expansion coefficients
     
-"""
-function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
-    l = length(μ)
-    r = length(ν)
+# """
+# function singular_expansion(μ, ν, sols, s, stag; first_bubble = false)
+#     l = length(μ)
+#     r = length(ν)
 
-    ju_list = filter(x -> !(x in s), 1:l)
-    jl_list = filter(x -> !(x in stag), 1:r)  # non-singular indices
+#     ju_list = filter(x -> !(x in s), 1:l)
+#     jl_list = filter(x -> !(x in stag), 1:r)  # non-singular indices
 
-    order = length(s) + length(stag)
-    terms = zeros(order)
+#     order = length(s) + length(stag)
+#     terms = zeros(order)
 
-    # In each loop we calculate a list of polynomial coefficients, for a given solution of the partition problem
-    # We want to have an array that holds the polynomial coefficients of the sum of all solutions
-    for (idx, (n, u, d)) in enumerate(sols)
-        # first inner sum -- includes all analytic contributions
-        # analytic terms should return a list of terms, each term being a polynomial
-        taylor_terms = calc_analytic_terms(μ, ν, n)      
+#     # In each loop we calculate a list of polynomial coefficients, for a given solution of the partition problem
+#     # We want to have an array that holds the polynomial coefficients of the sum of all solutions
+#     for (idx, (n, u, d)) in enumerate(sols)
+#         # first inner sum -- includes all analytic contributions
+#         # analytic terms should return a list of terms, each term being a polynomial
+#         taylor_terms = calc_analytic_terms(μ, ν, n)      
         
-        # mu_list and ml_list hold vectors of mu values
-        mu_list = find_integer_solutions(length(ju_list), u)
-        ml_list = find_integer_solutions(length(jl_list), d)
+#         # mu_list and ml_list hold vectors of mu values
+#         mu_list = find_integer_solutions(length(ju_list), u)
+#         ml_list = find_integer_solutions(length(jl_list), d)
         
-        # second inner sum -- terms due to finite pole contributions  
-        # this is a correction factor for this particular solution
-        pole_factors = calc_pole_factor(μ, ν, s, stag, mu_list, ml_list, ju_list, jl_list, first_bubble)     
-        poles_sum = isempty(pole_factors) ? 0 : sum(pole_factors)
+#         # second inner sum -- terms due to finite pole contributions  
+#         # this is a correction factor for this particular solution
+#         pole_factors = calc_pole_factor(μ, ν, s, stag, mu_list, ml_list, ju_list, jl_list, first_bubble)     
+#         poles_sum = isempty(pole_factors) ? 0 : sum(pole_factors)
 
-        #analytic_sum = isempty(analytic_terms) ? 0 : sum(analytic_terms)
+#         #analytic_sum = isempty(analytic_terms) ? 0 : sum(analytic_terms)
 
-        terms = [terms[i] + poles_sum*taylor_terms[i] for i in 1:order]
-        #push!(terms, poles_sum.*taylor_terms)
-    end
-    return terms
-end
+#         terms = [terms[i] + poles_sum*taylor_terms[i] for i in 1:order]
+#         #push!(terms, poles_sum.*taylor_terms)
+#     end
+#     return terms
+# end
 
-"""
-    calc_analytic_terms(μ, ν, n)
-Calculates the analytic terms for a single bubble.
+# """
+#     calc_analytic_terms(μ, ν, n)
+# Calculates the analytic terms for a single bubble.
 
-# Arguments
-- `μ::Vector{Int}`: vector of up mode frequencies
-- `ν::Vector{Int}`: vector of down mode frequencies
-- `n::Int`: index for the sum
-"""
-function calc_analytic_terms(μ, ν, n)
-    l, r = length(μ), length(ν)
-    @cnumbers τ
+# # Arguments
+# - `μ::Vector{Int}`: vector of up mode frequencies
+# - `ν::Vector{Int}`: vector of down mode frequencies
+# - `n::Int`: index for the sum
+# """
+# function calc_analytic_terms(μ, ν, n)
+#     l, r = length(μ), length(ν)
+#     @cnumbers τ
     
-    poly = convert(Array{Any}, [1, zeros(2*n)...])
-    #analytic_terms = []
-    for k in 0:floor(Int, n/2)
-        sum_μ = isempty(μ) ? 0 : sum(μ)  
-        sum_ν = isempty(ν) ? 0 : sum(ν)
+#     poly = convert(Array{Any}, [1, zeros(2*n)...])
+#     #analytic_terms = []
+#     for k in 0:floor(Int, n/2)
+#         sum_μ = isempty(μ) ? 0 : sum(μ)  
+#         sum_ν = isempty(ν) ? 0 : sum(ν)
         
-        freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
-        l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
-        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
+#         freq_sum = isequal(sum_μ + sum_ν, 0) && (n - 2*k) == 0 ? 1 : (sum_μ + sum_ν)
+#         l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
+#         coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
 
-        poly[2*(n-k) + 1] += coeff
+#         poly[2*(n-k) + 1] += coeff
 
-        #push!(analytic_terms, taylor_coeff(n, k)/Float64(factorial(n))*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
-    end
-    #return analytic_terms
-    return poly
-end
+#         #push!(analytic_terms, taylor_coeff(n, k)/Float64(factorial(n))*τ^(2*(n - k))*(freq_sum)^(n - 2*k)*(l_plus_r)^n)
+#     end
+#     #return analytic_terms
+#     return poly
+# end
