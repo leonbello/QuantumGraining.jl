@@ -1,5 +1,5 @@
 using IterTools
-using QuantumGraining
+#using QuantumGraining
 
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -33,7 +33,7 @@ struct ContractionCoefficient #{T1,T2}
     #corrections::Vector{Correction}
     exponents::Vector{Number}
     prefacs::Vector{Number}
-    polys::Vector{Number}
+    polys::Vector{Vector{Num}}
     #diagrams::Vector{Diagram{T1, T2}}
     #expression
 
