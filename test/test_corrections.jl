@@ -99,7 +99,7 @@ module Tst
         corr = diagram_correction(ω)
 
         @test corr.exponent ≈ 2*8
-        # @test corr.poly ≈ [1, 0, -48]
+        #@test corr.poly ≈ [1, 0, -48]
         @test isapprox(corr.poly, [1, 0, -48], atol = 1e-13)
         # @test corr.prefac ≈ 1//144
         @test isapprox(corr.prefac, 1//144, atol = 1e-13)

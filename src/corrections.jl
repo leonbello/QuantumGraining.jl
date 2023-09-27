@@ -1,5 +1,5 @@
 using Symbolics
-
+using SymPy
 struct Correction
     prefac
     exponent
@@ -16,7 +16,8 @@ end
 Base.show(io::IO, c::Correction) = print(io, to_symbol(c))
 
 function to_symbol(c::Correction)
-    @variables τ
+    #@variables τ
+    SymPy.@syms τ
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]*(τ^(n-1)) for n in 1:c.order])
     return sym
@@ -46,41 +47,36 @@ end
 
 function  +(c1::ContractionCoefficient, c2::Correction)
     prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    if c2.exponent ∈ exponents
-        ind = findfirst(item -> item ≈ c2.exponent, c1.exponents)
+    exp_in = 0
+    for expon in exponents
+        if isequal(c2.exponent, expon)
+            exp_in = 1
+        end
+    end
+    if exp_in == 1
+        ind = findfirst(item -> isequal(item,c2.exponent), c1.exponents)
         prefac_og = prefacs[ind]
         replace!(prefacs, prefacs[ind] => prefacs[ind] + c2.prefac)
         replace!(polys, polys[ind] => (prefac_og*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
     
     else
-        push!(exponents, c2.exponent)
-        push!(prefacs, c2.prefac)
-        push!(polys, c2.poly)
+    push!(exponents, c2.exponent)
+    push!(prefacs, c2.prefac)
+    push!(polys, c2.poly)
     end
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
-"""
+
 function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    common_exponents = intersect(c1.exponents, c2.exponents)
-    for expon in common_exponents
-        ind1 = findfirst(item -> item ≈ expon, c1.exponents)
-        ind2 = findfirst(item -> item ≈ expon, c2.exponents)
-        prefac_og = prefacs[ind1]
-        replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
-        replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
-        deleteat!(c2.exponents, ind2)
-        deleteat!(c2.prefacs, ind2)
-        deleteat!(c2.polys, ind2)
+    contractCoeff = c1
+    for i in 1:length(c2.exponents)
+        corr = Correction(c2.prefacs[i], c2.exponents[i], c2.polys[i])
+        contractCoeff += corr
     end
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    append!(exponents, c2.exponents)
-    append!(prefacs, c2.prefacs)
-    append!(polys, c2.polys)
-    return ContractionCoefficient(exponents, prefacs, polys)
+    return contractCoeff
 end
-"""
+
 import Base: *
 function *(c1::Correction, c2::Correction)
     exponent = c1.exponent + c2.exponent
@@ -98,6 +94,10 @@ function *(c::Correction, n::Number)
     return Correction(prefac, exponent, poly, order)
 end
 *(n::Number, c::Correction) = c*n
+function *(n::Number, c1::ContractionCoefficient)
+    prefacs = c1.prefacs*n
+    return ContractionCoefficient(c1.exponents,prefacs,c1.polys)
+end
 
 function conv(u::Vector{<:Number}, v::Vector{<:Number})
     m, n = length(u), length(v)

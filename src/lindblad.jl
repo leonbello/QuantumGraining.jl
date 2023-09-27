@@ -1,3 +1,4 @@
+using SymPy
 #"""
 #Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
 #"""
@@ -53,22 +54,29 @@ end
 Given a truncation order `k`, and a list of frequencies `Ω`, couplings `g` and operators `h`` representing the raw Hamiltonian, 
 returns new frequencies, coupling strengths and operators represneting the new Hamiltonian.
 """
-# STILL WORK IN PROGRESS, DO NOT RUN
-function effective_hamiltonian(h::Vector, Ω::Vector{Number}, k::Int)
-    perm_h, perm_Ω = coresponding_combinations(h, Ω, k)
+# NOTE: This outputs term of the kth order only
+function effective_hamiltonian(h::Vector, Ω::Vector, k::Int)
+    perm_h, perm_Ω = repeated_combinations(h, Ω, k)
 
     ops_eff = []
     ωs_eff  = []
     gs_eff  = []
 
-    for i in enumerate(perm_h)        
-        push!(ops_eff, normal_order(perm_h[i])) # not sure this works, may be better to keep ops_eff have only unique operators
-        ω = sum(perm_Ω[i])
+    for (i,perm) in enumerate(perm_h)        
+        push!(ops_eff, normal_order(perm)) # not sure this works, may be better to keep ops_eff have only unique operators
+        ω = perm_Ω[i]
         push!(ωs_eff, ω)
-        push!(gs_eff, 1/2*(contraction_coeff(k, 0, ω) + contraction_coeff(0, k, ω)))
+        #push!(gs_eff, 1/2*(contraction_coeff(k, 0, ω) + contraction_coeff(0, k, ω)))
+        push!(gs_eff, contraction_coeff(k, 0, ω))
     end
 
-    return ops_eff, ωs_eff, gs_eff
+    eff_ham = []
+    SymPy.@syms t::Real
+    for i in 1:length(gs_eff)
+        push!(eff_ham, exp(-1im*sum(ωs_eff[i])*t)*to_symbol(gs_eff[i])*ops_eff[i])
+    end
+
+    return eff_ham, ops_eff, ωs_eff, gs_eff
 end
 
 """
@@ -76,7 +84,7 @@ end
     
         Given a Hamiltonian as a list of operators and corresponding frequencies,
         returns the effective TCG Hamiltonian up to order `k`.
-"""
+
 function effective_hamiltonian(K::Int, ω::Array, h::Array)
     # Functionality to sum over all contractions of up to kth order 
     # w and h are arrays of symbolic cnumbers from QuantumCumulants
@@ -124,6 +132,7 @@ function effective_hamiltonian(K::Int, ω::Array, h::Array)
     # end
     # return effective_ham
 end
+"""
 
 
 """
@@ -137,7 +146,7 @@ function effective_dissipator(K::Int, ω::Array, h::Array)
     g_list = []
     J_list = []
     Jd_list = []
-    @syms t::Real
+    @variables t::Real
     for k in 1:K  
         ω_list = repeated_combinations(ω, k)
         h_list = repeated_combinations(h, k)              

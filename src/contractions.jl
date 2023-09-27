@@ -1,6 +1,7 @@
 using IterTools
+using SymPy
 #using QuantumGraining
-
+include("../src/utils.jl")
 """
     split_freqs_into_bubbles(freqs, diagram)
 Splits an array of frequencies into an array of tuples of frequencies, matching the dimensions of each bubble in `diagram`.
@@ -32,7 +33,7 @@ end
 struct ContractionCoefficient #{T1,T2}
     #corrections::Vector{Correction}
     exponents::Vector{Number}
-    prefacs::Vector{Number}
+    prefacs::Vector{Num}
     polys::Vector{Vector{Num}}
     #diagrams::Vector{Diagram{T1, T2}}
     #expression
@@ -60,23 +61,35 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     """
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
-    c = 0
-    c_list = []
+    exp_list = []
+    pre_list = []
+    poly_list = []
     d_list = []
     
     for diagram in diagrams
         reverse!(diagram)                               # reversing since Wentao's order is right-to-left, rather than left-to-right
         ω = split_freqs_into_bubbles(freqs, diagram)
-        
+        corr = diagram_correction(ω)
         push!(d_list, diagram)
-        push!(c_list, diagram_correction(ω))
-        #c += c_list[end]
+        push!(exp_list, corr.exponent)
+        push!(pre_list, corr.prefac)
+        push!(poly_list, corr.poly)
     end
-    contraction_coeff = ContractionCoefficient(c_list, c)
-    #return c, c_list, d_list
-    return ContractionCoefficient
+    return ContractionCoefficient(exp_list, pre_list, poly_list)
 end
 contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
+
+Base.show(io::IO, coeff::ContractionCoefficient) = print(io, to_symbol(coeff))
+
+function to_symbol(coeff::ContractionCoefficient)
+    #@variables τ
+    SymPy.@syms τ
+    sym = 0
+    for i in 1:length(coeff.prefacs)
+        sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i],coeff.polys[i]))
+    end
+    return sym
+end
 
 """
     diagram_correction(ω)
