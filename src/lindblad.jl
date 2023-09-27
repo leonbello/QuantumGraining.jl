@@ -1,4 +1,4 @@
-using SymPy
+#using SymPy
 #"""
 #Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
 #"""

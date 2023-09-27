@@ -1,5 +1,5 @@
 using Symbolics
-using SymPy
+#using SymPy
 struct Correction
     prefac
     exponent
@@ -24,9 +24,16 @@ function to_symbol(c::Correction)
 end
 
 function extend_correction(c::Correction, poly::Vector{<:Number})
-    return Correction(poly[1]*c.prefac,
+    non_zero_poly = findall(x -> x != 0, poly)
+    if isempty(non_zero_poly)
+        poly = [1]
+        norm = 1
+    else
+        norm = poly[non_zero_poly[1]] # find the first non-zero element of poly and normalize the correction by it.
+    end
+    return Correction(norm*c.prefac,
                     c.exponent,
-                    1/poly[1]*poly,
+                    1/norm*poly,
                     length(poly)
                     )
 end
@@ -58,7 +65,6 @@ function  +(c1::ContractionCoefficient, c2::Correction)
         prefac_og = prefacs[ind]
         replace!(prefacs, prefacs[ind] => prefacs[ind] + c2.prefac)
         replace!(polys, polys[ind] => (prefac_og*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
-    
     else
     push!(exponents, c2.exponent)
     push!(prefacs, c2.prefac)
