@@ -1,5 +1,5 @@
 using IterTools
-#using QuantumGraining
+using QuantumGraining
 
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -16,6 +16,11 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     ububs, dbubs = count_modes(diagram)
     freqs_up, freqs_dn = split_freqs(freqs, ububs, dbubs)
     freqs_dn = reverse(freqs_dn)
+
+    if size(freqs)[1] != ububs + dbubs
+        error("Number of frequencies ($(size(freqs)[1])) does not fit the number of modes ($(ububs + dbubs)) in the diagram.")
+    end
+
     ind_μ = 0
     ind_ν = 0
     for bubble in diagram
@@ -29,17 +34,22 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     return ω
 end
 
+
+
 struct ContractionCoefficient #{T1,T2}
     #corrections::Vector{Correction}
     exponents::Vector{Number}
     prefacs::Vector{Number}
-    polys::Vector{Vector{Num}}
-    #diagrams::Vector{Diagram{T1, T2}}
+    polys::Vector{Vector{Number}}
     #expression
 
     function ContractionCoefficient(exponents, prefacs, polys)
          #expression = sum(to_symbol.(corrections))
-         new(exponents,prefacs,polys)
+         new(exponents, prefacs, polys)
+    end
+
+    function ContractionCoefficient(exponents, prefacs)
+        new(exponents, prefacs, [[1]]) 
     end
 end
 
@@ -71,7 +81,6 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
         
         push!(d_list, diagram)
         push!(c_list, diagram_correction(ω))
-        #c += c_list[end]
     end
     contraction_coeff = ContractionCoefficient(c_list, c)
     #return c, c_list, d_list

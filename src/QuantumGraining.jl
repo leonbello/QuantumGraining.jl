@@ -25,7 +25,10 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections, ContractionCoefficient
+export diagram_correction, contraction_coeff, calc_pole_corrections, ContractionCoefficient, split_freqs_into_bubbles
+
+# bubble.jl
+export Bubble, calculate_bubble_factor
 
 
 include("bvector.jl")

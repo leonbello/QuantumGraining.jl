@@ -24,9 +24,16 @@ function to_symbol(c::Correction)
 end
 
 function extend_correction(c::Correction, poly::Vector{<:Number})
-    return Correction(poly[1]*c.prefac,
+    non_zero_poly = findall(x -> x != 0, poly)
+    if isempty(non_zero_poly)
+        poly = [1]
+        norm = 1
+    else
+        norm = poly[non_zero_poly[1]] # find the first non-zero element of poly and normalize the correction by it.
+    end
+    return Correction(norm*c.prefac,
                     c.exponent,
-                    1/poly[1]*poly,
+                    1/norm*poly,
                     length(poly)
                     )
 end
@@ -60,27 +67,27 @@ function  +(c1::ContractionCoefficient, c2::Correction)
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
-"""
-function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    common_exponents = intersect(c1.exponents, c2.exponents)
-    for expon in common_exponents
-        ind1 = findfirst(item -> item ≈ expon, c1.exponents)
-        ind2 = findfirst(item -> item ≈ expon, c2.exponents)
-        prefac_og = prefacs[ind1]
-        replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
-        replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
-        deleteat!(c2.exponents, ind2)
-        deleteat!(c2.prefacs, ind2)
-        deleteat!(c2.polys, ind2)
-    end
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    append!(exponents, c2.exponents)
-    append!(prefacs, c2.prefacs)
-    append!(polys, c2.polys)
-    return ContractionCoefficient(exponents, prefacs, polys)
-end
-"""
+
+# function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
+#     prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+#     common_exponents = intersect(c1.exponents, c2.exponents)
+#     for expon in common_exponents
+#         ind1 = findfirst(item -> item ≈ expon, c1.exponents)
+#         ind2 = findfirst(item -> item ≈ expon, c2.exponents)
+#         prefac_og = prefacs[ind1]
+#         replace!(prefacs, prefacs[ind1] => prefacs[ind1] + c2.prefacs[ind2])
+#         replace!(polys, polys[ind1] => (prefac_og*polys[ind1] + c2.prefacs[ind2]*c2.polys[ind2])/prefacs[ind1])
+#         deleteat!(c2.exponents, ind2)
+#         deleteat!(c2.prefacs, ind2)
+#         deleteat!(c2.polys, ind2)
+#     end
+#     prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
+#     append!(exponents, c2.exponents)
+#     append!(prefacs, c2.prefacs)
+#     append!(polys, c2.polys)
+#     return ContractionCoefficient(exponents, prefacs, polys)
+# end
+
 import Base: *
 function *(c1::Correction, c2::Correction)
     exponent = c1.exponent + c2.exponent
