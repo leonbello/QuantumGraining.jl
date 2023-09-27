@@ -2,22 +2,12 @@ using Revise
 using IterTools
 using Symbolics
 using Test
-#using QuantumGraining
+using QuantumGraining
 
 #@testset "corrections" begin
 module Tst
     using Test
-    include("../src/bvector.jl")
-    include("../src/bubble.jl")
-    include("../src/diagram.jl")
-    include("../src/diagrams.jl")
-    include("../src/contractions.jl")
-    include("../src/corrections.jl")
-    include("../src/lindblad.jl")
-    include("../src/poles.jl")
-    include("../src/printing.jl")
-    include("../src/utils.jl")
-    #using QuantumGraining
+    using QuantumGraining
 
     # one common bubble and one up-bubble
     # no singularities
@@ -99,9 +89,7 @@ module Tst
         corr = diagram_correction(ω)
 
         @test corr.exponent ≈ 2*8
-        #@test corr.poly ≈ [1, 0, -48]
         @test isapprox(corr.poly, [1, 0, -48], atol = 1e-13)
-        # @test corr.prefac ≈ 1//144
         @test isapprox(corr.prefac, 1//144, atol = 1e-13)
     end
     # there is error in the last one or two digits, probably resulting from limited machine precision
@@ -121,7 +109,6 @@ module Tst
         @test corr.poly ≈ [1]
         @test corr.prefac ≈ -1//36
     end
-    ## WRONG COEFFICIENTS AND POLY: 1/144*exp(-8*τ^2)*(1-48τ^2) ##
 
     # up-singularity in the second bubble 
     begin
@@ -161,9 +148,6 @@ module Tst
         # @test corr.prefac ≈ 91//7776
         @test isapprox(corr.prefac, 91//7776, atol = 1e-13)
     end
-    ## WRONG COEFFICIENTS
-
-
 
     begin
         μ1 = [0, 1, -1];  
@@ -240,4 +224,31 @@ module Tst
         @test isapprox(corr.prefac, -4597019//80621568, atol = 1e-13)
     end
 
+    # need to check if that's actually the correct result
+    begin
+        μ1 = [3]
+        ν1 = [0]
+        ω =  Diagram([(μ1, ν1)])
+        corr = diagram_correction(ω)
+        
+        @show corr
+        @test corr.exponent ≈ 3^2
+        @test isapprox(corr.poly, [0, 0, 1], atol = 1e-8)
+        @test isapprox(corr.prefac, -3)
+    end
+
+    begin
+        μ1 = [1]
+        ν1 = []
+        μ2 = [0]
+        ν2 = []
+        ω =  Diagram([(μ1, ν1), (μ2, ν2)])
+        corr  = diagram_correction(ω)
+        
+        @show corr
+
+        @test corr.exponent ≈ 1
+        @test isapprox(corr.poly, [1], atol = 1e-8)
+        @test isapprox(corr.prefac, 1, atol = 1e-13)
+    end
 end

@@ -21,7 +21,7 @@ module Tst
 
    
     
-    #Setup
+    #Setup-
     h_cav = FockSpace(:cavity)
     h_atom = NLevelSpace(:atom, (:g,:e))
     h = tensor(h_cav, h_atom)
@@ -49,7 +49,7 @@ module Tst
     
     #Numerical test
     ω_n = 1
-    ω_m = 1
+    ω_m = 1.0001
 
     
     ωs_rab_num = [ω_n + ω_m, -ω_n - ω_m, -ω_n + ω_m, ω_n - ω_m]
