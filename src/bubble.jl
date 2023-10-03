@@ -1,4 +1,4 @@
-#using QuantumGraining
+using QuantumGraining
 
 """
     Bubble{T1, T2} <: AbstractVector{Tuple{T1, T2}}    

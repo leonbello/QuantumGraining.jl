@@ -1,6 +1,6 @@
 using IterTools
 #using SymPy
-#using QuantumGraining
+using QuantumGraining
 include("../src/utils.jl")
 """
     split_freqs_into_bubbles(freqs, diagram)
@@ -40,9 +40,8 @@ end
 struct ContractionCoefficient #{T1,T2}
     #corrections::Vector{Correction}
     exponents::Vector{Number}
-    prefacs::Vector{Num}
-    polys::Vector{Vector{Num}}
-    #diagrams::Vector{Diagram{T1, T2}}
+    prefacs::Vector{Number}
+    polys::Vector{Vector{Number}}
     #expression
 
     function ContractionCoefficient(exponents, prefacs, polys)
