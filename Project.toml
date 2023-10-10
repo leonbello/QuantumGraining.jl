@@ -11,6 +11,7 @@ IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 QuantumCumulants = "35bcea6d-e19f-57db-af74-8011de6c7255"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 

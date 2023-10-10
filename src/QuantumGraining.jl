@@ -6,6 +6,7 @@ import SymbolicUtils
 import SymbolicUtils: substitute
 import QuantumCumulants
 import Symbolics
+import SymPy
 import IterTools
 #import SciMLBase
 
@@ -36,7 +37,6 @@ include("bubble.jl")
 include("diagram.jl")
 include("contractions.jl")
 include("corrections.jl")
-
 include("diagrams.jl")
 include("lindblad.jl")
 include("poles.jl")

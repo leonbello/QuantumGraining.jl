@@ -1,7 +1,7 @@
 using IterTools
-#using SymPy
+using SymPy
 using QuantumGraining
-include("../src/utils.jl")
+
 """
     split_freqs_into_bubbles(freqs, diagram)
 Splits an array of frequencies into an array of tuples of frequencies, matching the dimensions of each bubble in `diagram`.
