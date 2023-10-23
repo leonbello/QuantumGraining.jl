@@ -1,4 +1,4 @@
-#using SymPy
+using Symbolics
 #"""
 #Lindblad.jl contains the functionalities to generate the final Lindbladian in operator form.
 #"""
@@ -49,6 +49,12 @@ function normal_order(ops::Vector)
     return prod(ops)
 end
 
+
+
+function symbolic_eff_ham(gs, ops, ωs,T)
+    return to_symbol(gs)*ops*exp(-1im*sum(ωs)*T)
+end
+
 """
     effective_hamiltonian(h::Vector, g::Vector{Number}, Ω::Vector{Number}, k::Int)
 Given a truncation order `k`, and a list of frequencies `Ω`, couplings `g` and operators `h`` representing the raw Hamiltonian, 
@@ -56,13 +62,14 @@ returns new frequencies, coupling strengths and operators represneting the new H
 """
 # NOTE: This outputs term of the kth order only
 function effective_hamiltonian(h::Vector, Ω::Vector, k::Int)
+    @syms t::Real
     perm_h, perm_Ω = repeated_combinations(h, Ω, k)
-
+    
     ops_eff = []
     ωs_eff  = []
     gs_eff  = []
 
-    for (i,perm) in enumerate(perm_h)        
+    for (i,perm) in enumerate(perm_h)      
         push!(ops_eff, normal_order(perm)) # not sure this works, may be better to keep ops_eff have only unique operators
         ω = perm_Ω[i]
         push!(ωs_eff, ω)
@@ -71,10 +78,9 @@ function effective_hamiltonian(h::Vector, Ω::Vector, k::Int)
     end
 
     eff_ham = []
-    SymPy.@syms t::Real
-    for i in 1:length(gs_eff)
-        push!(eff_ham, exp(-1im*sum(ωs_eff[i])*t)*to_symbol(gs_eff[i])*ops_eff[i])
-    end
+    #for i in 1:length(gs_eff)
+     #   push!(eff_ham, symbolic_eff_ham(gs_eff[i],ops_eff[i],ωs_eff[i],t))
+    #end
 
     return eff_ham, ops_eff, ωs_eff, gs_eff
 end
