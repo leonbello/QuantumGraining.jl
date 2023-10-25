@@ -71,7 +71,7 @@ Returns:
     - up_poles: list of indices of poles in upper modes
     - down_poles: list of indices of poles in lower modes
 """
-function find_all_poles(freqs::Vector)#::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
+function find_all_poles(freqs::Vector) #::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
     d = Diagram(freqs)
     return find_all_poles(d)
 end

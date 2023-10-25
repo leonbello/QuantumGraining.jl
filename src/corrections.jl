@@ -16,6 +16,75 @@ struct Correction
 end
 Base.show(io::IO, c::Correction) = print(io, to_symbol(c))
 
+struct ContractionCoefficient 
+    corrections::Vector{Correction}
+    exponents::Vector{Number}
+    prefacs::Vector{Number}
+    polys::Vector{Vector{Number}}
+
+    function ContractionCoefficient(exponents, prefacs, polys)
+        if !(length(exponents) == length(prefacs) == length(polys))
+            error("exponents, prefacs and polys should have the length!")
+        end
+        corrections = [Correction(exponents[i], prefacs[i], polys[i]) for i in eachindex(exponents)]
+        new(corrections, exponents, prefacs, polys)
+    end
+
+    function ContractionCoefficient(exponents, prefacs)
+        if !(length(exponents) == length(prefacs))
+            error("exponents, prefacs and polys should have the length!")
+        end
+        polys = fill([1], size(exponents))
+        corrections = [Correction(exponents[i], prefacs[i], polys[i]) for i in eachindex(exponents)]
+        new(corrections, exponents, prefacs, polys) 
+    end
+end
+
+# Possibly, this should be a `ContractionCoefficient` constructor.
+function contraction_coeff(left::Int, right::Int, freqs::Array)
+    """
+    contraction_coeff(left::Int, right::Int, freqs::Array)
+
+    Calculates the coefficient of a whole contraction, given the contraction and input frequencies. Calculates equation (7) in the paper.
+
+    Arguments:
+    - left: the left-order of the contraction
+    - right: the right-order of the contraction
+    - freqs: array of frequencies to put in each mode
+
+    Returns:
+    - c: a contraction coefficient struct, symbolic expression for the contraction coeffeicient.
+    """
+    node = DiagramNode((left, right))
+    diagrams = get_diagrams(node)
+    exp_list = []
+    pre_list = []
+    poly_list = []
+    d_list = []
+    
+    for diagram in diagrams
+        reverse!(diagram)                               # reversing since Wentao's order is right-to-left, rather than left-to-right
+        ω = split_freqs_into_bubbles(freqs, diagram)
+        corr = diagram_correction(ω)
+        push!(d_list, diagram)
+        push!(exp_list, corr.exponent)
+        push!(pre_list, corr.prefac)
+        push!(poly_list, corr.poly)
+    end
+    return ContractionCoefficient(exp_list, pre_list, poly_list)
+end
+contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
+
+Base.show(io::IO, coeff::ContractionCoefficient) = print(io, to_symbol(coeff))
+
+function to_symbol(coeff::ContractionCoefficient)
+    sym = 0
+    for i in 1:length(coeff.prefacs)
+        sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i], coeff.polys[i]))
+    end
+    return sym
+end
+
 function to_symbol(c::Correction)
     @syms τ
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
@@ -73,7 +142,6 @@ function  +(c1::ContractionCoefficient, c2::Correction)
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
-
 function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
     contractCoeff = c1
     for i in 1:length(c2.exponents)
@@ -99,10 +167,28 @@ function *(c::Correction, n::Number)
     prefac = c.prefac*n
     return Correction(prefac, exponent, poly, order)
 end
+
 *(n::Number, c::Correction) = c*n
 function *(n::Number, c1::ContractionCoefficient)
     prefacs = c1.prefacs*n
     return ContractionCoefficient(c1.exponents,prefacs,c1.polys)
+end
+
+import Base: -
+function  -(c1::Correction, c2::Correction)
+    return c1 + -1*c2
+end
+function  -(c1::ContractionCoefficient, c2::Correction)
+    return c1 + -1*c2
+end
+function  -(c1::ContractionCoefficient, c2::ContractionCoefficient)
+    return c1 + -1*c2
+end
+function  -(c::Correction)
+    return -1*c
+end
+function  -(c::ContractionCoefficient)
+    return -1*c
 end
 
 function conv(u::Vector{<:Number}, v::Vector{<:Number})
