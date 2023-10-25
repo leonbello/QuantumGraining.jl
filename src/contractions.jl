@@ -1,5 +1,5 @@
 using IterTools
-using SymPy
+using Symbolics
 using QuantumGraining
 
 """
@@ -93,8 +93,8 @@ contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1
 Base.show(io::IO, coeff::ContractionCoefficient) = print(io, to_symbol(coeff))
 
 function to_symbol(coeff::ContractionCoefficient)
-    #@variables τ
-    SymPy.@syms τ
+    #@syms τ
+    #SymPy.@syms τ
     sym = 0
     for i in 1:length(coeff.prefacs)
         sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i],coeff.polys[i]))

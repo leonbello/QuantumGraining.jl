@@ -17,8 +17,7 @@ end
 Base.show(io::IO, c::Correction) = print(io, to_symbol(c))
 
 function to_symbol(c::Correction)
-    #@variables τ
-    SymPy.@syms τ
+    @syms τ
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]*(τ^(n-1)) for n in 1:c.order])
     return sym
