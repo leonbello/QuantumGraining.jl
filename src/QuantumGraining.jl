@@ -27,10 +27,13 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections, Correction, ContractionCoefficient, split_freqs_into_bubbles
+export diagram_correction, contraction_coeff, calc_pole_corrections, Correction, ContractionCoefficient, split_freqs_into_bubbles, to_symbol, to_qc_symbol
 
 # bubble.jl
 export Bubble, calculate_bubble_factor
+
+# lindblad.jl
+export effective_hamiltonian
 
 
 include("bvector.jl")

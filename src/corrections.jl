@@ -14,7 +14,10 @@ struct Correction
         new(prefac, exponent, poly, order)
     end
 end
-Base.show(io::IO, c::Correction) = print(io, to_symbol(c))
+Base.show(io::IO, c::Correction) = begin
+    @variables τ 
+    print(io, to_symbol(c, τ))
+end
 
 struct ContractionCoefficient 
     corrections::Vector{Correction}
@@ -75,18 +78,20 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
 end
 contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
-Base.show(io::IO, coeff::ContractionCoefficient) = print(io, to_symbol(coeff))
+Base.show(io::IO, coeff::ContractionCoefficient) = begin
+    @variables τ
+    print(io, to_symbol(coeff, τ))
+end
 
-function to_symbol(coeff::ContractionCoefficient)
+function to_symbol(coeff::ContractionCoefficient, τ) #where {T <: Number}
     sym = 0
     for i in 1:length(coeff.prefacs)
-        sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i], coeff.polys[i]))
+        sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i], coeff.polys[i]), τ)
     end
     return sym
 end
 
-function to_symbol(c::Correction)
-    @syms τ
+function to_symbol(c::Correction, τ) #where {T <: Number}
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]*(τ^(n-1)) for n in 1:c.order])
     return sym
