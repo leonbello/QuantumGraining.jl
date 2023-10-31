@@ -62,112 +62,51 @@ returns new frequencies, coupling strengths and operators represneting the new H
 """
 # NOTE: This outputs term of the kth order only
 function effective_hamiltonian(h::Vector, Ω::Vector, k::Int)
-    @syms t::Real
     perm_h, perm_Ω = repeated_combinations(h, Ω, k)
     
     ops_eff = []
     ωs_eff  = []
     gs_eff  = []
 
-    for (i,perm) in enumerate(perm_h)      
-        push!(ops_eff, normal_order(perm)) # not sure this works, may be better to keep ops_eff have only unique operators
+    for (i, perm) in enumerate(perm_h)      
+        push!(ops_eff, perm) # not sure this works, may be better to keep ops_eff have only unique operators
         ω = perm_Ω[i]
         push!(ωs_eff, ω)
-        #push!(gs_eff, 1/2*(contraction_coeff(k, 0, ω) + contraction_coeff(0, k, ω)))
         push!(gs_eff, contraction_coeff(k, 0, ω))
     end
 
-    eff_ham = []
-    #for i in 1:length(gs_eff)
-     #   push!(eff_ham, symbolic_eff_ham(gs_eff[i],ops_eff[i],ωs_eff[i],t))
-    #end
-
-    return eff_ham, ops_eff, ωs_eff, gs_eff
-end
-
-"""
-    effective_hamiltonian(k::Int, ω::Array, h::Array)
-    
-        Given a Hamiltonian as a list of operators and corresponding frequencies,
-        returns the effective TCG Hamiltonian up to order `k`.
-
-function effective_hamiltonian(K::Int, ω::Array, h::Array)
-    # Functionality to sum over all contractions of up to kth order 
-    # w and h are arrays of symbolic cnumbers from QuantumCumulants
-    g_list = []
-    V_list = []
-    freq_list = []
-    @syms t::Real
-    h_eff = 0
-    ks = []
-    ωs = []
-    contractions = []
-    for k in 1:K
-        ω_list = repeated_combinations(ω, k)
-        h_list = repeated_combinations(h, k)
-        g = 0
-        V = 0               
-        for (ω, h) in zip(ω_list, h_list) 
-            push!(ks, k)
-            push!(ωs, ω)
-            g = 0.5*(contraction_coeff((k,0),ω)[1] + contraction_coeff((k,0),-reverse(ω))[1])*exp(1.0im*sum(ω)*t)
-            g = simplify(g)
-            #println(typeof(g))
-            push!(contractions, contraction_coeff((k,0),ω)[1])
-            V = prod(h) #? 
-            #println(typeof(V))
-            push!(g_list, g)
-            push!(V_list, V)
-            push!(freq_list, sum(ω))
-            h_eff += simplify(g*V)
-            #(typeof(g*V) == QuantumCumulants.QMul{Nothing}) ? h_eff += g*V : h_eff += 0
-        end
-    end
-    #H_eff = 0
-    #terms = tuple.(g_list, V_list)
-    #for (j,(g,V)) in enumerate(terms)
-    #    @syms f(j,t)
-    #    H_eff += g*V*f(j,t)
-    #end
-    return h_eff, contractions, ks, ωs, g_list, V_list
-    # effective_ham = 0
-    # for n in 1:k
-    #     ω_list = repeated_combinations(ω,n)
-    #     h_list = repeated_combinations(h,n)
-    #     effective_ham += sum([effective_hamiltonian(diagram,ω_list,h_list) for diagram in get_diagrams(DiagramNode((n,0)))])    
-    # end
-    # return effective_ham
-end
-"""
-
+    return ops_eff, ωs_eff, gs_eff
+end    
 
 """
 * effective_dissipator(c::Tuple{int, int}) - Given a contraction, returns all contributing terms.
 * effective_dissipator(d::Diagram) - Given a diagram object, returns all contributing terms.
 * effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
-function effective_dissipator(K::Int, ω::Array, h::Array)
-    # Functionality to sum over all contractions of up to kth order 
-    # w and h are arrays of symbolic cnumbers from QuantumCumulants
-    g_list = []
-    J_list = []
+function effective_dissipator(h::Vector, Ω::Vector, k::Int)
+    γ_list  = []
+    ω_list  = []
+    J_list  = []
     Jd_list = []
-    @variables t::Real
-    for k in 1:K  
-        ω_list = repeated_combinations(ω, k)
-        h_list = repeated_combinations(h, k)              
-        for (ω, h) in zip(ω_list, h_list) 
-            for k1 in 1:(k-1)
-                g = (contraction_coeff((k1,k-k1),ω) - contraction_coeff((k-k1,k1),ω))*exp(1im*sum(ω)*t)
-                J = prod(h[1:k1]) # Jump operator
-                Jd = prod(h[k1+1:k])
-                push!(g_list, g) 
+    
+    for i in 1:k  
+        perm_h, perm_Ω = repeated_combinations(h, Ω, i)
+
+        for (ω, h) in zip(perm_Ω, perm_h) 
+            for l in 1:(i-1)
+                γ = (contraction_coeff(l, k-l, ω) - contraction_coeff(k-l, l, ω))
+                
+                J = prod(h[1:l]) # Jump operators
+                Jd = prod(h[l+1:k])
+
+                push!(γ_list, γ) 
+                push!(ω_list, sum(ω))
                 push!(J_list, J)
                 push!(Jd_list, Jd)
             end
         end
     end
-    return g_list, J_list, Jd_list
+    return γ_list, ω_list, J_list, Jd_list
 end
 
 # function effective_dissipator(k::Int, ω::Array, h::Array, fmt=:QuantumCumulants)
@@ -179,7 +118,6 @@ end
 * effective_lindblad(d::Diagram) - Given a diagram object, returns all contributing terms.
 * effective_lindblad(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
-
 function effective_lindblad(k::Int, ω::Array, h::Array)
     return effective_hamiltonian(k, ω, h), effective_dissipator(k, ω, h)
 end

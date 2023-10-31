@@ -33,7 +33,7 @@ export diagram_correction, contraction_coeff, calc_pole_corrections, Correction,
 export Bubble, calculate_bubble_factor
 
 # lindblad.jl
-export effective_hamiltonian
+export effective_hamiltonian, effective_dissipator
 
 
 include("bvector.jl")
