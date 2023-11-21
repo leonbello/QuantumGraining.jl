@@ -74,8 +74,11 @@ function effective_hamiltonian(h::Vector, Ω::Vector, k::Int)
         push!(ωs_eff, ω)
         push!(gs_eff, contraction_coeff(k, 0, ω))
     end
-
-    return ops_eff, ωs_eff, gs_eff
+    if length(ops_eff[1]) == 1
+        ops_eff = vcat(ops_eff...)
+        ωs_eff = vcat(ωs_eff...)
+    end
+    return ops_eff,ωs_eff, gs_eff
 end    
 
 """
