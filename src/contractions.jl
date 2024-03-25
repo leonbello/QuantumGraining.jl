@@ -1,5 +1,4 @@
 using IterTools
-using Symbolics
 using QuantumGraining
 
 """
@@ -17,11 +16,6 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     ububs, dbubs = count_modes(diagram)
     freqs_up, freqs_dn = split_freqs(freqs, ububs, dbubs)
     freqs_dn = reverse(freqs_dn)
-
-    if size(freqs)[1] != ububs + dbubs
-        error("Number of frequencies ($(size(freqs)[1])) does not fit the number of modes ($(ububs + dbubs)) in the diagram.")
-    end
-
     ind_μ = 0
     ind_ν = 0
     for bubble in diagram
@@ -34,7 +28,6 @@ function split_freqs_into_bubbles(freqs::Vector, diagram::Vector{Tuple{Int, Int}
     ω = tuple.(μ, ν)
     return ω
 end
-
 
 """
     diagram_correction(ω)
@@ -81,7 +74,6 @@ function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
         end
         total_correction = extend_correction(total_correction, total_poly)
     end
-    
     return total_correction
 end 
 function diagram_correction(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
@@ -90,7 +82,7 @@ function diagram_correction(ω::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1
 end
 
 function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
-    taylor_factors = Vector{Correction}()   # array holding the terms of the outer sum
+    taylor_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
     for b in d
         μ, ν = b.up, b.down
         l = length(b.up)
@@ -104,9 +96,11 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
     return taylor_factors
 end
 
-function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
+function calc_expansion_factors(mu::BVector{T1}, ν::BVector{T2}, order, n::Int) where {T1, T2}
     if mu.special
-        μ = μ[2:end]
+        μ = mu[2:end]
+    else
+        μ = mu
     end
 
     l, r = length(μ), length(ν)
@@ -114,7 +108,7 @@ function calc_expansion_factors(μ::BVector{T1}, ν::BVector{T2}, order, n::Int)
     #order = 2*(length(μ.poles) + length(ν.poles)) + 1
     poly = zeros(Num, order)
     for k in 0:floor(Int, n/2)
-        freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
+        freq_sum = isequal(sum(mu) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(mu) + sum(ν))
         l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
         coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
         poly[2*(n-k) + 1] = coeff
@@ -150,11 +144,12 @@ end
 
 pole_fac(v, regular, j, m) = (-j/sum(v[1:regular]))^m
 
-function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
+function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
     if mu.special
-        μ = μ[2:end]
+        μ = mu[2:end]
+    else
+        μ = mu
     end
-
     μ = reverse(μ)
 
     norm = calc_pole_normalization(up_poles, down_poles)
@@ -209,6 +204,9 @@ function calc_pole_corrections(μ::BVector{T1}, ν::BVector{T2}, up_poles::Vecto
 
     return pole_terms   
 end
+
+
+
 
 """
     calculate_bubble_factor(ω, bubble_idx, total_num_poles, s, stag)

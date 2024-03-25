@@ -1,30 +1,27 @@
 using Revise
-using QuantumCumulants
-using SymbolicUtils
 using IterTools
 using Symbolics
 using Test
 using QuantumGraining
 
-#@testset "contractions" begin
-module Tst
-    using Test
-    using IterTools
-    using QuantumGraining
+@testset "contraction_coefficients" begin
+    begin
+        @variables μ τ
+        c10 = contraction_coeff(1, 0, [μ])
+        @show c10
+        @test isequal(c10.exponents, [μ^2])
+        @test isequal(c10.prefacs, [1])
+    end
 
-
-    e1 = [1]
-    pf1 = [1]
-    c1 = ContractionCoefficient(e1, pf1)
-    cr = -Correction(1, 1)
-
-
-    e2 = [2, 3]
-    pf2 = [2, 1]
-    c2 = ContractionCoefficient(e2, pf2)
-
-    c3 = c1 + c2
-    c4 = 2*c3
-
-    c5 = c4 - cr
+    begin
+        @variables μ1 μ2 τ
+        c20 = contraction_coeff(2, 0, [μ1, μ2])
+        c11 = contraction_coeff(1, 1, [μ1, μ2])
+        @show c20
+        @show c11
+        @test isequal(c20.exponents, [(μ1 + μ2)^2, (μ1^2 + μ2^2)])
+        @test isequal(c20.prefacs, [-1/μ2, 1/μ2])
+        @test isequal(c11.exponents, expand.(c20.exponents))
+        @test isequal(simplify.(-c11.prefacs), c20.prefacs)
+    end
 end

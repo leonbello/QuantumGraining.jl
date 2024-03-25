@@ -98,7 +98,8 @@ function to_symbol(c::Correction, τ) #where {T <: Number}
 end
 
 function extend_correction(c::Correction, poly::Vector{<:Number})
-    non_zero_poly = findall(x -> x != 0, poly)
+    #non_zero_poly = findall(x -> x != 0, poly)
+    non_zero_poly = findall(x -> !(isequal(x, 0)), poly)
     if isempty(non_zero_poly)
         poly = [1]
         norm = 1
@@ -110,6 +111,21 @@ function extend_correction(c::Correction, poly::Vector{<:Number})
                     1/norm*poly,
                     length(poly)
                     )
+end
+
+import Base: ==
+function ==(c1::ContractionCoefficient, c2::ContractionCoefficient)
+    return issetequal(c1.corrections, c2.corrections)
+end
+
+function ==(c1::Correction, c2::Correction)
+    if c1.order != c2.order
+        return false
+    else
+        exp_eq = isequal(simplify(expand(c1.exponent) - expand(c2.exponent)), 0)
+        poly_eq = isequal(simplify.(c1.prefac*c1.poly - c2.prefac*c2.poly), 0)
+    end
+    return exp_eq && poly_eq
 end
 
 import Base: +
@@ -207,4 +223,46 @@ function conv(u::Vector{<:Number}, v::Vector{<:Number})
     end
 
     return result
+end
+
+function merge_duplicate_exponents(c::ContractionCoefficient)
+    unique_exponents = []
+    unique_prefacs = []
+    unique_polys = []
+    merged_indices = []
+
+    for i in 1:length(c.exponents)
+        if i in merged_indices
+            continue
+        end
+
+        exponent = c.exponents[i]
+        prefac = c.prefacs[i]
+        poly = c.polys[i]
+
+        indices_to_merge = [i]
+        for j in (i+1):length(c.exponents)
+            if isequal(expand(c.exponents[j]^2) - expand(exponent^2), 0)
+                push!(indices_to_merge, j)
+                push!(merged_indices, j)
+            end
+        end
+
+        if length(indices_to_merge) > 1
+            # Merge prefacs and polys for indices_to_merge
+            merged_prefac = simplify(sum(c.prefacs[idx] for idx in indices_to_merge))
+            merged_poly = simplify(sum(c.polys[idx] for idx in indices_to_merge))
+
+            push!(unique_exponents, exponent)
+            push!(unique_prefacs, merged_prefac)
+            push!(unique_polys, merged_poly)
+            
+        else
+            push!(unique_exponents, exponent)
+            push!(unique_prefacs, prefac)
+            push!(unique_polys, poly)
+        end
+    end
+
+    return ContractionCoefficient(unique_exponents, unique_prefacs, unique_polys)
 end

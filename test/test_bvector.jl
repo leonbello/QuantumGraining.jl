@@ -4,18 +4,12 @@ using SymbolicUtils
 using IterTools
 using Symbolics
 using Test
+using QuantumGraining
 
 #@testset "corrections" begin
 module Tst
     using Test
     using IterTools
-    include("../src/bvector.jl")
-    include("../src/diagrams.jl")
-    include("../src/bubble.jl")
-    include("../src/diagram.jl")
-    include("../src/poles.jl")
-    include("../src/printing.jl")
-    
    
     begin  #singularity in the first bubble should be omitted
         μ1 = UVec([0, 1, -2], special=true);  

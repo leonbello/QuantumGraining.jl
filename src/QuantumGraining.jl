@@ -23,17 +23,24 @@ export DiagramNode, node_decomp,
 
 # poles.jl
 export Contraction, count_poles,
-        find_all_poles, find_integer_solutions,
+        find_poles, find_all_poles, find_integer_solutions,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections, Correction, ContractionCoefficient, split_freqs_into_bubbles, to_symbol, to_qc_symbol
+export diagram_correction, contraction_coeff, calc_pole_corrections, 
+        Correction, ContractionCoefficient, 
+        split_freqs_into_bubbles, to_symbol, to_qc_symbol
+
+# corrections.jl
+export merge_duplicate_exponents
 
 # bubble.jl
 export Bubble, calculate_bubble_factor
 
 # lindblad.jl
-export effective_hamiltonian, effective_dissipator
+export effective_hamiltonian_term, effective_dissipator_term, 
+        gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
+        qc_convert, effective_hamiltonian
 
 
 include("bvector.jl")

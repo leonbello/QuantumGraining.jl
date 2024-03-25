@@ -4,78 +4,40 @@ using SymbolicUtils
 using IterTools
 using Symbolics
 using Test
+using QuantumGraining
 
-#@testset "corrections" begin
-module Tst
-    using Test
-    using IterTools
-    include("../src/bvector.jl")
-    include("../src/bubble.jl")
-    include("../src/diagrams.jl")
-    include("../src/diagram.jl")
-    include("../src/poles.jl")
-    include("../src/printing.jl")
-    include("../src/expressions.jl")
+@testset "bubble" begin
     
-   ## Bubble struct tests ##
-   # Frequency constructor
-    let
+   
+    # Frequency constructor
+    begin
         shape = (3, 2)
         freqs = [1, 2, 3, 4, 5]
         bubble = Bubble(freqs, shape)
-        @show bubble[1]
-        @show bubble[2]
-        @show bubble[3]
-        @show bubble[4]
-        @show bubble[5]
-        @show bubble
-        @show bubble.shape
-        @show bubble.freqs
-        @show bubble.up
-        @show bubble.down
+        @test bubble.shape == (3, 2)
+        @test bubble.freqs == freqs
+        @test bubble.up == [1, 2, 3]
+        @test bubble.down == [4, 5]
     end
 
     # BVector constructor
-    let 
+    begin
         μ1 = UVec([1, 2])
         ν1 = DVec([3, 4, 5])
         bubble = Bubble(μ1, ν1)
-        @show bubble[1]
-        @show bubble[2]
-        @show bubble[3]
-        @show bubble[4]
-        @show bubble[5]
-        @show bubble
-        @show bubble.shape
-        @show bubble.freqs
-        @show bubble.up
-        @show bubble.down
+        @test bubble.shape == (2, 3)
+        @test bubble.freqs == [1, 2, 5, 4, 3]
+        @test bubble.up == [1, 2]
+        @test bubble.down == [3, 4, 5]
+        @test bubble.special == false
     end
 
-    let 
+    begin
         μ1 = [1, 2]
         ν1 = [3, 4, 5]
-        bubble = Bubble(μ1, ν1)
-        @show bubble[1]
-        @show bubble[2]
-        @show bubble[3]
-        @show bubble[4]
-        @show bubble[5]
-        @show bubble
-        @show bubble.shape
-        @show bubble.freqs
-        @show bubble.up
-        @show bubble.down
-
-        push!(μ1, 6)
-        @show bubble
+        bubble = Bubble(μ1, ν1; special=true)
+        @test bubble.shape == (2,3)
+        @test bubble.freqs == [1, 2, 5, 4, 3]
+        @test bubble.special == true
     end
-
-    μ1 = [1, 2]
-    ν1 = [3, 4, 5]
-    bubble = Bubble(μ1, ν1; special=true)
-    @show bubble
-    @show bubble.special
-    @show bubble.up.special
-    @show bubble.down.special
 end

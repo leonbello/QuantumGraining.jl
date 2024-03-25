@@ -1,70 +1,60 @@
 using Symbolics
 using SymbolicUtils
 using IterTools
+using QuantumGraining
 
-module Tst
-    using Test
-    using IterTools
-    include("../src/bvector.jl")
-    include("../src/bubble.jl")
-    include("../src/diagram.jl")
-    include("../src/diagrams.jl")
-    include("../src/poles.jl")
-    include("../src/printing.jl")
 
-    #===
-    find_poles()
-    ===#
-    #@cnumbers a b c
+@testset "poles" begin
 
-    # Using QuantumCumulants for symbolic variables is generally not a good idea, 
-    # since it creates type inconsistencies between the vectors. Should only switch right before having to use the operator algebra capabilities.
-    @variables a b c
-    μ1 = [a, b, c]
-    ν1 = [2*a, -2*a]
-    ω = [(μ1, ν1)]
-
-    @show find_poles(μ1[2:end])
-    @show find_poles(ν1)
+    # find_poles
+    begin
+        @variables a b c
+        μ1 = [a, b, c]
+        ν1 = [2*a, -2*a]
+        ω = [(μ1, ν1)]
     
-    #===
-    find_all_poles()
-    ===#
-    μ1 = [0, 1, -1] # pole at 3 -- should be regarded as 2 since the first mode is omitted
-    ν1 = [1, -2]
-    ω = [(μ1, ν1)]
+        @test isempty(find_poles(μ1[2:end]))
+        @test isequal(find_poles(ν1), [2])
+    end
 
-    find_poles(μ1[2:end])
     
-    @show typeof(ω)
-    s_list, stag_list = find_all_poles(ω)
-    count_poles(s_list, stag_list)
-    
+    # find_all_poles()
+    begin
+        μ1 = [0, 1, -1] # pole at 3 -- should be regarded as 2 since the first mode is omitted
+        ν1 = [1, -2]
+        ω = [(μ1, ν1)]
+
+        find_poles(μ1[2:end])
+        
+        @show typeof(ω)
+        s_list, stag_list = find_all_poles(ω)
+        count_poles(s_list, stag_list)
+    end
+
     # non-singular indices
-    s = s_list[1]
-    stag = stag_list[1]
-    ju_list = filter(x -> !(x in s), 1:3)      # should be [1, 3]
-    jl_list = filter(x -> !(x in stag), 1:2)   # should be [1, 2]
+    begin
+        s = s_list[1]
+        stag = stag_list[1]
+        ju_list = filter(x -> !(x in s), 1:3)      # should be [1, 3]
+        jl_list = filter(x -> !(x in stag), 1:2)   # should be [1, 2]
     
-    # non-singular cases
-    μ1 = [a, b, -a-b] # pole at 3
-    ν1 = [a, -a] # pole at 2
+        # non-singular cases
+        μ1 = [a, b, -a-b] # pole at 3
+        ν1 = [a, -a] # pole at 2
 
-    μ2 = [a, a, -2*a] # pole at 1 and 4
+        μ2 = [a, a, -2*a] # pole at 1 and 4
+        ν2 = [-a, b, a-b] # poles at 3
+        
+        ω = [(μ1, ν1), (μ2, ν2)]
 
-    ν2 = [-a, b, a-b] # poles at 3
-    
-    (μ1, ν1)
-    (μ2, ν2)
-    ω = [(μ1, ν1), (μ2, ν2)]
+        # problem with bubble vectors being different types... need to find a robust way of handling this
+        s_list, stag_list = find_all_poles(ω)
+        total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
 
-    # problem with bubble vectors being different types... need to find a robust way of handling this
-    s_list, stag_list = find_all_poles(ω)
-    total_num_poles = sum([length(su) + length(sl) for (su, sl) in (s_list, stag_list)])
-
-    @show s_list
-    @show stag_list
-    @show total_num_poles
+        @show s_list
+        @show stag_list
+        @show total_num_poles
+    end
 
     ## taylor_coeff() ##
     # base cases verification
