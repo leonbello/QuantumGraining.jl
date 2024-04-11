@@ -32,7 +32,7 @@ export diagram_correction, contraction_coeff, calc_pole_corrections,
         split_freqs_into_bubbles, to_symbol, to_qc_symbol
 
 # corrections.jl
-export merge_duplicate_exponents
+export merge_duplicate_exponents, simplify_contraction
 
 # bubble.jl
 export Bubble, calculate_bubble_factor
@@ -40,7 +40,8 @@ export Bubble, calculate_bubble_factor
 # lindblad.jl
 export effective_hamiltonian_term, effective_dissipator_term, 
         gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
-        qc_convert, effective_hamiltonian
+        qc_convert, effective_hamiltonian, expand_operators, group_operators
+        #group_unique_operators,
 
 
 include("bvector.jl")

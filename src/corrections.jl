@@ -1,4 +1,5 @@
 using Symbolics
+using SymbolicUtils
 using QuantumGraining
 
 struct Correction
@@ -43,6 +44,14 @@ struct ContractionCoefficient
     end
 end
 
+function simplify_contraction(c::ContractionCoefficient)
+    simplified_prefacs = simplify.(c.prefacs; simplify_fractions=false)
+    simplified_exponents = simplify.(c.exponents; simplify_fractions=false)
+    simplified_polys = [simplify.(poly; simplify_fractions=false) for poly in c.polys]
+
+    return ContractionCoefficient(simplified_exponents, simplified_prefacs, simplified_polys)
+end
+
 # Possibly, this should be a `ContractionCoefficient` constructor.
 function contraction_coeff(left::Int, right::Int, freqs::Array)
     """
@@ -74,7 +83,8 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
         push!(pre_list, corr.prefac)
         push!(poly_list, corr.poly)
     end
-    return ContractionCoefficient(exp_list, pre_list, poly_list)
+    c = ContractionCoefficient(exp_list, pre_list, poly_list)
+    return merge_duplicate_exponents(c)
 end
 contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
@@ -142,34 +152,77 @@ function  +(c1::Correction, c2::Correction)
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
+# function  +(c1::ContractionCoefficient, c2::Correction)
+#     prefacs, polys, exponents = c1.prefacs, c1.polys, c1.exponents
+#     exp_in = 0
+#     for exponent in exponents
+#         if isequal(c2.exponent, exponent)
+#             exp_in = 1
+#         end
+#     end
+#     if exp_in == 1
+#         ind = findfirst(item -> isequal(item,c2.exponent), c1.exponents)
+#         old_prefac = prefacs[ind]
+#         replace!(prefacs, prefacs[ind] => prefacs[ind] + c2.prefac)
+#         replace!(polys, polys[ind] => (old_prefac*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
+#     else
+#         push!(exponents, c2.exponent)
+#         push!(prefacs, c2.prefac)
+#         push!(polys, c2.poly)
+#     end
+#     return ContractionCoefficient(exponents, prefacs, polys)
+# end
+
+# Doesn't work correctly
+# function  +(c1::ContractionCoefficient, c2::Correction)
+#     new_c = deepcopy(merge_duplicate_exponents(c1))
+
+#     prefacs, polys, exponents = new_c.prefacs, new_c.polys, new_c.exponents
+#     for exponent in exponents
+#         if isequal(c2.exponent, exponent)
+#             ind = findfirst(item -> isequal(item, c2.exponent), c1.exponents)
+#             old_prefac = prefacs[ind]
+#             replace!(prefacs, prefacs[ind] => simplify(prefacs[ind] + c2.prefac))
+#             replace!(polys, polys[ind] => (old_prefac*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
+#         else
+#             push!(exponents, c2.exponent)
+#             push!(prefacs, c2.prefac)
+#             push!(polys, c2.poly)
+#         end
+#     end
+#     return merge_duplicate_exponents(ContractionCoefficient(exponents, prefacs, polys))
+# end
+
 function  +(c1::ContractionCoefficient, c2::Correction)
-    prefacs,polys,exponents = c1.prefacs, c1.polys, c1.exponents
-    exp_in = 0
-    for expon in exponents
-        if isequal(c2.exponent, expon)
-            exp_in = 1
+    new_c = deepcopy(merge_duplicate_exponents(c1))
+
+    prefacs, polys, exponents = new_c.prefacs, new_c.polys, new_c.exponents
+    found = false
+    for exponent in exponents
+        if isequal(c2.exponent, exponent)
+            found = true
+            ind = findfirst(item -> isequal(item, c2.exponent), c1.exponents)
+            old_prefac = prefacs[ind]
+            replace!(prefacs, prefacs[ind] => simplify(prefacs[ind] + c2.prefac))
+            replace!(polys, polys[ind] => (old_prefac*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
         end
     end
-    if exp_in == 1
-        ind = findfirst(item -> isequal(item,c2.exponent), c1.exponents)
-        prefac_og = prefacs[ind]
-        replace!(prefacs, prefacs[ind] => prefacs[ind] + c2.prefac)
-        replace!(polys, polys[ind] => (prefac_og*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
-    else
-    push!(exponents, c2.exponent)
-    push!(prefacs, c2.prefac)
-    push!(polys, c2.poly)
+    if !found
+        push!(exponents, c2.exponent)
+        push!(prefacs, c2.prefac)
+        push!(polys, c2.poly)
     end
-    return ContractionCoefficient(exponents, prefacs, polys)
+    return merge_duplicate_exponents(ContractionCoefficient(exponents, prefacs, polys))
 end
 
+
 function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
-    contractCoeff = c1
-    for i in 1:length(c2.exponents)
+    new_c = deepcopy(c1)
+    for i in eachindex(c2.exponents)
         corr = Correction(c2.prefacs[i], c2.exponents[i], c2.polys[i])
-        contractCoeff += corr
+        new_c += corr
     end
-    return contractCoeff
+    return simplify_contraction(merge_duplicate_exponents(new_c))
 end
 
 import Base: *
@@ -231,7 +284,7 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
     unique_polys = []
     merged_indices = []
 
-    for i in 1:length(c.exponents)
+    for i in eachindex(c.exponents)
         if i in merged_indices
             continue
         end
@@ -241,6 +294,7 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
         poly = c.polys[i]
 
         indices_to_merge = [i]
+        #indices_to_merge = []
         for j in (i+1):length(c.exponents)
             if isequal(expand(c.exponents[j]^2) - expand(exponent^2), 0)
                 push!(indices_to_merge, j)
@@ -250,13 +304,12 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
 
         if length(indices_to_merge) > 1
             # Merge prefacs and polys for indices_to_merge
-            merged_prefac = simplify(sum(c.prefacs[idx] for idx in indices_to_merge))
-            merged_poly = simplify(sum(c.polys[idx] for idx in indices_to_merge))
+            merged_prefac = sum(simplify.(c.prefacs[indices_to_merge]))
+            merged_poly = simplify(sum(c.polys[indices_to_merge]))
 
             push!(unique_exponents, exponent)
             push!(unique_prefacs, merged_prefac)
             push!(unique_polys, merged_poly)
-            
         else
             push!(unique_exponents, exponent)
             push!(unique_prefacs, prefac)

@@ -79,11 +79,17 @@ function effective_hamiltonian_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     ωs_eff  = []
     gs_eff  = []
 
+    idx = []
     for i in eachindex(perm_h)
-        ω = perm_Ω[i]      
-        push!(ops_eff, perm_h[i])                    
+        ω = perm_Ω[i]
+        if length(ω) > 1 && isequal(ω[1] + ω[2], 0)
+            push!(idx, i)
+        end
+        op = perm_h[i]
+        g = simplify_contraction(1//2*prod(perm_g[i])*(contraction_coeff(k, 0, ω) + contraction_coeff(k, 0, -reverse(ω))))
+        push!(ops_eff, op)                    
         push!(ωs_eff, ω)
-        push!(gs_eff, prod(1//2*perm_g[i])*(contraction_coeff(k, 0, ω) + contraction_coeff(k, 0, -reverse(ω))))
+        push!(gs_eff, g)
     end
     if length(ops_eff[1]) == 1
         ops_eff = vcat(ops_eff...)
@@ -96,10 +102,12 @@ function effective_hamiltonian_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
         ωs_eff = [sum(ω) for ω in ωs_eff]
     end
 
-    return ops_eff, merge_duplicate_exponents.(gs_eff), ωs_eff
+    merged_gs = [merge_duplicate_exponents(g) for g in gs_eff]
+    return ops_eff, merged_gs, ωs_eff
+    #return ops_eff, merge_duplicate_exponents.(gs_eff), ωs_eff
 end    
 
-function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int)
+function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict=false, remove_constants=true)
     ops_eff = []
     ωs_eff  = []
     gs_eff  = []
@@ -110,8 +118,21 @@ function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int)
         push!(ωs_eff, ω...)
         push!(gs_eff, g...)
     end
+    
+    unique_hs, unique_gs, unique_ωs = expand_operators(ops_eff, gs_eff, ωs_eff)
+    
+    if as_dict
+        gs_eff, ωs_eff = group_operators(unique_hs, unique_gs, unique_ωs; as_dict=true)
+        if remove_constants 
+            delete!(gs_eff, 1)
+            delete!(ωs_eff, 1)
+        end
+        return gs_eff, ωs_eff
+    else
+        unique_hs, unique_gs = group_operators(unique_hs, unique_gs, unique_ωs; as_dict=false) 
+        return unique_hs, unique_gs, ωs_eff
+    end
 
-    return ops_eff, gs_eff, ωs_eff
 end
 
 """
@@ -119,6 +140,7 @@ end
 * effective_dissipator(d::Diagram) - Given a diagram object, returns all contributing terms.
 * effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
+# To be deprecated
 function effective_dissipator_term(h::Vector, Ω::Vector, k::Int)
     γ_list  = []
     ω_list  = []
@@ -167,6 +189,72 @@ function effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     return J_list, γ_list, ω_list
 end
 
+function expand_operators(hs, gs, ωs)
+    """
+        Goes over any sum of operators and breaks it into the constituent operators while preserving the order of the other vectors
+    """
+    unique_hs = []
+    unique_gs = []
+    unique_ωs = []
+    for (h, g, ω) in zip(hs, gs, ωs)
+        if h ≠ 0
+            if h isa QuantumCumulants.QAdd  # if it's a sum of operators
+                for s in h.arguments
+                    if !(s isa QuantumCumulants.QMul)
+                        push!(unique_hs, s)
+                        push!(unique_gs, g)
+                        push!(unique_ωs, ω)
+                    else
+                        p = prod([p for p in s.args_nc])
+                        new_g = s.arg_c*g
+                        push!(unique_hs, p)
+                        push!(unique_gs, new_g)
+                        push!(unique_ωs, ω)
+                    end
+                end
+            elseif h isa QuantumCumulants.QMul
+                p = prod([p for p in h.args_nc])
+                new_g = h.arg_c*g
+                push!(unique_hs, p)
+                push!(unique_gs, new_g)
+                push!(unique_ωs, ω)
+            end
+        end
+    end
+    return unique_hs, unique_gs, unique_ωs
+end
+
+function group_operators(hs, gs, ωs; as_dict=true)
+    new_hs = []
+    new_gs = []
+    new_ωs = []
+
+    for i in eachindex(hs)
+        idx = findfirst(x -> isequal(x, hs[i]), new_hs)
+        if !isnothing(idx)
+            # If it's a duplicate, find its index in new_hs i=14
+            new_gs[idx] += gs[i]
+        else
+            # If it's not a duplicate, add hs[i] to new_hs
+            push!(new_hs, hs[i])
+            # Add gs[i] to new_gs and add corresponding element from ws to new_ws
+            push!(new_gs, gs[i])
+            push!(new_ωs, ωs[i])
+        end
+    end
+
+    new_gs = simplify_contraction.(new_gs)
+
+    if as_dict
+        gs_dict = Dict(new_hs[i] => new_gs[i] for i in eachindex(new_hs))
+        ωs_dict = Dict(new_hs[i] => new_ωs[i] for i in eachindex(new_hs))
+        return gs_dict, ωs_dict
+    else
+        return new_hs, new_gs, new_ωs
+    end
+end
+
+
 
 
 """
@@ -178,7 +266,7 @@ end
 #     return effective_hamiltonian(k, ω, h), effective_dissipator(k, ω, h)
 # end
 
-function drop_high_freqs(freqs_list, freqs_subs, cutoff=0.1)
+function drop_high_freqs(freqs_list::Vector, freqs_subs, cutoff=0.1)
     """
         Given a list of frequencies, and a list of substitutions, returns only the low frequencies.
     """
@@ -194,7 +282,22 @@ function drop_high_freqs(freqs_list, freqs_subs, cutoff=0.1)
     return rwa, freqs_low
 end
 
-function symbolic_hamiltonian(gs, ops, Ω, t, τ)
+function drop_high_freqs(freqs_dict, freqs_vals; cutoff=0.1)
+    """
+        Given dictionaries holding the frequencies and couplings,
+        drops all high-frequency contributions.
+    """
+
+    for (key, freq) in freqs_dict
+        num_val = substitute(freq, freqs_vals)
+        if !isapprox(round(abs(num_val.val)), 0; rtol=cutoff)
+            delete!(freqs_dict, key)
+        end
+    end
+    return freqs_dict
+end
+
+function symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
     terms = []
     for (g, op, ω) in zip(gs, ops, Ω)
         if isequal(ω, 0)
@@ -204,15 +307,24 @@ function symbolic_hamiltonian(gs, ops, Ω, t, τ)
         end
 
         term = to_symbol(g, τ)*ft
-        println(term)
         if !isequal(term, 0)
-            push!(terms, term*op)
+            push!(terms, (term)*op)
         end
     end
     return terms
 end
 
-function gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=false)
+function symbolic_hamiltonian(gs::Dict, Ω::Dict, t, τ)
+    gs_list = collect(values(gs))
+    ops_list = collect(keys(gs))
+    Ω_list = collect(values(Ω))
+
+    return symbolic_hamiltonian(gs_list, ops_list, Ω_list, t, τ)
+end
+
+
+
+function gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=true)
     new_gs = []
     for g in gs
         new_exponents = []
@@ -229,6 +341,14 @@ function gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=fals
     return merge_duplicate_exponents.(new_gs)
 end
 
+function gaussian_to_cutoff(gs::Dict, ωs::Dict, freq_vals; cutoff=0.1, keep_small_exponents=true)
+    gs_low = Dict(key => gs[key] for key in collect(keys(ωs)) if haskey(gs, key))
+    gs_list = gaussian_to_cutoff(collect(values(gs_low)), freq_vals; 
+                                    cutoff=cutoff, keep_small_exponents=keep_small_exponents)
+    gs_low = Dict(key => gs_list[i] for (i, key) in enumerate(collect(keys(ωs))))
+
+    return gs_low
+end
 function qc_convert(gs, ops, freqs, cnumbers_dict, t, τ)
     gs_qc = substitute(to_symbol.(gs, τ), cnumbers_dict)
     freqs_qc = [substitute(ω, cnumbers_dict) for ω in freqs]
