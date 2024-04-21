@@ -40,8 +40,11 @@ export Bubble, calculate_bubble_factor
 # lindblad.jl
 export effective_hamiltonian_term, effective_dissipator_term, 
         gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
-        qc_convert, effective_hamiltonian, expand_operators, group_operators
-        #group_unique_operators,
+        effective_hamiltonian, expand_operators, expand_operator, group_operators,
+        effective_dissipator
+
+# convert.jl
+export convert_expressions, hamiltonian_function, normal_ordered_dictionary, qc_convert, qnumber_to_qop
 
 
 include("bvector.jl")
@@ -54,4 +57,5 @@ include("lindblad.jl")
 include("poles.jl")
 include("printing.jl")
 include("utils.jl")
+include("convert.jl")
 end
