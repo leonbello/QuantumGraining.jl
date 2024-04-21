@@ -24,7 +24,6 @@ ops_eff, Ω_eff, g_eff = effective_hamiltonian_term(hvec, gvec, Ω, 1)
 ops_eff, Ω_eff, g_eff = effective_hamiltonian(hvec, gvec, Ω, 2)
 
 
-
 ### RWA
 freqs_subs = Dict(
     ωa => 1,
