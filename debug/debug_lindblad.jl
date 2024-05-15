@@ -3,6 +3,7 @@ using Symbolics
 using Test
 using QuantumCumulants
 using QuantumGraining
+using QuantumOptics
 
 @variables g ωc ωa
 Ω = [-ωc - ωa, ωc + ωa, -ωc + ωa, ωc - ωa]
@@ -19,12 +20,48 @@ h = tensor(h_cav, h_atom)
 σp = σ(:g, :e)
 hvec = [a*σm, a'*σp, a*σp, a'*σm]
 
-ops_eff, Ω_eff, g_eff = effective_hamiltonian_term(hvec, gvec, Ω, 1)
+order = 3
+#ops_eff, Ω_eff, g_eff = effective_hamiltonian_term(hvec, gvec, Ω, order)
 
-ops_eff, Ω_eff, g_eff = effective_hamiltonian(hvec, gvec, Ω, 2)
+g_eff, Ω_eff = effective_hamiltonian(hvec, gvec, Ω, order, as_dict=true)
+g_eff, Ω_eff = drop_high_freqs(g_eff, Ω_eff, Dict(ωa => 1, ωc => 1.01))
+
+g_eff
+
+### QuantumOptics.jl definitions
+ha_qo = SpinBasis(1//2)
+hc_qo = FockBasis(100)
+h_qo = hc_qo ⊗ ha_qo
+
+# Operator definitions
+σp_qo = sigmap(ha_qo)
+σm_qo = sigmam(ha_qo)
+a_qo = destroy(hc_qo)
+I_a = identityoperator(ha_qo)
+I_c = identityoperator(hc_qo)
+
+p_sym = [g, ωc, ωa]
+
+base_qc = [a, a', σm, σp, σ(:e, :e)]
+Id = [I_c, I_a]
+base_qo = [a_qo, a_qo', σm_qo, σp_qo, σp_qo*σm_qo, Id...]
+
+H_func = hamiltonian_function(g_eff, Ω_eff, base_qc, base_qo, p_sym)
+
+## QuantumOptics.jl
+# Units
+μs = 1
+MHz = 1/μs
+
+tspan = [0:0.01:120μs;]
+ψ0 = coherentstate(hc_qo, 4.5) ⊗ spinup(ha_qo)
+
 
 
 ### RWA
+
+
+
 freqs_subs = Dict(
     ωa => 1,
     ωc => 1.01

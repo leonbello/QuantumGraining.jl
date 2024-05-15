@@ -379,7 +379,7 @@ function drop_high_freqs(freqs_list::Vector, freqs_subs, cutoff=0.1)
     return rwa, freqs_low
 end
 
-function drop_high_freqs(freqs_dict, freqs_vals; cutoff=0.1)
+function drop_high_freqs(gs_dict, freqs_dict, freqs_vals; cutoff=0.1)
     """
         Given dictionaries holding the frequencies and couplings,
         drops all high-frequency contributions.
@@ -389,9 +389,10 @@ function drop_high_freqs(freqs_dict, freqs_vals; cutoff=0.1)
         num_val = substitute(freq, freqs_vals)
         if !isapprox(round(abs(num_val.val)), 0; rtol=cutoff)
             delete!(freqs_dict, key)
+            delete!(gs_dict, key)
         end
     end
-    return freqs_dict
+    return gs_dict, freqs_dict
 end
 
 function symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
@@ -400,7 +401,7 @@ function symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
         if isequal(ω, 0)
             ft = 1
         else
-            ft = Symbolics.Term(exp, [-im*ω*t])
+            ft = Symbolics.Term(exp, [im*ω*t])
         end
 
         term = to_symbol(g, τ)*ft

@@ -36,7 +36,7 @@ using QuantumGraining
 
     # a*σm: -ωa - ωc
     begin
-        @test isequal(g_eff_1[a*σm].prefacs[1], g/2)
+        @test isequal(g_eff_1[a*σm].prefacs[1], g//2)
         @test isequal(g_eff_1[a*σm].exponents[1], (-ωa - ωc)^2)
         @test isequal(Ω_eff_1[a*σm], -ωa - ωc)
     end
@@ -78,13 +78,13 @@ using QuantumGraining
     # a*σp: ωa - ωc
     begin
         @test isequal(g_low_1[a*σp].prefacs[1], g//2)
-        @test isequal(g_low_1[a*σp].exponents[1], (ωa - ωc)^2)
+        @test isequal(expand(g_low_1[a*σp].exponents[1]), expand((ωa - ωc)^2))
     end
 
     # a'*σm: ωc - ωa
     begin
         @test isequal(g_low_1[a'*σm].prefacs[1], g//2)
-        @test isequal(g_low_1[a'*σm].exponents[1], (ωc - ωa)^2)
+        @test isequal(expand(g_low_1[a'*σm].exponents[1]), expand((ωc - ωa)^2))
     end
     
     # Second-order Rabi-model -- Hamiltonian terms
@@ -135,219 +135,5 @@ using QuantumGraining
         @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[1] - gadaσee.prefacs[1]), 0)
         @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[2] - gadaσee.prefacs[3]), 0)
         @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[3] - gadaσee.prefacs[2]), 0)
-    end
-
-    # # # ω, -ω:
-    # begin    
-    #     @test isequal(Ω_eff[2], 0)
-    #     @test isequal(simplify(ops_eff[2] - a'*σp*a*σm), 0)
-    #     @test issetequal(expand.(g_eff[2].exponents), [0, 2*ωa^2 + 4*ωa*ωc + 2*ωc^2])
-    #     @test issetequal(simplify.(g_eff[2].prefacs .- -[-g^2//8*1/(ωa + ωc), g^2//8*1/(ωa + ωc)]), [0,0])
-    # end
-
-    # # -Δ, -ω
-    # begin
-    #     @test isequal(Ω_eff[3], -(ωc - ωa) - (ωc + ωa))
-    #     @test isequal(simplify(ops_eff[3] - a*σp*a*σm), 0)
-    #     @test issetequal(
-    #         expand.(g_eff[3].exponents),
-    #         expand.([Δ^2 + Σ^2, (Σ + Δ)^2])
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[3].prefacs[1] - g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[3].prefacs[2] - -g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    # end
-
-    # # -ω, Δ:
-    # begin
-    #     @test isequal(Ω_eff[4], -ωa - ωc + ωc - ωa)
-    #     @test isequal(simplify(ops_eff[4] - a*σm*a'*σm), 0) # equals 0       
-    # end
-    
-    # # -ω, ω:    
-    # begin
-    #     @test isequal(Ω_eff[5], 0)
-    #     @test isequal(simplify(ops_eff[5] - a*σm*a'*σp), 0)
-    #     @test issetequal(expand.(g_eff[5].exponents), [0, 2*ωa^2 + 4*ωa*ωc + 2*ωc^2])
-    #     @test issetequal(simplify.(g_eff[5].prefacs .- [-g^2//8*1/(ωa + ωc), g^2//8*1/(ωa + ωc)]), [0,0])
-    # end
-
-    # # ω, ω:
-    # begin
-    #     @test isequal(Ω_eff[6], 2ωa + 2ωc)
-    #     @test isequal(ops_eff[6], 0)  # equals 0  
-    # end
-
-    # # ω, -Δ: 
-    # begin   
-    #     @test isequal(Ω_eff[7], (ωa + ωc) - (ωc - ωa))
-    #     @test isequal(ops_eff[7], a'*σp*a*σp) # equals 0
-    # end
-    
-    # # Δ, ω:
-    # begin
-    #     @test isequal(Ω_eff[8], (ωa + ωc) + (ωc - ωa))
-    #     @test isequal(ops_eff[8], a'*σm*a'*σp)
-    #     @test issetequal(
-    #         expand.(g_eff[8].exponents),
-    #         expand.([Δ^2 + Σ^2, (Σ + Δ)^2])
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[8].prefacs[1] - -g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[8].prefacs[2] - g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    # end
-    
-    # # -ω, -Δ:
-    # begin
-    #     @test isequal(Ω_eff[9], -(ωc + ωa) - (ωc - ωa))
-    #     @test isequal(ops_eff[9], a*σm*a*σp)
-    #     @test issetequal(
-    #         expand.(g_eff[9].exponents),
-    #         expand.([Δ^2 + Σ^2, (Σ + Δ)^2])
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[9].prefacs[1] - -g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    #     @test isequal(
-    #         simplify(g_eff[9].prefacs[2] - g^2//16*(1/Σ - 1/Δ)),
-    #         0
-    #     )
-    # end
-
-    # # -Δ, ω:
-    # begin    
-    #     @test isequal(Ω_eff[10], -(ωc - ωa) + (ωc + ωa))
-    #     @test isequal(ops_eff[10], a*σp*a'*σp) # equals 0
-    # end
-
-    # # -Δ, -Δ:
-    # begin
-    #     @test isequal(simplify(Ω_eff[11] - -2*(ωc - ωa)), 0)
-    #     @test isequal(ops_eff[11], a*σp*a*σp)  # equals 0      
-    # end
-
-    # # Δ, Δ:
-    # begin
-    #     @test isequal(simplify(Ω_eff[16] - 2*(ωc - ωa)), 0)
-    #     @test isequal(ops_eff[16], a'*σm*a'*σm) # equals 0        
-    # end
-
-    # # Δ, -Δ:
-    # begin
-    #     @test isequal(Ω_eff[12], -(ωc - ωa) + (ωc - ωa))
-    #     @test isequal(ops_eff[12], a'*σm*a*σp)
-    #     @test issetequal(
-    #         simplify.(expand.(g_eff[12].exponents)), 
-    #         simplify.(expand.([2*(ωc - ωa)^2, 0]))
-    #     )
-    #     @test issetequal(
-    #         simplify.(g_eff[12].prefacs .- g^2//8*1/(ωc - ωa).*[1, -1]),
-    #         0
-    #     )         
-    # end
-
-    # # -Δ, Δ:
-    # begin
-    #     @test isequal(Ω_eff[15], -(ωc - ωa) + (ωc - ωa))
-    #     @test isequal(simplify(ops_eff[15] - a*σp*a'*σm), 0)
-    #     @test issetequal(
-    #         simplify.(expand.(g_eff[15].exponents)), 
-    #         simplify.(expand.([2*(ωc - ωa)^2, 0]))
-    #     )
-    #     @test issetequal(
-    #         simplify.(g_eff[15].prefacs .- -g^2//8*1/(ωc - ωa).*[1, -1]),
-    #         [0, 0]
-    #     )        
-    # end
-
-    # # Δ, -ω:
-    # begin    
-    #     @test isequal(Ω_eff[13], (ωc - ωa) - (ωa + ωc))
-    #     @test isequal(ops_eff[13], a'*σm*a*σm) # equals 0
-    # end
-
-    # # ω, Δ:
-    # begin                
-    #     @test isequal(Ω_eff[14], (ωc - ωa) + (ωa + ωc))
-    #     @test isequal(
-    #         simplify(ops_eff[14] - a'*σp*a'*σm),
-    #         0
-    #     )
-    #     @test issetequal(
-    #         expand.(g_eff[14].exponents),
-    #         expand.([(ωc + ωa)^2 + (ωc - ωa)^2, ((ωc + ωa) + (ωc - ωa))^2])
-    #     )
-    #     @test issetequal(
-    #         simplify.(g_eff[14].prefacs .- g^2//16*(1/(ωc - ωa) - 1/(ωc + ωa)).*[-1, 1]),
-    #         [0, 0]
-    #     )
-    # end
-
-    # # Second-order Rabi-model -- Dissipators
-    # begin
-    #     diss_eff, γ_eff, Ω_eff = effective_dissipator_term(hvec, gvec, Ω, 2)
-    #     rwa, Ω_rwa = drop_high_freqs(Ω_eff, fsubs)
-    #     @show Ω_rwa
-        
-    #     diss_rwa = diss_eff[rwa]
-    #     @show diss_rwa
-        
-    #     γ_rwa = γ_eff[rwa]
-    #     @show γ_rwa
-    # end
-
-    # # -Δ, -Δ:
-    # begin
-    #     @test isequal(simplify(Ω_rwa[3] - -2*Δ), 0)
-    #     @test issetequal(diss_rwa[3], (a*σp, a*σp))
-
-    #     @test issetequal(
-    #         simplify.(expand.(γ_rwa[3].exponents)),
-    #         simplify.(expand.([2*Δ^2, 4*Δ^2]))
-    #     )
-
-    #     @test isequal(
-    #         simplify(γ_rwa[3].prefacs[1] - im*g^2/(2*Δ)),
-    #         0
-    #     )
-
-    #     @test isequal(
-    #         simplify(γ_rwa[3].prefacs[2] - -im*g^2/(2*Δ)),
-    #         0
-    #     )
-
-    # end
-
-    # # Δ, Δ:
-    # begin
-    #     @test isequal(simplify(Ω_rwa[6] - 2*Δ), 0)
-    #     @test issetequal(diss_rwa[6], (a'*σm, a'*σm))
-
-    #     @test issetequal(
-    #         simplify.(expand.(γ_rwa[6].exponents)),
-    #         simplify.(expand.([2*Δ^2, 4*Δ^2]))
-    #     )
-
-    #     @test isequal(
-    #         simplify(γ_rwa[6].prefacs[1] - -im*g^2/(2*Δ)),
-    #         0
-    #     )
-
-    #     @test isequal(
-    #         simplify(γ_rwa[6].prefacs[2] - im*g^2/(2*Δ)),
-    #         0
-    #     )
-    # end
-    
+    end    
 end

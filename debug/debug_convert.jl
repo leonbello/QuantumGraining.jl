@@ -48,6 +48,7 @@ hs_qo = [a_qo⊗σm_qo, a_qo'⊗σp_qo, a_qo⊗σp_qo, a_qo'⊗σm_qo]
 ### TCG
 g_eff_1, Ω_eff_1 = effective_hamiltonian(hs_qc, gs_qc, Ω_qc, 1; as_dict=true)
 g_eff_2, Ω_eff_2 = effective_hamiltonian(hs_qc, gs_qc, Ω_qc, 2; as_dict=true)
+γ_eff_2, ω_eff_2 = effective_dissipator(hs_qc, gs_qc, Ω_qc, 2; as_dict=true)
 
 tspan = [0:0.01:80μs;]
 ψ0 = coherentstate(hc_qo, 4.5) ⊗ spinup(ha_qo)
@@ -56,7 +57,6 @@ base_qc = [a_qc, a_qc', σm_qc, σp_qc, σ_qc(:e, :e)]
 
 Id = [I_c, I_a]
 base_qo = [a_qo, a_qo', σm_qo, σp_qo, σp_qo*σm_qo, Id...]
-
 
 H_1 = hamiltonian_function(g_eff_1, Ω_eff_1, base_qc, base_qo, p_qc)
 H_2 = hamiltonian_function(g_eff_2, Ω_eff_2, base_qc, base_qo, p_qc)
@@ -67,14 +67,16 @@ H_2(0, ψ0; args=args)
 tout1, ψt1 = timeevolution.schroedinger_dynamic(tspan, ψ0, (t, ψ) -> H_1(t, ψ; args=args));
 tout2, ψt2 = timeevolution.schroedinger_dynamic(tspan, ψ0, (t, ψ) -> H_2(t, ψ; args=args));
 
-plot(tout1, real(expect(1, a_qo'*a_qo, ψt1)), lw=2.5, label="a'*a - 1");
-plot!(tout2, real(expect(1, a_qo'*a_qo, ψt2)), lw=2.5, label="a'*a - 2");
+# plot(tout1, real(expect(1, a_qo'*a_qo, ψt1)), lw=2.5, label="a'*a - 1");
+# plot!(tout2, real(expect(1, a_qo'*a_qo, ψt2)), lw=2.5, label="a'*a - 2");
 
-xlabel!("Time [μs]")
-ylabel!(L"$\langle n \rangle$")
+# xlabel!("Time [μs]")
+# ylabel!(L"$\langle n \rangle$")
 
 
+L = lindblad_function(g_eff_2, Ω_eff_2, γ_eff_2, ω_eff_2, base_qc, base_qo, p_qc)
 
+L(0, dm(ψ0); args=args)
 
 
 ##

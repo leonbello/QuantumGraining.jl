@@ -44,7 +44,8 @@ export effective_hamiltonian_term, effective_dissipator_term,
         effective_dissipator
 
 # convert.jl
-export convert_expressions, hamiltonian_function, normal_ordered_dictionary, qc_convert, qnumber_to_qop
+export convert_expressions, hamiltonian_function, normal_ordered_dictionary, qc_convert, qnumber_to_qop,
+        contraction_to_function, lindblad_function
 
 
 include("bvector.jl")

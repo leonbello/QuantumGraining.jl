@@ -4,13 +4,42 @@ using QuantumOptics
 
 function contraction_to_function(g, ω, ps)
     @variables t, τ
-    expr = sum(to_symbol(g, τ).*exp(-1im*ω*t))
+    expr = sum(to_symbol(g, τ).*exp(1im*ω*t))
     func_re = build_function(expr.re, [ps..., τ, t]...; expression=false)
     func_im = build_function(expr.im, [ps..., τ, t]...; expression=false)
     
     func(args, t) = func_re(args..., t) + 1im*func_im(args..., t)
     return func
 end
+
+function lindblad_function(gs, Ωs, γs, ωs, h_src, h_tgt, ps)
+    n = length(h_src)
+    Id = h_tgt[(n+1):end]
+    h_tgt = h_tgt[1:n]
+    
+    
+    @variables t, τ
+    op_subs = h_src .=> h_tgt
+    J = []
+    Jdagger = []
+    rate_funcs = []
+    for (J_val, γ) in γs
+        J1, J2 = J_val
+
+        push!(J, qnumber_to_qop(J1, op_subs, Id))
+        push!(Jdagger, qnumber_to_qop(J2, op_subs, Id))    
+        push!(rate_funcs, contraction_to_function(γ, ωs[J_val], ps))
+    end
+    
+    function L_func(t, ρ; args)
+        H = hamiltonian_function(gs, Ωs, h_src, [h_tgt..., Id...], ps)
+        rates = map(f -> f(args, t), rate_funcs)
+        return (H(t, ρ; args=args), J, Jdagger, rates) 
+    end
+
+    return L_func
+end
+
 
 function hamiltonian_function(gs, ωs, h_src, h_tgt, ps)
     n = length(h_src)
@@ -21,21 +50,11 @@ function hamiltonian_function(gs, ωs, h_src, h_tgt, ps)
     @variables t, τ
 
     func_gs = [contraction_to_function(g, ω, ps) for (g, ω) in zip(values(gs), values(ωs))]
-    #new_ops = [qnumber_to_qop(op, h_src .=> h_tgt, Id) for op in collect(keys(gs))]
+    
     new_ops = []
     for op in keys(gs)
         push!(new_ops, qnumber_to_qop(op, h_src .=> h_tgt, Id))
     end
-    # for (g, ω) in zip(values(gs), values(ωs))
-    #     expr = sum(to_symbol(g, τ).*exp(-1im*ω*t))
-    #     func_re = build_function(expr.re, [ps..., τ, t]...; expression=false)
-    #     func_im = build_function(expr.im, [ps..., τ, t]...; expression=false)
-        
-    #     func(args, t) = func_re(args..., t) + 1im*func_im(args..., t)
-    #     push!(func_gs, func)
-    # end
-
-    #ops_dict, gs_dict, ωs_dict = convert_expressions(gs, ωs, h_src, h_tgt, ps .=> ps, τ; order=order, as_dict=true)
 
     function H_func(t, ψ; args)
         H = []
