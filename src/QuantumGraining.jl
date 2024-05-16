@@ -40,7 +40,7 @@ export Bubble, calculate_bubble_factor
 # lindblad.jl
 export effective_hamiltonian_term, effective_dissipator_term, 
         gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
-        qc_convert, effective_hamiltonian, expand_operators, group_operators
+        qc_convert, effective_hamiltonian, expand_operators, group_operators, repeated_combinations
         #group_unique_operators,
 
 

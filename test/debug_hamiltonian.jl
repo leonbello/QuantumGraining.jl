@@ -4,88 +4,216 @@ using Test
 using QuantumCumulants
 using QuantumGraining
 
-@variables g ωc ωa
-Ω = [-ωc - ωa, ωc + ωa, -ωc + ωa, ωc - ωa]
-gvec = (g/2).*[1, 1, 1, 1]
+@variables g ωc ωa t τ
+Ω = [ωc + ωa, - ωc - ωa, ωc - ωa, - ωc + ωa]
+gvec = (g//2).*[1, 1, 1, 1]
 
+# Hilbert space definitions
 h_cav = FockSpace(:cavity)
 h_atom = NLevelSpace(:atom, (:g,:e))
 h = tensor(h_cav, h_atom)
 
+# Operator definitions
 @qnumbers a::Destroy(h) σ::Transition(h)
-σm = σ(:e, :g)
-σp = σ(:g, :e)
-σz = σ(:e, :e)
+σm = σ(:g, :e)
+σp = σ(:e, :g)
+σz = σ(:e, :e) - σ(:g, :g)
+σee = σ(:e, :e)
 hvec = [a*σm, a'*σp, a*σp, a'*σm]
 
-Σ = ωa + ωc
-Δ = ωc - ωa
+g_eff_2, Ω_eff_2 = effective_hamiltonian(hvec, gvec, Ω, 2; as_dict=true)
 
-ops_eff, g_eff, Ω_eff = effective_hamiltonian_term(hvec, gvec, Ω, 2)  
+@show keys(g_eff_2)
 
-@show a*a'
-@show σm*σp
-@show σp*σm
+# σee: 0
 
-@show a'*σm*a*σp
-@show a*σp*a'*σm
-@show a'*σp*a*σm
-@show a*σm*a'*σp
+TestExpSigmaEE = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2]
+TestPrefacSigmaEE = [[(g^2//4)*(1/(ωa - ωc) + 1/(ωa + ωc))],
+[(-(g^2//4)/(ωa + ωc))],
+[(-(g^2//4)/(ωa - ωc))]
+]
 
-@show ops_eff
-unique_hs, unique_gs, unique_ωs = expand_operators(ops_eff, g_eff, Ω_eff)
+begin
+    @test isequal(Ω_eff_2[σee], 0)
 
+    @test isequal(length(g_eff_2[σee].exponents), 3)
 
-ids = findall(x -> isequal(x, a'*a), unique_hs)
-c_test = simplify_contraction(sum(unique_gs[ids]))
-@show c_test.polys
-
-gs, ωs = group_operators(unique_hs, unique_gs, unique_ωs)
-
-@show unique_hs
-
-@test issetequal(gs[a'*a].exponents, c_test.exponents)
-@test issetequal(gs[a'*a].prefacs, c_test.prefacs)
-
-g_eff, Ω_eff = effective_hamiltonian(hvec, gvec, Ω, 2; as_dict=true)
-@show g_eff
-
-@show g_eff[a'*a].exponents
-@show g_eff[a'*a].prefacs
-
-@show g_eff[σ(:e,:e)].exponents
-@show g_eff[σ(:e,:e)].prefacs
-
-@show g_eff[a'*a*σ(:e,:e)].exponents
-@show g_eff[a'*a*σ(:e,:e)].prefacs
-
-g1_test = g^2/4*contraction_coeff(2, 0, -[-ωa - ωc, ωa + ωc])
-g2_test = g^2/4*contraction_coeff(2, 0, -[ωa - ωc, ωc - ωa])
-@show g1_test
-@show g2_test
-
-@show (g2_test - g1_test).prefacs
-@show g_eff[a'*a].prefacs
-
-@show -(g2_test - g1_test).prefacs
-@show g_eff[σ(:e,:e)].prefacs
-
-@show 2*(g2_test + g1_test).prefacs
-@show g_eff[a'*a*σ(:e,:e)].prefacs
-
-for op in unique_hs
-    if op ≠ 1
-        println(op)
-        @test issetequal(g_eff[op].exponents, gs[op].exponents)
-        @test issetequal(simplify.(g_eff[op].prefacs .- gs[op].prefacs), [0,0])
+    for i in 1:3
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[σee].prefacs[i].*g_eff_2[σee].polys[i][j]
+                -
+                TestPrefacSigmaEE[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[σee].exponents[i], TestExpSigmaEE[i])
     end
 end
 
-# group_operators and simplify_contraction, as well as expand_operators seems to work
-# The operator-ordered don't match what I would expet from theory.
-# Specifically, the a'*a contributions should cancel, but in the output the still seem to exist.
 
-# function I may have screwed up (not limited to): 
-    # +(ContractionCoefficient, ContractionCoefficient)
-    # merge_duplicate_exponents()
-    # group_unique_operators() - for some reason the ContractionCoefficient is corrupted 
+# a*a*σee: 2*ωc
+
+TestExpAASigmaEE = [(4//1)*(ωc^2), (ωa + ωc)^2 + (-ωa + ωc)^2]
+TestPrefacAASigmaEE = [[(g^2//2)*ωa/((ωa - ωc)*(ωa + ωc))],
+[-(g^2//2)*ωa/((ωa - ωc)*(ωa + ωc))]
+]
+
+begin
+    @test isequal(Ω_eff_2[a*a*σee], 2*ωc)
+
+    @test isequal(length(g_eff_2[a*a*σee].exponents), 2)
+
+    for i in 1:2
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a*a*σee].prefacs[i].*g_eff_2[a*a*σee].polys[i][j]
+                -
+                TestPrefacAASigmaEE[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a*a*σee].exponents[i], TestExpAASigmaEE[i])
+    end
+end
+
+
+# a'*a'σee: -2*ωc
+
+TestExpAdAdSigmaEE = [(4//1)*(ωc^2), (ωa - ωc)^2 + (-ωa - ωc)^2]
+TestPrefacAdAdSigmaEE = [[(g^2//2)*ωa/((ωa - ωc)*(ωa + ωc))],
+[-(g^2//2)*ωa/((ωa - ωc)*(ωa + ωc))]
+]
+
+begin
+    @test isequal(Ω_eff_2[a'*a'*σee], -2*ωc)
+
+    @test isequal(length(g_eff_2[a'*a'*σee].exponents), 2)
+
+    for i in 1:2
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a'*a'*σee].prefacs[i].*g_eff_2[a'*a'*σee].polys[i][j]
+                -
+                TestPrefacAdAdSigmaEE[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a'*a'*σee].exponents[i], TestExpAdAdSigmaEE[i])
+    end
+end
+
+
+# a'*a*σee: 0
+
+TestExpAdASigmaEE = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2]
+TestPrefacAdASigmaEE = [[(g^2)*ωa/((ωa - ωc)*(ωa + ωc))],
+[-(g^2//2)*1/(ωa + ωc)],
+[-(g^2//2)*1/(ωa - ωc)]
+]
+
+begin
+    @test isequal(Ω_eff_2[a'*a*σee], 0)
+
+    @test isequal(length(g_eff_2[a'*a*σee].exponents), 3)
+
+    for i in 1:3
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a'*a*σee].prefacs[i].*g_eff_2[a'*a*σee].polys[i][j]
+                -
+                TestPrefacAdASigmaEE[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a'*a*σee].exponents[i], TestExpAdASigmaEE[i])
+    end
+end
+
+
+# a*a: 2*ωc
+
+TestExpAA = [(4//1)*(ωc^2), (ωa + ωc)^2 + (-ωa + ωc)^2]
+TestPrefacAA = [[-(g^2//4)*ωa/((ωa - ωc)*(ωa + ωc))],
+[(g^2//4)*ωa/((ωa - ωc)*(ωa + ωc))]
+]
+
+begin
+    @test isequal(Ω_eff_2[a*a], 2*ωc)
+
+    @test isequal(length(g_eff_2[a*a].exponents), 2)
+
+    for i in 1:2
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a*a].prefacs[i].*g_eff_2[a*a].polys[i][j]
+                -
+                TestPrefacAA[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a*a].exponents[i], TestExpAA[i])
+    end
+end
+
+
+# a'*a': -2*ωc
+
+TestExpAdAd = [(4//1)*(ωc^2), (ωa - ωc)^2 + (-ωa - ωc)^2]
+TestPrefacAdAd = [[-(g^2//4)*ωa/((ωa - ωc)*(ωa + ωc))],
+[(g^2//4)*ωa/((ωa - ωc)*(ωa + ωc))]
+]
+
+begin
+    @test isequal(Ω_eff_2[a'*a'], -2*ωc)
+
+    @test isequal(length(g_eff_2[a'*a'].exponents), 2)
+
+    for i in 1:2
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a'*a'].prefacs[i].*g_eff_2[a'*a'].polys[i][j]
+                -
+                TestPrefacAdAd[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a'*a'].exponents[i], TestExpAdAd[i])
+    end
+end
+
+
+# a'*a: 0
+
+TestExpAdA = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2]
+TestPrefacAdA = [[-(g^2//2)*ωa/((ωa - ωc)*(ωa + ωc))],
+[(g^2//4)*1/(ωa + ωc)],
+[(g^2//4)*1/(ωa - ωc)]
+]
+
+begin
+    @test isequal(Ω_eff_2[a'*a], 0)
+
+    @test isequal(length(g_eff_2[a'*a].exponents), 3)
+
+    for i in 1:3
+        PrefacDiff = []
+        for j in 1:1
+            push!(PrefacDiff, simplify(
+                g_eff_2[a'*a].prefacs[i].*g_eff_2[a'*a].polys[i][j]
+                -
+                TestPrefacAdA[i][j]
+                ))
+        end
+        @test isequal(PrefacDiff, fill(0,1))
+        @test isequal(g_eff_2[a'*a].exponents[i], TestExpAdA[i])
+    end
+end
+
+@test true

@@ -141,29 +141,29 @@ end
 * effective_dissipator(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
 """
 # To be deprecated
-function effective_dissipator_term(h::Vector, Ω::Vector, k::Int)
-    γ_list  = []
-    ω_list  = []
-    J_list  = []
-    
-    for i in 1:k  
-        perm_h, perm_Ω = repeated_combinations(h, Ω, i)
-
-        for (ω, h) in zip(perm_Ω, perm_h) 
-            for l in 1:(i-1)
-                γ = -im*(contraction_coeff(l, k-l, ω) - contraction_coeff(k-l, l, -reverse(ω)))
-                
-                J = prod(h[1:l]) # Jump operators
-                L = prod(h[l+1:k])
-
-                push!(γ_list, γ) 
-                push!(ω_list, sum(ω))
-                push!(J_list, (J, L))
-            end
-        end
-    end
-    return γ_list, ω_list, J_list
-end
+#function effective_dissipator_term(h::Vector, Ω::Vector, k::Int)
+#    γ_list  = []
+#    ω_list  = []
+#    J_list  = []
+#    
+#    for i in 1:k  
+#        perm_h, perm_Ω = repeated_combinations(h, Ω, i)
+#
+#        for (ω, h) in zip(perm_Ω, perm_h) 
+#            for l in 1:(i-1)
+#                γ = -im*(contraction_coeff(l, k-l, ω) - contraction_coeff(k-l, l, -reverse(ω)))
+#                
+#                J = prod(h[1:l]) # Jump operators
+#                L = prod(h[l+1:k])
+#
+#                push!(γ_list, γ) 
+#                push!(ω_list, sum(ω))
+#                push!(J_list, (J, L))
+#            end
+#        end
+#    end
+#    return γ_list, ω_list, J_list
+#end
 
 function effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     γ_list  = []
@@ -171,14 +171,14 @@ function effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     J_list  = []
     
     for i in 1:k  
-        perm_h, perm_g, perm_Ω = repeated_combinations(h, gs, Ω, k)
+        perm_h, perm_g, perm_Ω = repeated_combinations(h, gs, Ω, i)
 
         for (ω, g, h) in zip(perm_Ω, perm_g, perm_h) 
             for l in 1:(i-1)
-                γ = -im*(contraction_coeff(l, k-l, ω) - contraction_coeff(k-l, l, -reverse(ω)))
+                γ = -im*(contraction_coeff(l, i-l, ω) - contraction_coeff(i-l, l, -reverse(ω)))
                 γ = merge_duplicate_exponents(γ)
                 J = prod(h[1:l]) # Jump operators
-                L = prod(h[l+1:k])
+                L = prod(h[l+1:i])
 
                 push!(γ_list, prod(g)*γ)
                 push!(ω_list, sum(ω))
@@ -343,7 +343,11 @@ end
 
 function gaussian_to_cutoff(gs::Dict, ωs::Dict, freq_vals; cutoff=0.1, keep_small_exponents=true)
     gs_low = Dict(key => gs[key] for key in collect(keys(ωs)) if haskey(gs, key))
-    gs_list = gaussian_to_cutoff(collect(values(gs_low)), freq_vals; 
+    gs_low_values = []
+    for key in collect(keys(ωs))
+        push!(gs_low_values, gs_low[key])
+    end
+    gs_list = gaussian_to_cutoff(gs_low_values, freq_vals; 
                                     cutoff=cutoff, keep_small_exponents=keep_small_exponents)
     gs_low = Dict(key => gs_list[i] for (i, key) in enumerate(collect(keys(ωs))))
 

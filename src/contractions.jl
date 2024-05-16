@@ -45,7 +45,7 @@ Gives an expression for the effective diagram correction.
 function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
     # calculate an array of simple factor terms -- taylor_factors
     simple_factors = calc_simple_factors(diagram)
-    total_correction = prod(simple_factors)
+    total_correction = - prod(simple_factors)
 
     # if there are poles we need to calculate
     if diagram.num_poles != 0
@@ -85,7 +85,7 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
     taylor_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
     for b in d
         μ, ν = b.up, b.down
-        l = length(b.up)
+        l = length(b.down)
 
         exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
         prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))
