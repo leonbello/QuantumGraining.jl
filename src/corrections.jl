@@ -145,7 +145,8 @@ function  +(c1::Correction, c2::Correction)
         if c1.exponent ≈ c2.exponent
             exponents = [c1.exponent]
             prefacs = [c1.prefac + c2.prefac]
-            polys = [(c1.prefacs*c1.poly + c2*prefacsc2.poly)/prefacs[1]]
+            max_length = maximum([length(c1.prefacs*c1.poly), length(c2*prefacsc2.poly)])
+            polys = [(vcat(c1.prefacs*c1.poly, fill(0, max_length - length(c1.prefacs*c1.poly))) + vcat(c2*prefacsc2.poly, fill(0, max_length - length(c2*prefacsc2.poly))))/prefacs[1]]
         else
             exponents = [c1.exponent, c2.exponent]
             prefacs = [c1.prefac, c2.prefac]
@@ -210,7 +211,8 @@ function  +(c1::ContractionCoefficient, c2::Correction)
             ind = findfirst(item -> isequal(item, expand(c2.exponent)), C1Exponents)
             old_prefac = prefacs[ind]
             replace!(prefacs, prefacs[ind] => simplify(prefacs[ind] + c2.prefac))
-            replace!(polys, polys[ind] => (old_prefac*polys[ind] + c2.prefac*c2.poly)/prefacs[ind])
+            max_length = maximum([length(old_prefac*polys[ind]), length(c2.prefac*c2.poly)])
+            replace!(polys, polys[ind] => (vcat(old_prefac*polys[ind], fill(0,max_length-length(old_prefac*polys[ind]))) + vcat(c2.prefac*c2.poly, fill(0,max_length-length(c2.prefac*c2.poly))))/prefacs[ind])
         end
     end
     if !found
@@ -312,7 +314,18 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
             # Merge prefacs and polys for indices_to_merge
             merged_prefac = simplify(sum(c.prefacs[indices_to_merge]))
 
-            merged_poly = 0
+            poly_lengths = []
+            for j1 in indices_to_merge
+                push!(poly_lengths, length(c.polys[j1]))
+            end
+            max_poly_length = maximum(poly_lengths)
+            for j1 in indices_to_merge
+                c.polys[j1] = vcat(c.polys[j1], fill(0,max_poly_length - length(c.polys[j1])))
+            end
+
+            merged_poly = fill(0,max_poly_length)
+
+
             for j1 in indices_to_merge
                 merged_poly += c.prefacs[j1]*c.polys[j1]
             end

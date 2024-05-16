@@ -216,4 +216,38 @@ begin
     end
 end
 
+
+
+
+# Test the 3rd-order Hamiltonian corrections with ωa=7/17, ωc=11/13, and g = 5/3
+
+g_eff_3, Ω_eff_3 = effective_hamiltonian(hvec, gvec, Ω, 3; as_dict=true)
+
+@show keys(g_eff_3)
+
+
+# (a'*a'*a'*σp): −ωa−3ωc
+
+TestExpAdAdAdSigmaP = [(-ωa - 3ωc)^2, (-ωa - ωc)^2 + (4//1)*(ωc^2), (ωa - ωc)^2 + 2((-ωa - ωc)^2)]
+TestPrefacAdAdAdSigmaP = [[0.271847],
+[-1.33092],
+[1.05907]
+]
+
+begin
+    @test isequal(Ω_eff_3[(a'*a'*a'*σp)], -ωa-3*ωc)
+
+    @test isequal(length(g_eff_3[(a'*a'*a'*σp)].exponents), 3)
+
+    for i in 1:3
+        for j in 1:1
+            diff = (substitute(g_eff_3[(a'*a'*a'*σp)].prefacs[i].*g_eff_3[(a'*a'*a'*σp)].polys[i][j], Dict(ωa => 7//17, ωc => 11//13, g => 5//3))
+            -
+            TestPrefacAdAdAdSigmaP[i][j])
+            @test abs(diff/TestPrefacAdAdAdSigmaP[i][j]) < 0.0001
+        end
+        @test isequal(g_eff_3[(a'*a'*a'*σp)].exponents[i], TestExpAdAdAdSigmaP[i])
+    end
+end
+
 @test true
