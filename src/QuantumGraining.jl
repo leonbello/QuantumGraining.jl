@@ -38,7 +38,7 @@ export merge_duplicate_exponents, simplify_contraction
 export Bubble, calculate_bubble_factor
 
 # lindblad.jl
-export effective_hamiltonian_term, effective_dissipator_term, 
+export effective_hamiltonian_term, effective_dissipator_term, repeated_combinations,
         gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
         effective_hamiltonian, expand_operators, expand_operator, group_operators,
         effective_dissipator
