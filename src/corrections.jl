@@ -29,7 +29,7 @@ struct ContractionCoefficient
 
     function ContractionCoefficient(exponents, prefacs, polys)
         if !(length(exponents) == length(prefacs) == length(polys))
-            error("exponents, prefacs and polys should have the same length!")
+            error("exponents, prefacs and polys should have the length!")
         end
         corrections = [Correction(exponents[i], prefacs[i], polys[i]) for i in eachindex(exponents)]
         new(corrections, exponents, prefacs, polys)
@@ -37,11 +37,11 @@ struct ContractionCoefficient
 
     function ContractionCoefficient(exponents, prefacs)
         if !(length(exponents) == length(prefacs))
-            error("exponents, prefacs and polys should have the same length!")
+            error("exponents, prefacs and polys should have the length!")
         end
         polys = fill([1], size(exponents))
         corrections = [Correction(exponents[i], prefacs[i], polys[i]) for i in eachindex(exponents)]
-        new(corrections, exponents, prefacs, polys)
+        new(corrections, exponents, prefacs, polys) 
     end
 end
 
@@ -99,14 +99,12 @@ function to_symbol(coeff::ContractionCoefficient, τ) #where {T <: Number}
     for i in 1:length(coeff.prefacs)
         sym += to_symbol(Correction(coeff.prefacs[i], coeff.exponents[i], coeff.polys[i]), τ)
     end
-    sym = expand(simplify(sym))
     return sym
 end
 
 function to_symbol(c::Correction, τ) #where {T <: Number}
     sym = c.prefac*exp(-0.5*τ^2*c.exponent)
     sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]*(τ^(n-1)) for n in 1:c.order])
-    sym = expand(simplify(sym))
     return sym
 end
 
@@ -146,8 +144,7 @@ function  +(c1::Correction, c2::Correction)
         if c1.exponent ≈ c2.exponent
             exponents = [c1.exponent]
             prefacs = [c1.prefac + c2.prefac]
-            max_length = maximum([length(c1.prefacs*c1.poly), length(c2*prefacsc2.poly)])
-            polys = [(vcat(c1.prefacs*c1.poly, fill(0, max_length - length(c1.prefacs*c1.poly))) + vcat(c2*prefacsc2.poly, fill(0, max_length - length(c2*prefacsc2.poly))))/prefacs[1]]
+            polys = [(c1.prefacs*c1.poly + c2*prefacsc2.poly)/prefacs[1]]
         else
             exponents = [c1.exponent, c2.exponent]
             prefacs = [c1.prefac, c2.prefac]
@@ -158,15 +155,10 @@ end
 
 function  +(c1::ContractionCoefficient, c2::Correction)
     new_c = deepcopy(merge_duplicate_exponents(c1))
-    C1Exponents = []
-    for i in eachindex(c1.exponents)
-        push!(C1Exponents, expand(c1.exponents[i]))
-    end
 
     prefacs, polys, exponents = new_c.prefacs, new_c.polys, new_c.exponents
     found = false
     for exponent in exponents
-        if isequal(expand(c2.exponent), expand(exponent))
         if isequal(expand(c2.exponent), expand(exponent))
             found = true
             ind = findfirst(item -> isequal(item, expand(c2.exponent)), expand.(c1.exponents))

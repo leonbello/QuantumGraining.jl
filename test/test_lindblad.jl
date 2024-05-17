@@ -43,21 +43,21 @@ using QuantumGraining
 
     # a'*σp: ωc + ωa
     begin
-        @test isequal(g_eff_1[a'*σp].prefacs[1]*g_eff_1[a'*σp].polys[1], [g//2])
+        @test isequal(g_eff_1[a'*σp].prefacs[1], g//2)
         @test isequal(g_eff_1[a'*σp].exponents[1], (ωc + ωa)^2)        
         @test isequal(Ω_eff_1[a'*σp], ωc + ωa)
     end
 
     # a*σp: ωa - ωc
     begin
-        @test isequal(g_eff_1[a*σp].prefacs[1]*g_eff_1[a*σp].polys[1], [g//2])
+        @test isequal(g_eff_1[a*σp].prefacs[1], g//2)
         @test isequal(g_eff_1[a*σp].exponents[1], (ωa - ωc)^2)    
         @test isequal(Ω_eff_1[a*σp], ωa - ωc)
     end
 
     # a'*σm: ωc - ωa
     begin
-        @test isequal(g_eff_1[a'*σm].prefacs[1]*g_eff_1[a'*σm].polys[1], [g//2])
+        @test isequal(g_eff_1[a'*σm].prefacs[1], g//2)
         @test isequal(g_eff_1[a'*σm].exponents[1], (ωc - ωa)^2)    
         @test isequal(Ω_eff_1[a'*σm], ωc - ωa)
     end
