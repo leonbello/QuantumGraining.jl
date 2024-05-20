@@ -14,7 +14,7 @@ using QuantumGraining
         @test isequal(c2.exponents, merge_duplicate_exponents(c2).exponents)
         @test isequal(c2.exponents, c1.exponents)
         @test isequal(c3.prefacs, 3*c1.prefacs)
-        @test isequal(c2.prefacs, 3*c1.prefacs)
+        @test isequal(simplify.(c2.prefacs), 3*c1.prefacs)
     end
 
     begin
@@ -42,7 +42,7 @@ using QuantumGraining
         c20 = contraction_coeff(2, 0, [μ1, μ2])
         c11 = contraction_coeff(1, 1, [μ1, μ2])
         @test isequal(c20.exponents, [(μ1 + μ2)^2, (μ1^2 + μ2^2)])
-        @test isequal(c20.prefacs, [-1/μ2, 1/μ2])
+        @test isequal(c20.prefacs, [1/μ2, -1/μ2])
         @test isequal(c11.exponents, expand.(c20.exponents))
         @test isequal(simplify.(-c11.prefacs), c20.prefacs)
     end

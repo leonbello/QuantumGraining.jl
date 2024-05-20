@@ -23,10 +23,16 @@ hvec = [a*σm, a'*σp, a*σp, a'*σm]
 order = 3
 #ops_eff, Ω_eff, g_eff = effective_hamiltonian_term(hvec, gvec, Ω, order)
 
+# possible problems that cause poly to not stay normalized
+# contraction_coeff
+# +(c1, c2)
+# merge_duplicate_exponents
+
 g_eff, Ω_eff = effective_hamiltonian(hvec, gvec, Ω, order, as_dict=true)
-g_eff, Ω_eff = drop_high_freqs(g_eff, Ω_eff, Dict(ωa => 1, ωc => 1.01))
+#g_eff, Ω_eff = drop_high_freqs(g_eff, Ω_eff, Dict(ωa => 1, ωc => 1.01))
 
 g_eff
+@show g_eff[(a'*a'*a'*σp)].prefacs
 
 ### QuantumOptics.jl definitions
 ha_qo = SpinBasis(1//2)
@@ -56,12 +62,7 @@ MHz = 1/μs
 tspan = [0:0.01:120μs;]
 ψ0 = coherentstate(hc_qo, 4.5) ⊗ spinup(ha_qo)
 
-
-
 ### RWA
-
-
-
 freqs_subs = Dict(
     ωa => 1,
     ωc => 1.01

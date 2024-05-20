@@ -12,7 +12,6 @@ module Tst
     node.right
     child = DiagramNode(node.right)
 
-    
     # node_decomp() -- check by hand
     decomps = node_decomp(node)
     t = [ (el[1][1] + el[2][1], el[1][2] + el[2][2]) for el in decomps]
