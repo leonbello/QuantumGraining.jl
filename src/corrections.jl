@@ -153,7 +153,7 @@ function ==(c1::Correction, c2::Correction)
     if c1.order != c2.order
         return false
     else
-        exp_eq = isequal(simplify(expand(c1.exponent) - expand(c2.exponent)), 0)
+        exp_eq = isequal(simplify.(expand(c1.exponent) - expand(c2.exponent)), 0)
         poly_eq = isequal(simplify.(c1.prefac*c1.poly - c2.prefac*c2.poly), 0)
     end
     return exp_eq && poly_eq
@@ -163,8 +163,17 @@ import Base: +
 function  +(c1::Correction, c2::Correction)
         if isequal(expand(c1.exponent), expand(c2.exponent))
             exponents = [c1.exponent]
-            prefacs = [c1.prefac + c2.prefac]
-            polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)./prefacs[1] 
+            polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)
+            try
+                prefacs = [simplify.(polys[1]; simplify_fractions=true)]
+            catch
+                prefacs = [simplify.(polys[1]; simplify_fractions=false)]
+            end
+            try
+                polys = simplify.(polys/polys[1]; simplify_fractions=true)
+            catch
+                polys = simplify.(polys/polys[1]; simplify_fractions=false)
+            end
             #max_length = maximum([length(c1.prefacs*c1.poly), length(c2*prefacsc2.poly)])
             #polys = [(vcat(c1.prefacs*c1.poly, fill(0, max_length - length(c1.prefacs*c1.poly))) + vcat(c2*prefacsc2.poly, fill(0, max_length - length(c2*prefacsc2.poly))))/prefacs[1]]
         else
@@ -186,9 +195,9 @@ function +(c1::ContractionCoefficient, c2::Correction)
             ind = findfirst(item -> isequal(item, expand(c2.exponent)), expand.(c1.exponents))
             old_prefac = prefacs[ind]
             try 
-                replace!(prefacs, prefacs[ind] => simplify(prefacs[ind] + c2.prefac, simplify_fractions=true))
+                replace!(prefacs, prefacs[ind] => simplify.(prefacs[ind] + c2.prefac; simplify_fractions=true))
             catch
-                replace!(prefacs, prefacs[ind] => simplify(prefacs[ind] + c2.prefac, simplify_fractions=false))
+                replace!(prefacs, prefacs[ind] => simplify.(prefacs[ind] + c2.prefac; simplify_fractions=false))
             end
             replace!(polys, polys[ind] => (ordered_sum(old_prefac*polys[ind], c2.prefac*c2.poly))/prefacs[ind])
         end
@@ -308,35 +317,34 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
 
         if length(indices_to_merge) > 1
             # Merge prefacs and polys for indices_to_merge
-            merged_prefac = sum(simplify.(c.prefacs[indices_to_merge]))
-            try
-                merged_prefac = simplify(merged_prefac)
-            catch
-                merged_prefac = simplify(merged_prefac, simplify_fractions=false)
-            end
-
-
             merged_poly = [0]
-            choices = [(indices_to_merge[i], indices_to_merge[j]) for i in 1:(length(indices_to_merge) - 1) for j in (i + 1):length(indices_to_merge)]
-            for choice in choices
-                merged_poly = ordered_sum(merged_poly, ordered_sum(c.polys[choice[1]], c.polys[choice[2]]))
+            for j1 in indices_to_merge
+                merged_poly = ordered_sum(merged_poly, c.prefacs[j1]*c.polys[j1])
             end
 
             try
-                merged_poly = simplify.(merged_poly, simplify_fractions=true)
+                merged_poly = simplify.(merged_poly; simplify_fractions=true)
             catch
-                merged_poly = simplify.(merged_poly, simplify_fractions=false)
+                merged_poly = simplify.(merged_poly; simplify_fractions=false)
             end
-            
-            #merged_poly = simplify(sum(c.polys[indices_to_merge]))
 
-            norm_prefac = merged_poly[1]
-            merged_poly /= norm_prefac
-            merged_prefac *= norm_prefac
+            if !isequal(merged_poly[1], 0)
+                merged_prefac = merged_poly[1]
+                normalized_merged_poly = [convert(Num, 1)]
+                for j2 in 2:length(merged_poly)
+                    try
+                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=true)
+                    catch
+                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=false)
+                    end
+                    push!(normalized_merged_poly, poly_coeff)
+                end
 
-            push!(unique_exponents, exponent)
-            push!(unique_prefacs, merged_prefac)
-            push!(unique_polys, merged_poly)
+                push!(unique_exponents, exponent)
+                push!(unique_prefacs, merged_prefac)
+                push!(unique_polys, normalized_merged_poly)
+            end
+
         else
             push!(unique_exponents, exponent)
             push!(unique_prefacs, prefac)
