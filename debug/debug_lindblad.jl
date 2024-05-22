@@ -20,66 +20,67 @@ h = tensor(h_cav, h_atom)
 σp = σ(:g, :e)
 hvec = [a*σm, a'*σp, a*σp, a'*σm]
 
-order = 3
-#ops_eff, Ω_eff, g_eff = effective_hamiltonian_term(hvec, gvec, Ω, order)
-
-# possible problems that cause poly to not stay normalized
-# contraction_coeff
-# +(c1, c2)
-# merge_duplicate_exponents
-
-g_eff, Ω_eff = effective_hamiltonian(hvec, gvec, Ω, order, as_dict=true)
+order = 4
+g_eff, Ω_eff = effective_hamiltonian(hvec, gvec, Ω, order, as_dict=true);
+g_low, Ω_low = drop_high_freqs(g_eff, Ω_eff, Dict(ωa => 1, ωc => 1.01));
 #g_eff, Ω_eff = drop_high_freqs(g_eff, Ω_eff, Dict(ωa => 1, ωc => 1.01))
+ops_list, g_list, Ω_list = effective_hamiltonian(hvec, gvec, Ω, order, as_dict=false);
 
-g_eff
-@show g_eff[(a'*a'*a'*σp)].prefacs
+println(ops_list[9])
+@show g_list[9] 
+@show simplify(g_list[9].polys[2][3], expand=true, simplify_fractions=false)
+val = substitute(g_list[9].polys[2][3], [g, ωc, ωa] .=> [0.2, 2, 2.1])
 
-### QuantumOptics.jl definitions
-ha_qo = SpinBasis(1//2)
-hc_qo = FockBasis(100)
-h_qo = hc_qo ⊗ ha_qo
+typeof(g_list[9].polys[2][3].val)
+fieldnames(typeof(g_list[9].polys[2][3].val))
+@show val
 
-# Operator definitions
-σp_qo = sigmap(ha_qo)
-σm_qo = sigmam(ha_qo)
-a_qo = destroy(hc_qo)
-I_a = identityoperator(ha_qo)
-I_c = identityoperator(hc_qo)
-
-p_sym = [g, ωc, ωa]
-
-base_qc = [a, a', σm, σp, σ(:e, :e)]
-Id = [I_c, I_a]
-base_qo = [a_qo, a_qo', σm_qo, σp_qo, σp_qo*σm_qo, Id...]
-
-H_func = hamiltonian_function(g_eff, Ω_eff, base_qc, base_qo, p_sym)
-
-## QuantumOptics.jl
 # Units
 μs = 1
 MHz = 1/μs
+args = [2π*0.2MHz, 2π*2MHz, 2π*2.1MHz, 0.2μs]  # g, ωc, ωa, τ 
 
-tspan = [0:0.01:120μs;]
-ψ0 = coherentstate(hc_qo, 4.5) ⊗ spinup(ha_qo)
 
-### RWA
-freqs_subs = Dict(
-    ωa => 1,
-    ωc => 1.01
-)
-rwa, Ω_rwa = drop_high_freqs(Ω_eff, freqs_subs)
-g_rwa = gaussian_to_cutoff(g_eff[rwa], freqs_subs, keep_small_exponents=true)
-ops_rwa = ops_eff[rwa]
+println("----wo/ operator ordering:----")
+println("Prefactors:")
+for prefac in g_list[9].prefacs
+    val = substitute(prefac, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+    @show val
+end
 
-@variables t τ
-H_rwa_2 = sum(symbolic_hamiltonian(g_rwa, ops_rwa, Ω_rwa, t, τ))
+println("Exponentials:")
+for expon in g_list[9].exponents
+    val = substitute(expon, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+    @show val
+end
 
-@cnumbers g_qc ωc_qc ωa_qc τ_qc
-@syms t::Real
+println("Polynomials:")
+for poly in g_list[9].polys
+    println("Polynomial terms:")
+    for term in poly
+        val = substitute(term, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+        @show val
+    end
+end
 
-subs = Dict(
-    g => g_qc,
-    ωc => ωc_qc,
-    ωa => ωa_qc
-)
-H_rwa_qc = qc_convert(g_rwa, ops_rwa, Ω_rwa, subs, t, τ_qc)
+println("----w/ operator ordering:----")
+println("Prefactors:")
+for prefac in g_eff[σ(:e,:e)].prefacs
+    val = substitute(prefac, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+    @show val
+end
+
+println("Exponentials:")
+for expon in g_eff[σ(:e,:e)].exponents
+    val = substitute(expon, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+    @show val
+end
+
+println("Polynomials:")
+for poly in g_eff[σ(:e,:e)].polys
+    println("Polynomial terms:")
+    for term in poly
+        val = substitute(term, [g, ωc, ωa] .=> [0.2, 2, 2.1])
+        @show val
+    end
+end

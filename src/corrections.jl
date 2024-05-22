@@ -12,8 +12,11 @@ struct Correction
         if !(poly isa Array)
             poly = [poly]
         end
-        prefac_norm = poly[1]       # Make sure the polynomial is always normalized such that 1 + aτ + bτ^2 + ...
-        new(prefac*prefac_norm, exponent, [1, poly[2:end]./prefac_norm...], order)
+        if !isequal(poly[1], 0)
+            prefac_norm = poly[1]       # Make sure the polynomial is always normalized such that 1 + aτ + bτ^2 + ...
+            poly = [1, poly[2:end]./prefac_norm...]
+        end
+        new(prefac*prefac_norm, exponent, poly, order)
     end
 end
 
@@ -164,15 +167,17 @@ function  +(c1::Correction, c2::Correction)
         if isequal(expand(c1.exponent), expand(c2.exponent))
             exponents = [c1.exponent]
             polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)
-            try
-                prefacs = [simplify.(polys[1]; simplify_fractions=true)]
-            catch
-                prefacs = [simplify.(polys[1]; simplify_fractions=false)]
-            end
-            try
-                polys = simplify.(polys/polys[1]; simplify_fractions=true)
-            catch
-                polys = simplify.(polys/polys[1]; simplify_fractions=false)
+            if !isequal(polys[1], 0)
+                try
+                    prefacs = [simplify.(polys[1]; simplify_fractions=true)]
+                catch
+                    prefacs = [simplify.(polys[1]; simplify_fractions=false)]
+                end
+                try
+                    polys = simplify.(polys/polys[1]; simplify_fractions=true)
+                catch
+                    polys = simplify.(polys/polys[1]; simplify_fractions=false)
+                end
             end
             #max_length = maximum([length(c1.prefacs*c1.poly), length(c2*prefacsc2.poly)])
             #polys = [(vcat(c1.prefacs*c1.poly, fill(0, max_length - length(c1.prefacs*c1.poly))) + vcat(c2*prefacsc2.poly, fill(0, max_length - length(c2*prefacsc2.poly))))/prefacs[1]]
@@ -185,31 +190,13 @@ function  +(c1::Correction, c2::Correction)
 end
 
 function +(c1::ContractionCoefficient, c2::Correction)
-    new_c = deepcopy(merge_duplicate_exponents(c1))
-
+    new_c = deepcopy(c1)
     prefacs, polys, exponents = new_c.prefacs, new_c.polys, new_c.exponents
-    found = false
-    for exponent in exponents
-        if isequal(expand(c2.exponent), expand(exponent))
-            found = true
-            ind = findfirst(item -> isequal(item, expand(c2.exponent)), expand.(c1.exponents))
-            old_prefac = prefacs[ind]
-            try 
-                replace!(prefacs, prefacs[ind] => simplify.(prefacs[ind] + c2.prefac; simplify_fractions=true))
-            catch
-                replace!(prefacs, prefacs[ind] => simplify.(prefacs[ind] + c2.prefac; simplify_fractions=false))
-            end
-            replace!(polys, polys[ind] => (ordered_sum(old_prefac*polys[ind], c2.prefac*c2.poly))/prefacs[ind])
-        end
-    end
-    if !found
-        push!(exponents, c2.exponent)
-        push!(prefacs, c2.prefac)
-        push!(polys, c2.poly) 
-    end
-    return merge_duplicate_exponents(ContractionCoefficient(exponents, prefacs, polys))
+    push!(exponents, c2.exponent)
+    push!(prefacs, c2.prefac)
+    push!(polys, c2.poly)
+    return merge_duplicate_exponents(new_c)
 end
-
 
 function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
     new_c = deepcopy(c1)

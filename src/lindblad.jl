@@ -123,9 +123,13 @@ function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dic
     
     if as_dict
         gs_eff, ωs_eff = group_operators(unique_hs, unique_gs, unique_ωs; as_dict=true)
-        if remove_constants 
-            delete!(gs_eff, 1)
-            delete!(ωs_eff, 1)
+        if remove_constants
+            for key in keys(gs_eff)
+                if key isa Number 
+                    delete!(gs_eff, key)
+                    delete!(ωs_eff, key)
+                end
+            end
         end
         return gs_eff, ωs_eff
     else
@@ -224,41 +228,6 @@ function effective_dissipator(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict
         return ops_Eff, γs_eff, ωs_eff
     end
 end
-
-# function expand_operators(hs, gs, ωs)
-#     """
-#         Goes over any sum of operators and breaks it into the constituent operators while preserving the order of the other vectors
-#     """
-#     unique_hs = []
-#     unique_gs = []
-#     unique_ωs = []
-#     for (h, g, ω) in zip(hs, gs, ωs)
-#         if h ≠ 0
-#             if h isa QuantumCumulants.QAdd  # if it's a sum of operators
-#                 for s in h.arguments
-#                     if !(s isa QuantumCumulants.QMul)
-#                         push!(unique_hs, s)
-#                         push!(unique_gs, g)
-#                         push!(unique_ωs, ω)
-#                     else
-#                         p = prod([p for p in s.args_nc])
-#                         new_g = s.arg_c*g
-#                         push!(unique_hs, p)
-#                         push!(unique_gs, new_g)
-#                         push!(unique_ωs, ω)
-#                     end
-#                 end
-#             elseif h isa QuantumCumulants.QMul
-#                 p = prod([p for p in h.args_nc])
-#                 new_g = h.arg_c*g
-#                 push!(unique_hs, p)
-#                 push!(unique_gs, new_g)
-#                 push!(unique_ωs, ω)
-#             end
-#         end
-#     end
-#     return unique_hs, unique_gs, unique_ωs
-# end
 
 function expand_operators(hs)
     """

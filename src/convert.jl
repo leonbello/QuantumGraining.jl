@@ -41,7 +41,7 @@ function lindblad_function(gs, Ωs, γs, ωs, h_src, h_tgt, ps)
 end
 
 
-function hamiltonian_function(gs, ωs, h_src, h_tgt, ps)
+function hamiltonian_function(gs, ωs, h_src, h_tgt, ps; return_contraction_functions=false)
     n = length(h_src)
     Id = h_tgt[(n+1):end]
     h_tgt = h_tgt[1:n]
@@ -64,7 +64,7 @@ function hamiltonian_function(gs, ωs, h_src, h_tgt, ps)
         end
         return sum(H)
     end
-    return H_func
+    return return_contraction_functions ? (H_func, Dict(keys(gs) .=> func_gs)) : H_func
 end
 
 function qnumber_to_qop(qn::QuantumCumulants.QMul, op_subs, Id; mul = tensor)
