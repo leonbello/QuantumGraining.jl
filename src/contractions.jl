@@ -85,14 +85,14 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
     taylor_factors = Vector{Correction}()                                                 # array holding the terms of the outer sum
     for b in d
         μ, ν = b.up, b.down
-        l = length(b.down)
+        l = length(b.down)                                                                # number of down modes in the bubble
 
-        exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
-        prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))
-        poly = Num[1,]
-        push!(taylor_factors, Correction(prefac, exponent, poly))
+        exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν)                                  # exponent of the correction factor
+        prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))                       # prefactor of the correction factor
+        poly = Num[1,]                                                                    # polynomial representing the correction factor
+        push!(taylor_factors, Correction(prefac, exponent, poly))                         # add the correction factor to the array
     end
-    #taylor_factors[1] *= -1
+    #taylor_factors[1] *= -1                                                              # uncomment this line if the first factor needs to be negated
     return taylor_factors
 end
 
@@ -116,6 +116,20 @@ function calc_expansion_factors(mu::BVector{T1}, ν::BVector{T2}, order, n::Int)
     return poly
 end
 
+"""
+    poly_multiplication(poly1::Vector, poly2::Vector, order::Int)
+
+Multiply two polynomials `poly1` and `poly2` of lengths `len1` and `len2` respectively, and return the resulting polynomial of length `order`.
+
+# Arguments
+- `poly1::Vector`: The first polynomial.
+- `poly2::Vector`: The second polynomial.
+- `order::Int`: The length of the resulting polynomial.
+
+# Returns
+- `poly_product::Vector`: The resulting polynomial.
+
+"""
 function poly_multiplication(poly1::Vector, poly2::Vector, order::Int)
     len1 = length(poly1)
     len2 = length(poly2)
@@ -205,9 +219,6 @@ function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vecto
     return pole_terms   
 end
 
-
-
-
 """
     calculate_bubble_factor(ω, bubble_idx, total_num_poles, s, stag)
 Returns the bubble factor for a single bubble.
@@ -250,7 +261,6 @@ Calculates the taylor expansion coefficients for a singular bubble.
     
 """
 function singular_expansion(b::Bubble{T1, T2}, sols, up_poles::Vector{Int}, down_poles::Vector{Int}) where {T1, T2}
-    # not sure the order is correct here
     order = 2*(length(up_poles) + length(down_poles)) + 1
     terms = zeros(order)
 

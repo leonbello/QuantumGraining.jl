@@ -23,9 +23,36 @@ The TCG method is very computationally involved, with the number of terms growin
 * Finally, the symbolic Hamiltonian can be solved in **QuantumOptics.jl** or using **QuantumCumulants.jl**. 
 
 ## Installation
-
 `QuantumGraining.jl` is in early stages of developemnt, and is still not registered in the Julia package registrator. For the time being, the package can be installed by cloning the repository from GitHub. 
-To install, clone the repository, then use the Julia package manager to `activate` and `build`.
+To install `QuantumGraining.jl`, follow these steps:
+
+1. Clone the repository from GitHub:
+    ```
+    git clone https://github.com/leonbello/QuantumGraining.jl.git
+    ```
+
+2. Open the Julia package manager by running `julia` in your terminal.
+
+3. Activate the package by entering the package manager mode with `]`.
+
+4. Change to the `QuantumGraining.jl` directory:
+    ```
+    cd /path/to/QuantumGraining.jl
+    ```
+
+5. Activate the package environment:
+    ```
+    activate .
+    ```
+
+6. Build the package and its dependencies:
+    ```
+    instantiate
+    ```
+
+7. Exit the package manager mode by pressing `Ctrl + C`.
+
+After following these steps, you should have successfully installed `QuantumGraining.jl` and its dependencies.
 
 ## Development Status
 Note that **QuantumGraining.jl** is still at an early stage of development.

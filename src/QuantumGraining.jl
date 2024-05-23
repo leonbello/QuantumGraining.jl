@@ -29,7 +29,7 @@ export Contraction, count_poles,
 # contractions.jl
 export diagram_correction, contraction_coeff, calc_pole_corrections, 
         Correction, ContractionCoefficient, 
-        split_freqs_into_bubbles, to_symbol, to_qc_symbol
+        split_freqs_into_bubbles, to_qc_symbol
 
 # corrections.jl
 export merge_duplicate_exponents, simplify_contraction
@@ -39,14 +39,17 @@ export Bubble, calculate_bubble_factor
 
 # lindblad.jl
 export effective_hamiltonian_term, effective_dissipator_term, repeated_combinations,
-        gaussian_to_cutoff, drop_high_freqs, symbolic_hamiltonian,
-        effective_hamiltonian, expand_operators, expand_operator, group_operators,
-        effective_dissipator
+        gaussian_to_cutoff, drop_high_freqs, effective_hamiltonian, effective_dissipator
+
+# printing.jl
+export symbolic_hamiltonian, to_symbol
 
 # convert.jl
 export convert_expressions, hamiltonian_function, normal_ordered_dictionary, qc_convert, qnumber_to_qop,
         contraction_to_function, lindblad_function
 
+# ordering.jl
+export expand_operators, expand_operator, group_operators
 
 include("bvector.jl")
 include("bubble.jl")
@@ -59,4 +62,5 @@ include("poles.jl")
 include("printing.jl")
 include("utils.jl")
 include("convert.jl")
+include("ordering.jl")
 end

@@ -28,7 +28,7 @@ ops_list, g_list, Ω_list = effective_hamiltonian(hvec, gvec, Ω, order, as_dict
 
 println(ops_list[9])
 @show g_list[9] 
-@show simplify(g_list[9].polys[2][3], expand=true, simplify_fractions=false)
+@show simplify(g_list[9].polys[2][3], simplify_fractions=true)
 val = substitute(g_list[9].polys[2][3], [g, ωc, ωa] .=> [0.2, 2, 2.1])
 
 typeof(g_list[9].polys[2][3].val)

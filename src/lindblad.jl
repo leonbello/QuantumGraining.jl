@@ -34,6 +34,22 @@ function repeated_combinations(h::Vector, Ω::Vector, n::Int)
     return perm_h, perm_Ω
 end
 
+"""
+    repeated_combinations(h::Vector, g::Vector, Ω::Vector, n::Int)
+
+Generate all possible combinations of elements from the input vectors `h`, `g`, and `Ω` with repetition, forming combinations of length `n`.
+
+# Arguments
+- `h::Vector`: Vector of elements for combination from `h`
+- `g::Vector`: Vector of elements for combination from `g`
+- `Ω::Vector`: Vector of elements for combination from `Ω`
+- `n::Int`: Length of combinations to generate
+
+# Returns
+- `perm_h::Vector`: Vector of combinations of elements from `h`
+- `perm_g::Vector`: Vector of combinations of elements from `g`
+- `perm_Ω::Vector`: Vector of combinations of elements from `Ω`
+"""
 function repeated_combinations(h::Vector, g::Vector, Ω::Vector, n::Int)
     perm_h = []
     perm_Ω = []
@@ -63,14 +79,27 @@ function repeated_combinations(h::Vector, g::Vector, Ω::Vector, n::Int)
     return perm_h, perm_g, perm_Ω
 end
 
-# function symbolic_eff_ham(gs, ops, ωs,T)
-#     return to_symbol(gs)*ops*exp(-1im*sum(ωs)*T)
-# end
-
 """
     effective_hamiltonian(h::Vector, g::Vector{Number}, Ω::Vector{Number}, k::Int)
-Given a truncation order `k`, and a list of frequencies `Ω`, couplings `g` and operators `h`` representing the raw Hamiltonian, 
-returns new frequencies, coupling strengths and operators representing the Hamiltonian to order `k`.
+    
+Given a truncation order `k`, a list of frequencies `Ω`, couplings `g`, and operators `h` representing the raw Hamiltonian, 
+this function returns new frequencies, coupling strengths, and operators representing the Hamiltonian to order `k`.
+
+## Arguments
+- `h::Vector`: A vector of operators representing the raw Hamiltonian.
+- `g::Vector{Number}`: A vector of coupling strengths.
+- `Ω::Vector{Number}`: A vector of frequencies.
+- `k::Int`: The truncation order.
+
+## Returns
+- `ops_eff::Vector`: A vector of operators representing the effective Hamiltonian to order `k`.
+- `merged_gs::Vector`: A vector of merged coupling strengths.
+- `ωs_eff::Vector`: A vector of frequencies representing the effective Hamiltonian to order `k`.
+
+## Details
+The function calculates the effective Hamiltonian by considering all possible combinations of operators, frequencies, and coupling strengths up to order `k`. 
+It simplifies the expressions and merges duplicate coupling strengths.
+
 """
 function effective_hamiltonian_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     perm_h, perm_g, perm_Ω = repeated_combinations(h, gs, Ω, k)
@@ -104,9 +133,28 @@ function effective_hamiltonian_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
 
     merged_gs = [merge_duplicate_exponents(g) for g in gs_eff]
     return ops_eff, merged_gs, ωs_eff
-    #return ops_eff, merge_duplicate_exponents.(gs_eff), ωs_eff
 end    
 
+"""
+    effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict=false, remove_constants=true)
+
+Compute the effective Hamiltonian for a given system.
+
+## Arguments
+- `h::Vector`: A vector of Hamiltonian terms.
+- `gs::Vector`: A vector of coupling strengths.
+- `Ω::Vector`: A vector of frequencies.
+- `k::Int`: The number of terms to consider.
+
+## Keyword Arguments
+- `as_dict::Bool=false`: If `true`, the output will be returned as a dictionary of operators and frequencies.
+- `remove_constants::Bool=true`: If `true`, remove constant terms from the output.
+
+## Returns
+- If `as_dict` is `true`, returns a tuple `(gs_eff, ωs_eff)` where `gs_eff` is a dictionary of operators and `ωs_eff` is a dictionary of frequencies.
+- If `as_dict` is `false`, returns a tuple `(unique_hs, unique_gs, ωs_eff)` where `unique_hs` is a vector of unique operators, `unique_gs` is a vector of unique coupling strengths, and `ωs_eff` is a vector of frequencies.
+
+"""
 function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict=false, remove_constants=true)
     ops_eff = []
     ωs_eff  = []
@@ -169,6 +217,23 @@ function effective_dissipator_term(h::Vector, Ω::Vector, k::Int)
     return γ_list, ω_list, J_list
 end
 
+"""
+    effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
+
+Compute the effective dissipator term for a given set of parameters.
+
+# Arguments
+- `h::Vector`: Vector of coefficients for the Hamiltonian terms.
+- `gs::Vector`: Vector of coefficients for the jump operators.
+- `Ω::Vector`: Vector of coefficients for the frequencies.
+- `k::Int`: Number of terms in the Hamiltonian.
+
+# Returns
+- `J_list::Vector`: Vector of tuples representing the jump operators.
+- `γ_list::Vector`: Vector of complex numbers representing the dissipation coefficients.
+- `ω_list::Vector`: Vector of sums of frequencies.
+
+"""
 function effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     γ_list  = []
     ω_list  = []
@@ -193,6 +258,23 @@ function effective_dissipator_term(h::Vector, gs::Vector, Ω::Vector, k::Int)
     return J_list, γ_list, ω_list
 end
 
+"""
+    effective_dissipator(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict=true)
+
+Compute the effective dissipator for a given set of parameters.
+
+## Arguments
+- `h::Vector`: A vector of operators representing the raw Hamiltonian.
+- `gs::Vector`: A vector of coupling strengths.
+- `Ω::Vector`: A vector of frequencies.
+- `k::Int`: The truncation order.
+- `as_dict::Bool`: (optional) If `true`, returns the dissipator as a dictionary of operators and their corresponding dissipator terms. If `false`, returns the dissipator as separate vectors for operators, dissipator terms, and frequencies. Default is `true`.
+
+## Returns
+- If `as_dict` is `true`, returns a tuple `(γs_dict, ωs_dict)` where `γs_dict` is a dictionary of operators and their corresponding dissipator terms, and `ωs_dict` is a dictionary of operators and their corresponding frequencies.
+- If `as_dict` is `false`, returns a tuple `(ops_eff, γs_eff, ωs_eff)` where `ops_eff` is a vector of operators representing the effective dissipator, `γs_eff` is a vector of dissipator terms, and `ωs_eff` is a vector of frequencies.
+
+"""
 function effective_dissipator(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict=true)
     ops_eff = []
     ωs_eff  = []
@@ -229,113 +311,23 @@ function effective_dissipator(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dict
     end
 end
 
-function expand_operators(hs)
-    """
-        Goes over any sum of operators and breaks it into the constituent operators while preserving the order of the other vectors
-    """
-    unique_hs = []
 
-    for h in hs
-        new_h, _ = expand_operator(h)
-        push!(unique_hs, new_h...)
-    end
-
-    return unique_hs
-end
-
-function expand_operators(hs, gs, ωs)
-    """
-        Goes over any sum of operators and breaks it into the constituent operators while preserving the order of the other vectors
-    """
-    unique_hs = []
-    unique_gs = []
-    unique_ωs = []
-
-    for (h, g, ω) in zip(hs, gs, ωs)
-        new_h, facs = expand_operator(h)
-
-        push!(unique_hs, new_h...)
-        push!(unique_gs, [fac*g for fac in facs]...)
-        push!(unique_ωs, ω*ones(length(new_h))...)
-    end
-
-    return unique_hs, unique_gs, unique_ωs
-end
-
-function expand_operator(h)
-    ops = []
-    facs = []
-    if h ≠ 0
-        if h isa QuantumCumulants.QAdd  # if it's a sum of operators
-            for op in h.arguments
-                push!(ops, (op isa QuantumCumulants.QMul) ? prod(op.args_nc) : op)
-                push!(facs, (op isa QuantumCumulants.QMul) ? op.arg_c : 1)
-            end
-        elseif h isa QuantumCumulants.QMul
-            push!(ops, h)
-            push!(facs, 1)
-        end
-    end
-    return ops, facs
-end
-
-function group_operators(hs, gs, ωs; as_dict=true)
-    new_hs = []
-    new_gs = []
-    new_ωs = []
-
-    for i in eachindex(hs)
-        idx = findfirst(x -> isequal(x, hs[i]), new_hs)
-        if !isnothing(idx)
-            # If it's a duplicate, find its index in new_hs i=14
-            new_gs[idx] += gs[i]
-        else
-            # If it's not a duplicate, add hs[i] to new_hs
-            push!(new_hs, hs[i])
-            # Add gs[i] to new_gs and add corresponding element from ws to new_ws
-            push!(new_gs, gs[i])
-            push!(new_ωs, ωs[i])
-        end
-    end
-
-    new_gs = simplify_contraction.(new_gs)
-
-    if as_dict
-        gs_dict = Dict(new_hs[i] => new_gs[i] for i in eachindex(new_hs))
-        ωs_dict = Dict(new_hs[i] => new_ωs[i] for i in eachindex(new_hs))
-        return gs_dict, ωs_dict
-    else
-        return new_hs, new_gs, new_ωs
-    end
-end
-
-function group_operators(hs)
-    new_hs = []
-
-    for i in eachindex(hs)
-        idx = findfirst(x -> isequal(x, hs[i]), new_hs)
-        if isnothing(idx)
-            push!(new_hs, hs[i])
-        end
-    end
-
-    return new_hs
-
-end
 
 """
-* effective_lindblad(c::Tuple{int, int}) - Given a contraction, returns all contributing terms.
-* effective_lindblad(d::Diagram) - Given a diagram object, returns all contributing terms.
-* effective_lindblad(d::Array{Tuple{Int, Int}}) - Given a diagram in an array format, returns all contributing terms.
-"""
-# function effective_lindblad(k::Int, ω::Array, h::Array)
-#     return effective_hamiltonian(k, ω, h), effective_dissipator(k, ω, h)
-# end
+    drop_high_freqs(freqs_list::Vector, freqs_subs, cutoff=0.1)
 
+Given a list of frequencies and a list of substitutions, returns only the low frequencies.
+
+# Arguments
+- `freqs_list::Vector`: A list of frequencies.
+- `freqs_subs`: A list of substitutions.
+- `cutoff=0.1`: The cutoff value for determining low frequencies.
+
+# Returns
+- `rwa`: A list of indices corresponding to the low frequencies.
+- `freqs_low`: A list of low frequencies.
+"""
 function drop_high_freqs(freqs_list::Vector, freqs_subs, cutoff=0.1)
-    """
-        Given a list of frequencies, and a list of substitutions, returns only the low frequencies.
-    """
     freqs_low = []
     rwa = []
     for (i, freq) in enumerate(freqs_list)
@@ -348,12 +340,23 @@ function drop_high_freqs(freqs_list::Vector, freqs_subs, cutoff=0.1)
     return rwa, freqs_low
 end
 
-function drop_high_freqs(gs_dict, freqs_dict, freqs_vals; cutoff=0.1)
-    """
-        Given dictionaries holding the frequencies and couplings,
-        drops all high-frequency contributions.
-    """
 
+"""
+    drop_high_freqs(gs_dict, freqs_dict, freqs_vals; cutoff=0.1)
+
+Given dictionaries holding the frequencies and couplings, drops all high-frequency contributions.
+
+## Arguments
+- `gs_dict`: A dictionary holding the coupling strengths.
+- `freqs_dict`: A dictionary holding the frequencies.
+- `freqs_vals`: A dictionary of substitutions for the frequencies.
+- `cutoff=0.1`: The cutoff value for determining high frequencies.
+
+## Returns
+- `gs_dict`: The updated dictionary of coupling strengths after dropping high-frequency contributions.
+- `freqs_dict`: The updated dictionary of frequencies after dropping high-frequency contributions.
+"""
+function drop_high_freqs(gs_dict, freqs_dict, freqs_vals; cutoff=0.1)
     for (key, freq) in freqs_dict
         num_val = substitute(freq, freqs_vals)
         if !isapprox(round(abs(num_val.val)), 0; rtol=cutoff)
@@ -364,31 +367,21 @@ function drop_high_freqs(gs_dict, freqs_dict, freqs_vals; cutoff=0.1)
     return gs_dict, freqs_dict
 end
 
-function symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
-    terms = []
-    for (g, op, ω) in zip(gs, ops, Ω)
-        if isequal(ω, 0)
-            ft = 1
-        else
-            ft = Symbolics.Term(exp, [im*ω*t])
-        end
+"""
+    gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=true)
 
-        term = to_symbol(g, τ)*ft
-        if !isequal(term, 0)
-            push!(terms, (term)*op)
-        end
-    end
-    return terms
-end
+Apply a cutoff to Gaussian exponents based on their absolute value.
 
-function symbolic_hamiltonian(gs::Dict, Ω::Dict, t, τ)
-    gs_list = collect(values(gs))
-    ops_list = collect(keys(gs))
-    Ω_list = collect(values(Ω))
+# Arguments
+- `gs`: A list of `ContractionCoefficient` objects representing Gaussian functions.
+- `freq_vals`: A dictionary mapping frequency keys to their corresponding values.
+- `cutoff`: The cutoff value for the absolute value of the Gaussian exponents. Default is `0.1`.
+- `keep_small_exponents`: A boolean indicating whether to keep small exponents or set them to zero. Default is `true`.
 
-    return symbolic_hamiltonian(gs_list, ops_list, Ω_list, t, τ)
-end
+# Returns
+- A list of `ContractionCoefficient` objects with the cutoff applied to the Gaussian exponents.
 
+"""
 function gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=true)
     new_gs = []
     for g in gs
@@ -406,6 +399,22 @@ function gaussian_to_cutoff(gs, freq_vals; cutoff=0.1, keep_small_exponents=true
     return merge_duplicate_exponents.(new_gs)
 end
 
+"""
+    gaussian_to_cutoff(gs::Dict, ωs::Dict, freq_vals; cutoff=0.1, keep_small_exponents=true)
+
+Apply a cutoff to Gaussian exponents based on their absolute value.
+
+# Arguments
+- `gs`: A dictionary mapping frequency keys to `ContractionCoefficient` objects representing Gaussian functions.
+- `ωs`: A dictionary mapping frequency keys to their corresponding values.
+- `freq_vals`: A dictionary mapping frequency keys to their corresponding values.
+- `cutoff`: The cutoff value for the absolute value of the Gaussian exponents. Default is `0.1`.
+- `keep_small_exponents`: A boolean indicating whether to keep small exponents or set them to zero. Default is `true`.
+
+# Returns
+- A dictionary mapping frequency keys to `ContractionCoefficient` objects with the cutoff applied to the Gaussian exponents.
+
+"""
 function gaussian_to_cutoff(gs::Dict, ωs::Dict, freq_vals; cutoff=0.1, keep_small_exponents=true)
     gs_low = Dict(key => gs[key] for key in collect(keys(ωs)) if haskey(gs, key))
     gs_list = gaussian_to_cutoff(collect(values(gs_low)), freq_vals; 

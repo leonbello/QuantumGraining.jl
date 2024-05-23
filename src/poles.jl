@@ -1,10 +1,18 @@
 using QuantumCumulants
 using SymbolicUtils
 
-"""
-    taylor_coeff(n, k)
 
-Recursive function used to calculate finite contribution for Taylor expansion for diagrams with poles.
+"""
+    taylor_coeff(n::Int, k::Int)
+
+Compute the Taylor coefficient for a given pair of integers `n` and `k`, as detailed in the paper.
+
+# Arguments
+- `n::Int`: The total degree of the Taylor series.
+- `k::Int`: The degree of the term whose coefficient is being computed.
+
+# Returns
+- The value of the Taylor coefficient for the given pair of integers.
 
 """
 function taylor_coeff(n::Int, k::Int)
@@ -41,11 +49,23 @@ function find_poles(u::Vector{T}) where {T}
 end
 find_poles(u::BVector) = u.special ? find_poles(u.freqs[2:end]) : find_poles(u.freqs)
 
-
-
 """
-    find_all_poles(d::Vector{Tuple{BVector, BVector}})
-Finds all vector factorial poles for a list of BVectors. 
+    find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+
+Find all poles in the given vector of tuples `d`. Each tuple contains two `BVector` objects, `μ` and `ν`.
+The function iterates over each tuple and performs the following steps:
+- If `μ.special` is `true`, it removes the first element from `μ`.
+- Reverses the order of elements in `μ`.
+- Calls the `find_poles` function to find the poles in `μ` and `ν`.
+- Appends the resulting poles to `up_poles` and `down_poles` respectively.
+
+# Arguments
+- `d::Vector{Tuple{BVector{T1}, BVector{T2}}}`: A vector of tuples, where each tuple contains two `BVector` objects.
+
+# Returns
+- A tuple `(up_poles, down_poles)` where `up_poles` is a vector of vectors containing the poles found in `μ`,
+  and `down_poles` is a vector of vectors containing the poles found in `ν`.
+
 """
 function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
     up_poles = Vector{Vector{Int}}()
@@ -101,7 +121,7 @@ end
 """
     find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
 
-Function that calculates combinations of k positive integers adding up to m. 
+Function that calculates combinations of k positive integers adding up to m, as detailed in the paper.
 """
 function find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
     res = []
@@ -145,15 +165,3 @@ function reshape_sols(sols, target_sum, num_bubbles, num_indices=3)
     end
     return vectors
 end
-
-
-# function find_all_poles(freqs::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
-#     up_poles = Vector{Vector{T1}}()
-#     down_poles = Vector{Vector{T2}}()
-#     for (idx, (μ, ν)) in enumerate(freqs)
-#         start = (idx == 1) ? 2 : 1                  # omit the first mode in the first bubble
-#         push!(up_poles, find_poles(μ[end:-1:start]))
-#         push!(down_poles, find_poles(ν[start:end]))
-#     end
-#     return (up_poles, down_poles)
-# end

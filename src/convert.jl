@@ -2,6 +2,20 @@ using Symbolics
 using QuantumCumulants
 using QuantumOptics
 
+"""
+    contraction_to_function(g, ω, ps)
+
+Converts a contraction expression `g` into a Julia function that depends on the variables `t` and `τ`.
+
+# Arguments
+- `g`: The contraction expression to be converted.
+- `ω`: The angular frequency.
+- `ps`: Additional parameters.
+
+# Returns
+A Julia function that represents the contraction expression `g` as a function of `t` and `τ`.
+
+"""
 function contraction_to_function(g, ω, ps)
     @variables t, τ
     expr = sum(to_symbol(g, τ).*exp(1im*ω*t))
@@ -12,6 +26,34 @@ function contraction_to_function(g, ω, ps)
     return func
 end
 
+
+# Incomplete
+"""
+    lindblad_function(gs, Ωs, γs, ωs, h_src, h_tgt, ps)
+
+Constructs a Lindblad function that represents the Lindblad master equation for a quantum system.
+
+## Arguments
+- `gs`: An array of complex numbers representing the coupling strengths between the system and the environment.
+- `Ωs`: An array of complex numbers representing the Rabi frequencies of the system.
+- `γs`: An array of tuples representing the jump operators and their corresponding decay rates.
+- `ωs`: A dictionary mapping jump operators to their corresponding frequencies.
+- `h_src`: An array of quantum operators representing the source Hamiltonian.
+- `h_tgt`: An array of quantum operators representing the target Hamiltonian.
+- `ps`: A dictionary mapping jump operators to their corresponding probabilities.
+
+## Returns
+A function `L_func` that represents the Lindblad master equation for the given quantum system for `QuantumOptics.jl`.
+
+The Lindblad master equation is given by:
+    dρ/dt = -i[H(t, ρ), ρ] + ∑(J * ρ * J† - 0.5 * (J† * J * ρ + ρ * J† * J))
+where `H(t, ρ)` is the time-dependent Hamiltonian, `ρ` is the density matrix, `J` is the jump operator, and `J†` is the adjoint of the jump operator.
+
+The function `L_func` takes two arguments: `t` (time) and `ρ` (density matrix), and returns a tuple `(H, J, J†, rates)`. `H` is the time-dependent Hamiltonian, `J` is an array of jump operators, `J†` is an array of adjoints of the jump operators, and `rates` is an array of decay rates.
+
+The Lindblad function can be used to simulate the time evolution of a quantum system under the influence of the environment.
+
+"""
 function lindblad_function(gs, Ωs, γs, ωs, h_src, h_tgt, ps)
     n = length(h_src)
     Id = h_tgt[(n+1):end]
@@ -41,6 +83,24 @@ function lindblad_function(gs, Ωs, γs, ωs, h_src, h_tgt, ps)
 end
 
 
+"""
+    hamiltonian_function(gs, ωs, h_src, h_tgt, ps; return_contraction_functions=false)
+
+Constructs a Hamiltonian function based on the given parameters for `QuantumOptics.jl`.
+
+## Arguments
+- `gs`: A dictionary of contraction functions, where the keys are quantum numbers and the values are the corresponding contraction functions.
+- `ωs`: A dictionary of frequencies, where the keys are quantum numbers and the values are the corresponding frequencies.
+- `h_src`: An array of source Hamiltonian operators.
+- `h_tgt`: An array of target Hamiltonian operators.
+- `ps`: A dictionary of parameters, where the keys are parameter names and the values are the corresponding parameter values.
+- `return_contraction_functions`: (optional) A boolean indicating whether to return the contraction functions along with the Hamiltonian function. Default is `false`.
+
+## Returns
+- If `return_contraction_functions` is `false`, returns a Hamiltonian function `H_func` that takes a time `t` and a state `ψ` as input and returns the Hamiltonian operator applied to the state.
+- If `return_contraction_functions` is `true`, returns a tuple `(H_func, func_gs)` where `H_func` is the Hamiltonian function and `func_gs` is a dictionary of contraction functions, where the keys are quantum numbers and the values are the corresponding contraction functions.
+
+"""
 function hamiltonian_function(gs, ωs, h_src, h_tgt, ps; return_contraction_functions=false)
     n = length(h_src)
     Id = h_tgt[(n+1):end]
@@ -67,6 +127,21 @@ function hamiltonian_function(gs, ωs, h_src, h_tgt, ps; return_contraction_func
     return return_contraction_functions ? (H_func, Dict(keys(gs) .=> func_gs)) : H_func
 end
 
+"""
+    qnumber_to_qop(qn::QuantumCumulants.QMul, op_subs, Id; mul = tensor)
+
+Converts a `QuantumCumulants.QMul` object to a quantum operator.
+
+# Arguments
+- `qn::QuantumCumulants.QMul`: The `QMul` object representing the quantum number.
+- `op_subs`: The operator substitutions to be applied.
+- `Id`: The identity operator.
+- `mul`: The function used for tensor multiplication. Default is `tensor`.
+
+# Returns
+The quantum operator obtained from the `QMul` object.
+
+"""
 function qnumber_to_qop(qn::QuantumCumulants.QMul, op_subs, Id; mul = tensor)
     num_spaces = length(qn.args_nc[1].hilbert.spaces)
     fac = qn.arg_c
