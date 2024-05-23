@@ -65,19 +65,24 @@ As a simple illustrative example, let us consider the implementation of a second
 using QuantumCumulants
 using QuantumGraining
 
-ha = NLevelSpace(Symbol(:atom));     hc = FockSpace(:cavity);  
-h = hc ⊗ hc                                                     # Atom and Field spaces
+@variables g ωc ωa
+Ω = [-ωc - ωa, ωc + ωa, -ωc + ωa, ωc - ωa]
+gvec = (g/2).*[1, 1, 1, 1]
 
-σ(i,j) = Transition(ha, Symbol("σ_{$k}"), i, j)    
-σz = 2*σ(1,1) - 1
-σx = σ(1,2) + σ(2,1)                                            # Spin operators
+# Hilbert space definitions (QuantumCumulants.jl)
+h_cav = FockSpace(:cavity)
+h_atom = NLevelSpace(:atom, (:g,:e))
+h = tensor(h_cav, h_atom)
 
-@cnumbers ω_c ω_a Ω
+# Operator definitions
+@qnumbers a::Destroy(h) σ::Transition(h)
+σm = σ(:e, :g)
+σp = σ(:g, :e)
+hvec = [a*σm, a'*σp, a*σp, a'*σm]
 
-ωs = [ω_c+ω_a, -ω_c-ω_a, -ω_c+ω_a, ω_c-ω_a]
-hs = Ω/2 .* [a*σ(2,1), a'*σ(1,2), a*σ(1,2), a'*σ(2,1)]
-
-H, L_list, J_list = effective_lindblad(h_list, ω_list, order=2)
+order=2
+g_eff, Ω_eff = drop_high_freqs(effective_hamiltonian(hvec, gvec, Ω, order; as_dict=true)..., Dict(ωa => 1, ωc => 1.01))
+γ_eff, ω_eff = drop_high_freqs(effective_dissipator(hvec, gvec, Ω, order)..., Dict(ωa => 1, ωc => 1.01)) 
 ```
 
-The code above returns an effective Lindbladian that generates the time-coarse grained evolution of the Rabi-model up to second-order. The input is a list of frequencies and their corresponding operators, and the output is a symbolic description of the dynamics in the form of a new effective Hamiltonian, and new generalized dissipators.
+The code above returns an effective Lindbladian that generates the time-coarse grained evolution of the Rabi-model up to second-order. The input is a list of frequencies and their corresponding operators, and the output is a new list of operators, frequencies and coupling strengths. The `drop_high_freqs` function is used to remove the high-frequency terms from the effective Hamiltonian and dissipator, to simplify the resulting expressions.
