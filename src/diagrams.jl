@@ -120,6 +120,7 @@ function get_diagrams(node::AbstractDiagramNode)
             elseif reference_node.right isa DiagramNode
                 push!(child_set, reference_node.right)
                 current_node = reference_node.right
+                reference_node = reference_node.right
             else
                 break
             end
