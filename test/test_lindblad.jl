@@ -17,8 +17,8 @@ using QuantumGraining
         h = tensor(h_cav, h_atom)
 
         @qnumbers a::Destroy(h) σ::Transition(h)
-        σm = σ(:e, :g)
-        σp = σ(:g, :e)
+        σm = σ(:g, :e)
+        σp = σ(:e, :g)
         σz = σ(:e, :e) - σ(:g, :g)
         σee = σ(:e, :e)
         hvec = [a*σm, a'*σp, a*σp, a'*σm]
@@ -97,16 +97,20 @@ using QuantumGraining
         # @show g1.prefacs
         # @show g^2/4*1/Σ .* [1, -1]
         # @show simplify.(g1.prefacs .- g^2/4*1/Σ .* [1, -1])
-        @test issetequal(simplify.(g1.prefacs .- g^2/4*1/Σ .* [1, -1]), [0, 0])
+        @test issetequal(simplify.(g1.prefacs .- g^2/4*1/Σ.* [1, -1]), [0, 0])
     end
 
     begin
-        @test issetequal(simplify.(g2.prefacs .- g^2/4*1/Δ .* [1, -1]), [0, 0])
+        @test issetequal(simplify.(g2.prefacs .- g^2/4*1/Δ.* [1, -1]), [0, 0])
     end
 
     # a'*a: 0
     begin
-        gada = (g1 - g2)
+        gada = -(g1 - g2)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[1] - gada.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[2] - gada.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[3] - gada.exponents[3]), 0)
+
         @test isequal(simplify(g_eff_2[a'*a].prefacs[1] - gada.prefacs[1]), 0)
         @test isequal(simplify(g_eff_2[a'*a].prefacs[2] - gada.prefacs[2]), 0)
         @test isequal(simplify(g_eff_2[a'*a].prefacs[3] - gada.prefacs[3]), 0)
@@ -114,18 +118,26 @@ using QuantumGraining
 
     # σee: 0
     begin
-        gσee = (g2 - g1)
+        gσee = (g1 - g2)
+        @test isequal(simplify(g_eff_2[σee].exponents[1] - gσee.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[σee].exponents[2] - gσee.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[σee].exponents[3] - gσee.exponents[3]), 0)
+
         @test isequal(simplify(g_eff_2[σee].prefacs[1] - gσee.prefacs[1]), 0)
-        @test isequal(simplify(g_eff_2[σee].prefacs[3] - gσee.prefacs[2]), 0)
-        @test isequal(simplify(g_eff_2[σee].prefacs[2] - gσee.prefacs[3]), 0)
+        @test isequal(simplify(g_eff_2[σee].prefacs[2] - gσee.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[σee].prefacs[3] - gσee.prefacs[3]), 0)
     end
 
     # a'*a*σee: 0
     begin
-        gadaσee = 2*(g2 - g1)
+        gadaσee = 2*(g1 - g2)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[1] - gadaσee.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[2] - gadaσee.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[3] - gadaσee.exponents[3]), 0)
+
         @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[1] - gadaσee.prefacs[1]), 0)
-        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[2] - gadaσee.prefacs[3]), 0)
-        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[3] - gadaσee.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[2] - gadaσee.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[3] - gadaσee.prefacs[3]), 0)
     end
 
     ### Third-order corrections
@@ -145,9 +157,54 @@ using QuantumGraining
         @show g_eff_3[(a'*a'*a'*σp)].polys
         for i in 1:3
             @test isequal(g_eff_3[(a'*a'*a'*σp)].exponents[i], test_exponents[i])
-            @test isapprox(prefacs_num[i], test_prefacs[i], rtol=0.01)
+            @test isapprox(prefacs_num[i], test_prefacs[i], rtol=0.001)
         end
 
         # the first element of polys should be 1
     end
+
+
+    ### Fourth-order corrections
+    g_eff_4, Ω_eff_4 = effective_hamiltonian(hvec, gvec, Ω, 4; as_dict=true)
+
+    # (σee): 0
+    test_exponents = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2, 2*((ωa + ωc)^2 + (-ωa - ωc)^2), (ωa - ωc)^2 + (-ωa - ωc)^2 + (4//1)*(ωc^2), (ωa + ωc)^2 + (ωa - ωc)^2 + (-ωa - ωc)^2 + (-ωa + ωc)^2, 2*((ωa - ωc)^2 + (-ωa + ωc)^2)]
+    test_prefacs = [[1.934400, 0, 0], [-0.912239, 0, -1.453626], [4.619092, 0, -1.453626], [0.242280], [-2.660242], [2.660242], [-5.883532]]
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[σee], 0)
+
+        @test isequal(length(g_eff_4[σee].exponents), 7)
+
+        prefacs_num = [float.(substitute(g_eff_4[σee].prefacs[i]*g_eff_4[σee].polys[i], Dict(ωa => 0.41176470588235, ωc => 0.84615384615385, g => 1.66666666666667, g^2 => 2.77777777777778, g^4 => 7.71604938271605))) for i in 1:7]
+        for i in 1:7
+            @test isequal(g_eff_4[σee].exponents[i], test_exponents[i])
+            for j in 1:length(test_prefacs[i])
+                @test isapprox(prefacs_num[i][j], test_prefacs[i][j], rtol=0.001)
+            end
+        end
+
+    end
+
+    # (a'*a'*a'*a'*σee): 4ωc
+    test_exponents = [(16//1)*(ωc^2), (-ωa - ωc)^2 + (ωa - 3ωc)^2, (8//1)*(ωc^2), (ωa - ωc)^2 + (-ωa - 3ωc)^2, (ωa - ωc)^2 + (-ωa - ωc)^2 + (4//1)*(ωc^2), 2((ωa - ωc)^2 + (-ωa - ωc)^2)]
+    test_prefacs = [-0.231682, -0.213043, 1.330121, 0.444725, -2.660242, 1.330121]
+    
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[(a'*a'*a'*a'*σee)], -4*ωc)
+    
+        @test isequal(length(g_eff_4[(a'*a'*a'*a'*σee)].exponents), 6)
+    
+        prefacs_num = [float.(substitute(g_eff_4[(a'*a'*a'*a'*σee)].prefacs[i], Dict(ωa => 7/17, ωc => 11/13, g => 5/3))) for i in 1:6]
+        @show g_eff_4[(a'*a'*a'*a'*σee)].polys
+        for i in 1:6
+            @test isequal(g_eff_4[(a'*a'*a'*a'*σee)].exponents[i], test_exponents[i])
+            @test isapprox(prefacs_num[i], test_prefacs[i], rtol=0.001)
+        end
+
+        # the first element of polys should be 1
+    end
+
+
 end

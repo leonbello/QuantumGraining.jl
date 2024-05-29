@@ -27,10 +27,25 @@ struct Correction
         if !(poly isa Array)
             poly = [poly]
         end
-        if !isequal(poly[1], 0)
-            prefac_norm = poly[1]       # Make sure the polynomial is always normalized such that 1 + aτ + bτ^2 + ...
-            poly = [1, poly[2:end]./prefac_norm...]
+        
+        first_nonzero_index = 1
+        for i1 in 1:length(poly)
+            if isequal(poly[i1], 0)
+                first_nonzero_index += 1
+            else
+                break
+            end
         end
+
+        for i2 in 1:(first_nonzero_index-1)
+            poly[i2] = convert(Num,0)
+        end
+        prefac_norm = poly[first_nonzero_index]             # Make sure that the polynomial is always normalized such that the coefficient of the leading-order term in τ is 1
+        poly[first_nonzero_index] = 1
+        for i3 in (first_nonzero_index+1):length(poly)
+            poly[i3] = poly[i3]./prefac_norm
+        end
+
         new(prefac*prefac_norm, exponent, poly, order)
     end
 end
@@ -248,18 +263,37 @@ function  +(c1::Correction, c2::Correction)
         if isequal(expand(c1.exponent), expand(c2.exponent))
             exponents = [c1.exponent]
             polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)
-            if !isequal(polys[1], 0)
-                try
-                    prefacs = [simplify.(polys[1]; simplify_fractions=true)]
-                catch
-                    prefacs = [simplify.(polys[1]; simplify_fractions=false)]
-                end
-                try
-                    polys = simplify.(polys/polys[1]; simplify_fractions=true)
-                catch
-                    polys = simplify.(polys/polys[1]; simplify_fractions=false)
+            first_nonzero_index = 1
+            for i1 in 1:length(polys)
+                if isequal(polys[i1], 0)
+                    first_nonzero_index += 1
+                else
+                    break
                 end
             end
+
+            if first_nonzero_index > length(polys)
+                prefacs, polys = [convert(Num, 0)], [[convert(Num, 1)]]
+            else
+                try
+                    prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=true)]
+                catch
+                    prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=false)]
+                end
+                
+                for i2 in 1:(first_nonzero_index-1)
+                    polys[i2] = convert(Num, 0)
+                end
+
+                try
+                    polys = simplify.(polys/prefacs[1]; simplify_fractions=true)
+                catch
+                    polys = simplify.(polys/prefacs[1]; simplify_fractions=false)
+                end
+
+                polys = [polys]
+            end
+
         else
             exponents = [c1.exponent, c2.exponent]
             prefacs = [c1.prefac, c2.prefac]
@@ -474,7 +508,18 @@ function ordered_sum(a, b)
     padded_a = pad(a, new_length)
     padded_b = pad(b, new_length)
 
-    return padded_a .+ padded_b
+    result = []
+    for i in 1:new_length
+        try
+            global element_sum = simplify.(padded_a[i] + padded_b[i]; simplify_fractions=true)
+        catch
+            global element_sum = simplify.(padded_a[i] + padded_b[i]; simplify_fractions=false)
+        end
+
+        push!(result, element_sum)
+    end
+
+    return result
 end
 
 """
@@ -522,7 +567,7 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
 
         if length(indices_to_merge) > 1
             # Merge prefacs and polys for indices_to_merge
-            merged_poly = [0]
+            merged_poly = [convert(Num, 0)]
             for j1 in indices_to_merge
                 merged_poly = ordered_sum(merged_poly, c.prefacs[j1]*c.polys[j1])
             end
@@ -533,10 +578,26 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
                 merged_poly = simplify.(merged_poly; simplify_fractions=false)
             end
 
-            if !isequal(merged_poly[1], 0)
-                merged_prefac = merged_poly[1]
-                normalized_merged_poly = [convert(Num, 1)]
-                for j2 in 2:length(merged_poly)
+            first_nonzero_index = 1
+            for i1 in 1:length(merged_poly)
+                if isequal(merged_poly[i1], 0)
+                    first_nonzero_index += 1
+                else
+                    break
+                end
+            end
+
+            if first_nonzero_index > length(merged_poly)
+                merged_prefac, normalized_merged_poly = convert(Num, 0), [convert(Num, 1)]
+
+                push!(unique_exponents, exponent)
+                push!(unique_prefacs, merged_prefac)
+                push!(unique_polys, normalized_merged_poly)
+            else
+                merged_prefac = merged_poly[first_nonzero_index]
+                normalized_merged_poly = fill(convert(Num, 0), first_nonzero_index-1)
+                push!(normalized_merged_poly, convert(Num, 1))
+                for j2 in (first_nonzero_index+1):length(merged_poly)
                     try
                         global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=true)
                     catch

@@ -18,7 +18,7 @@ const MTK = ModelingToolkit
 export DVec, UVec, BVector
 
 # diagrams.jl
-export DiagramNode, node_decomp,
+export DiagramNode, node_decomp!,
         node_decomp, get_diagrams, Diagram                                 
 
 # poles.jl
@@ -29,7 +29,7 @@ export Contraction, count_poles,
 # contractions.jl
 export diagram_correction, contraction_coeff, calc_pole_corrections, 
         Correction, ContractionCoefficient, 
-        split_freqs_into_bubbles, to_qc_symbol
+        split_freqs_into_bubbles, to_qc_symbol, calc_simple_factors, calc_expansion_factors, poly_multiplication
 
 # corrections.jl
 export merge_duplicate_exponents, simplify_contraction

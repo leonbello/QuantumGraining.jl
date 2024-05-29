@@ -71,6 +71,9 @@ function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
             end
 
             total_poly += prod(total_prefac).*poly
+            for j in 1:length(total_poly)
+                total_poly[j] = simplify(total_poly[j])
+            end
         end
         total_correction = extend_correction(total_correction, total_poly)
     end

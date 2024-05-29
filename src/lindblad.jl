@@ -179,6 +179,19 @@ function effective_hamiltonian(h::Vector, gs::Vector, Ω::Vector, k::Int; as_dic
                 end
             end
         end
+
+        for key in keys(gs_eff)                #delete terms with zero prefactor
+            zero_prefac_list = []
+            for j in 1:length(gs_eff[key].prefacs)
+                if isequal(gs_eff[key].prefacs[j], 0)
+                    push!(zero_prefac_list, j)
+                end
+            end
+            splice!(gs_eff[key].exponents, zero_prefac_list)
+            splice!(gs_eff[key].prefacs, zero_prefac_list)
+            splice!(gs_eff[key].polys, zero_prefac_list)
+        end
+
         return gs_eff, ωs_eff
     else
         unique_hs, unique_gs = group_operators(unique_hs, unique_gs, unique_ωs; as_dict=false) 
