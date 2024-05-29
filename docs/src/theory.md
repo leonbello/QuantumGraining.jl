@@ -3,13 +3,15 @@
 To demonstrate the use of the method, we start with a simple but illustrative example -- the Rabi model. The Rabi model describes the interaction between a single linear cavity mode and a two-level (spin) system. However, unlike the Jaynes-Cummings model, it does not assume the rotating-wave approximation (RWA) and retains the counter-rotating terms. In the strong-coupling regime, the Rabi model is of special interest since the RWA breaks down as the spin-cavity coupling strength becomes comparable or greater than the mode frequencies\cite{Braumüller_USC_Rabi,Casanova_DSC_JC,Ashhab_USC_Rabi}. In order to showcase the time-coarse graining method, we focus on this strong-coupling regime in order to investigate the effects of the counter-rotating terms on the system dynamics when all measurements have limited time resolution.
 
 More concretely, the model we consider here is described by the following Hamiltonian terms in the interaction picture,
-$$
+The Hamiltonian terms in the interaction picture are described by the following equations:
+
+\[
 \begin{align}
 \label{eq:Rabi Hamiltonian}
     \hat{H} &= \frac{g}{2} \left ( \hat{a}^\dagger \hat{\sigma}_+ e^{-i(\omega_c + \omega_a) t} + \hat{a}\hat{\sigma}_-e^{+i(\omega_c + \omega_a) t} \right ) \\
     &+ \frac{g}{2} \left ( \hat{a}^\dagger \hat{\sigma_-} e^{-i(\omega_c - \omega_a) t} + \hat{a}\hat{\sigma}_+e^{i(\omega_c - \omega_a) t} \right )
 \end{align}
-$$
+\]
 where we $\omega_c$  $(\omega_a)$  is the cavity (atom) resonance.
 
 In particular, we consider the situation where the coupling strength $g$ is not much smaller than the spin and cavity frequencies $\omega_{a}$ and $\omega_{c}$. i.e. $g \approx \omega_c \ (\omega_a)$. In that regime, the counter-rotating terms assume significance, and the induced dynamics that depend on the time resolution of the measurement apparatus.
@@ -17,20 +19,12 @@ In particular, we consider the situation where the coupling strength $g$ is not 
 When observing the dynamics of a coherent-state cavity mode interacting with a single atom, the Jaynes-Cummings model (which is simply the Rabi model with the RWA employed), show collapse-revival dynamics. Due to the photon-number dispersion of a coherent state, the Rabi oscillation decoheres and revives. Interestingly, these collapse-revivla cycles are completely absent in the full Rabi-model, and as we will see, only appear under finite-time resolution (or equivalently, time-coarse graining).
 
 For example, the numerical simulations in this subsection assume the following set of parameters:
-$$
-\begin{equation}
-    \begin{split}
-        \frac{\omega_{c}}{2\pi}
-        =
-        \frac{\omega_{a}}{2\pi}
-        =
-        2 \textrm{GHz};
-        \qquad
-        \frac{g}{4\pi} = 0.4 \textrm{GHz}.
-    \end{split}
-\end{equation}
-$$
-Under this set of parameters, the spin-state population shows rapid oscillation whose amplitude undergoes intricate evolution over a much longer time scale, as shown in Fig.\ref{fig:rabi-models}. However, the infinite-resolution dynamics cannot be observed in most experiments. When measurements on the system are performed with $ns$-level time resolution as is typical in heterodyne-based monitoring of the system, the collapse-revival pattern in the dynamics of the spin population can be recovered by taking a moving average of it.
+\[
+\begin{align}
+\frac{\omega_{c}}{2\pi} &= \frac{\omega_{a}}{2\pi} = 2 \textrm{GHz}; \\
+\frac{g}{4\pi} &= 0.4 \textrm{GHz}.
+\end{align}
+\]
 
 With the TCG method, we obtain an effective description that gives us \textbf{directly} the time-averaged observables that would be obtained from a bandwidth-limited measurement apparatus.  The TCG description produces a set of operators, comprised of products of the original Hamiltonian operators (i.e. multi-body transitions) $h^{(k)}_{\vec{\mu}}$, and their corresponding coupling strengths $g_{\vec{\mu}}^{(k)}$. In general, the produced TCG evolution does not need to be unitary, and produces also a set of pairs of pseudo-dissipators $(\hat{L}_{\vec\mu}, \hat{J}_{\vec\nu})$ with complex coupling rate $i\gamma_{\vec{\mu}, \vec{\nu}}^{(k)}$. These coupling strengths are encoded in a set of frequency-dependent scalars we call "contraction coefficients" $C_{l,r}(\vec{\mu}, \vec{\nu})$.
 $$
