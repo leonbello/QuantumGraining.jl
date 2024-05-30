@@ -2,9 +2,14 @@ using QuantumGraining
 using Test
 
 names = [
-    "test_corrections.jl"
     "test_bubble.jl"
+    "test_bvector.jl"
+    "test_contraction_coefficients.jl"
+    "test_corrections.jl"
     "test_decomp.jl"
+    "test_dissipators.jl"
+    "test_lindblad_frequencies.jl"
+    "test_lindblad.jl"
 ]
 
 detected_tests = filter(

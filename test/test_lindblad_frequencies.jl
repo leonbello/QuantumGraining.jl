@@ -54,9 +54,8 @@ using QuantumGraining
         @test isequal(Ω_eff_2[2], 0)
         @test isequal(simplify(ops_eff_2[2] - a'*σp*a*σm), 0)
         @test issetequal(expand.(g_eff_2[2].exponents), [0, 2*ωa^2 + 4*ωa*ωc + 2*ωc^2])
-        @show g_eff_2[2].prefacs
         @test issetequal(
-            simplify.(g_eff_2[2].prefacs .- -[-g^2//4*1/(ωa + ωc), g^2//4*1/(ωa + ωc)]), 
+            simplify.(g_eff_2[2].prefacs .- [-g^2//4*1/(ωa + ωc), g^2//4*1/(ωa + ωc)]), 
             [0,0]
         )
     end
@@ -66,7 +65,7 @@ using QuantumGraining
         @test isequal(Ω_eff_2[5], 0)
         @test isequal(simplify(ops_eff_2[5] - a*σm*a'*σp), 0)
         @test issetequal(expand.(g_eff_2[5].exponents), [0, 2*ωa^2 + 4*ωa*ωc + 2*ωc^2])
-        @test issetequal(simplify.(g_eff_2[5].prefacs .- [-g^2//4*1/(ωa + ωc), g^2//4*1/(ωa + ωc)]), [0,0])
+        @test issetequal(simplify.(g_eff_2[5].prefacs .- [g^2//4*1/(ωa + ωc), -g^2//4*1/(ωa + ωc)]), [0,0])
     end
 
     # -Δ, -ω
@@ -80,11 +79,11 @@ using QuantumGraining
         @show g_eff_2[3].prefacs[1]
         @show simplify(g^2//8*(1/Σ - 1/Δ))
         @test isequal(
-            simplify(g_eff_2[3].prefacs[1] - g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[3].prefacs[1] - g^2//8*(-1/Σ + 1/Δ)),
             0
         )
         @test isequal(
-            simplify(g_eff_2[3].prefacs[2] - -g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[3].prefacs[2] - g^2//8*(1/Σ - 1/Δ)),
             0
         )
     end
@@ -98,11 +97,11 @@ using QuantumGraining
             expand.([Δ^2 + Σ^2, (Σ + Δ)^2])
         )
         @test isequal(
-            simplify(g_eff_2[9].prefacs[1] - -g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[9].prefacs[1] - g^2//8*(1/Σ - 1/Δ)),
             0
         )
         @test isequal(
-            simplify(g_eff_2[9].prefacs[2] - g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[9].prefacs[2] - g^2//8*(-1/Σ + 1/Δ)),
             0
         )
     end
@@ -140,11 +139,11 @@ using QuantumGraining
             expand.([Δ^2 + Σ^2, (Σ + Δ)^2])
         )
         @test isequal(
-            simplify(g_eff_2[8].prefacs[1] - -g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[8].prefacs[1] - g^2//8*(1/Σ - 1/Δ)),
             0
         )
         @test isequal(
-            simplify(g_eff_2[8].prefacs[2] - g^2//8*(1/Σ - 1/Δ)),
+            simplify(g_eff_2[8].prefacs[2] - g^2//8*(-1/Σ + 1/Δ)),
             0
         )
     end
@@ -161,7 +160,7 @@ using QuantumGraining
             expand.([(ωc + ωa)^2 + (ωc - ωa)^2, ((ωc + ωa) + (ωc - ωa))^2])
         )
         @test issetequal(
-            simplify.(g_eff_2[14].prefacs .- g^2//8*(1/(ωc - ωa) - 1/(ωc + ωa)).*[-1, 1]),
+            simplify.(g_eff_2[14].prefacs .- g^2//8*(1/(ωc - ωa) - 1/(ωc + ωa)).*[1, -1]),
             [0, 0]
         )
     end
@@ -175,7 +174,7 @@ using QuantumGraining
             simplify.(expand.([2*(ωc - ωa)^2, 0]))
         )
         @test issetequal(
-            simplify.(g_eff_2[12].prefacs .- g^2//4*1/(ωc - ωa).*[1, -1]),
+            simplify.(g_eff_2[12].prefacs .- g^2//4*1/(ωc - ωa).*[-1, 1]),
             0
         )         
     end
@@ -189,7 +188,7 @@ using QuantumGraining
             simplify.(expand.([2*(ωc - ωa)^2, 0]))
         )
         @test issetequal(
-            simplify.(g_eff_2[15].prefacs .- -g^2//4*1/(ωc - ωa).*[1, -1]),
+            simplify.(g_eff_2[15].prefacs .- -g^2//4*1/(ωc - ωa).*[-1, 1]),
             [0, 0]
         )        
     end    

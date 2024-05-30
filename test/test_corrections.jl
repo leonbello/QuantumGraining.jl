@@ -52,9 +52,9 @@ using QuantumGraining
         corr = diagram_correction(ω)
         
         @test corr.exponent ≈ 2*32
-        @test corr.prefac ≈ 1//30
+        @test corr.prefac ≈ -1//30
     end
-    ## CORRECT! 1//30*exp(-32τ^2) ##
+    ## CORRECT! -1//30*exp(-32τ^2) ##
 
     # two common bubbles
     # no singularities
@@ -68,7 +68,7 @@ using QuantumGraining
         # @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)     
 
-        @test corr.prefac ≈ -1//27720
+        @test corr.prefac ≈ 1//27720
         @test corr.exponent ≈ 277
     end
     ## CORRECT! -1/27720*exp(-277/2*τ^2) ##
@@ -113,12 +113,10 @@ using QuantumGraining
         ν2 = []
         ω =  Diagram([(μ1, ν1), (μ2, ν2)])
         corr  = diagram_correction(ω)
-        
-        @show corr
 
         @test corr.exponent ≈ 1
         @test isapprox(corr.poly, [1], atol = 1e-8)
-        @test isapprox(corr.prefac, 1, atol = 1e-13)
+        @test isapprox(corr.prefac, -1, atol = 1e-13)
     end
 
     # up and down singularities in the first bubble
@@ -137,7 +135,7 @@ using QuantumGraining
         # @test corr.poly ≈ [1, 0, -90//91, 0, 1152//91]
         @test isapprox(corr.poly, [1, 0, -90//91, 0, 1152//91], atol = 1e-13)
         # @test corr.prefac ≈ 91//7776
-        @test isapprox(corr.prefac, 91//7776, atol = 1e-13)
+        @test isapprox(corr.prefac, -91//7776, atol = 1e-13)
     end
 
     begin
@@ -152,7 +150,7 @@ using QuantumGraining
 
         @test corr.exponent ≈ 325
         @test isapprox(corr.poly, [1, 0, 9450//29], atol = 1e-12)
-        @test isapprox(corr.prefac, -29//1587600, atol = 1e-13)
+        @test isapprox(corr.prefac, 29//1587600, atol = 1e-13)
     end
 
     begin
@@ -167,7 +165,7 @@ using QuantumGraining
 
         @test corr.exponent ≈ 2*333
         @test isapprox(corr.poly, [1], atol = 1e-13)
-        @test isapprox(corr.prefac, -1//425250, atol = 1e-13)
+        @test isapprox(corr.prefac, 1//425250, atol = 1e-13)
     end
 
     begin
@@ -182,7 +180,7 @@ using QuantumGraining
 
         @test corr.exponent ≈ 49
         @test isapprox(corr.poly, [1, 0, -2080540//65361, 0, 29868440//65361, 0, -186356016//65361, 0, 311299254//65361], atol = 1e-11)
-        @test isapprox(corr.prefac, -65361//4302592, atol = 1e-13)
+        @test isapprox(corr.prefac, 65361//4302592, atol = 1e-13)
     end
 
     begin
@@ -215,17 +213,15 @@ using QuantumGraining
         @test isapprox(corr.prefac, -4597019//80621568, atol = 1e-13)
     end
 
-    # need to check if that's actually the correct result
     begin
         μ1 = [3]
         ν1 = [0]
         ω =  Diagram([(μ1, ν1)])
         corr = diagram_correction(ω)
-        
-        @show corr
+ 
         @test corr.exponent ≈ 3^2
         @test isapprox(corr.poly, [0, 0, 1], atol = 1e-8)
-        @test isapprox(corr.prefac, -3)
+        @test isapprox(corr.prefac, 3)
     end
 
     # up-singularity in the second bubble 

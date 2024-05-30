@@ -29,8 +29,8 @@ struct Correction
         end
         
         first_nonzero_index = 1
-        for i1 in 1:length(poly)
-            if isequal(poly[i1], 0)
+        for i in 1:length(poly)
+            if isequal(simplify(poly[i]), 0.0) || isequal(simplify(poly[i]), -0.0) 
                 first_nonzero_index += 1
             else
                 break
