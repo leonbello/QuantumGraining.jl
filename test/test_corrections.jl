@@ -4,11 +4,7 @@ using Symbolics
 using Test
 using QuantumGraining
 
-#@testset "corrections" begin
-module Tst
-    using Test
-    using QuantumGraining
-
+@testset "corrections" begin
     # one common bubble and one up-bubble
     # no singularities
     begin
@@ -56,9 +52,9 @@ module Tst
         corr = diagram_correction(ω)
         
         @test corr.exponent ≈ 2*32
-        @test corr.prefac ≈ 1//30
+        @test corr.prefac ≈ -1//30
     end
-    ## CORRECT! 1//30*exp(-32τ^2) ##
+    ## CORRECT! -1//30*exp(-32τ^2) ##
 
     # two common bubbles
     # no singularities
@@ -72,33 +68,31 @@ module Tst
         # @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)     
 
-        @test corr.prefac ≈ -1//27720
+        @test corr.prefac ≈ 1//27720
         @test corr.exponent ≈ 277
     end
     ## CORRECT! -1/27720*exp(-277/2*τ^2) ##
 
     # only up-bubbles
-    begin   # [(3, 0), (2, 0)], single singularity in the first bubble
+    begin
+        # [(3, 0), (2, 0)], single singularity in the first bubble   
         μ1 = [0, 1, -1];  
         ν1 = Int[];
         μ2 = [1, 3];
         ν2 = Int[];
         ω = Diagram([(μ1, ν1), (μ2, ν2)]);
 
-        # @show count_poles(find_all_poles(ω)...)
         corr = diagram_correction(ω)
 
         @test corr.exponent ≈ 2*8
-        # @test corr.poly ≈ [1, 0, -48]
         @test isapprox(corr.poly, [1, 0, -48], atol = 1e-13)
-        # @test corr.prefac ≈ 1//144
         @test isapprox(corr.prefac, 1//144, atol = 1e-13)
     end
     # there is error in the last one or two digits, probably resulting from limited machine precision
 
     # single singularity in the first bubble
-    begin   # [(3, 0), (2, 0)], single singularity in the first bubble
-        μ1 = [0, 1] #, -1];  
+    begin   
+        μ1 = [0, 1]  
         ν1 = Int[];
         μ2 = [-1, 1, 3];
         ν2 = Int[];
@@ -111,27 +105,19 @@ module Tst
         @test corr.poly ≈ [1]
         @test corr.prefac ≈ -1//36
     end
-    ## WRONG COEFFICIENTS AND POLY: 1/144*exp(-8*τ^2)*(1-48τ^2) ##
 
-    # up-singularity in the second bubble 
     begin
-        μ1 = [1, 3];
-        ν1 = [];
-        μ2 = [0, 1, -1];  
-        ν2 = [];
-        
-        ω = Diagram([(μ1, ν1), (μ2, ν2)]);
-    
-        # @show count_poles(find_all_poles(ω)...)
-        corr = diagram_correction(ω)
+        μ1 = [1]
+        ν1 = []
+        μ2 = [0]
+        ν2 = []
+        ω =  Diagram([(μ1, ν1), (μ2, ν2)])
+        corr  = diagram_correction(ω)
 
-        @test corr.exponent ≈ 2*8
-        # @test corr.poly ≈ [1, 0, -69//7, 0, 72//7]
-        @test isapprox(corr.poly, [1, 0, -69//7, 0, 72//7], atol = 1e-13)
-        # @test corr.prefac ≈ 7//162
-        @test isapprox(corr.prefac, 7//162, atol = 1e-13)
+        @test corr.exponent ≈ 1
+        @test isapprox(corr.poly, [1], atol = 1e-8)
+        @test isapprox(corr.prefac, -1, atol = 1e-13)
     end
-    # there is error in the last one or two digits, probably resulting from limited machine precision
 
     # up and down singularities in the first bubble
     begin
@@ -149,7 +135,7 @@ module Tst
         # @test corr.poly ≈ [1, 0, -90//91, 0, 1152//91]
         @test isapprox(corr.poly, [1, 0, -90//91, 0, 1152//91], atol = 1e-13)
         # @test corr.prefac ≈ 91//7776
-        @test isapprox(corr.prefac, 91//7776, atol = 1e-13)
+        @test isapprox(corr.prefac, -91//7776, atol = 1e-13)
     end
 
     begin
@@ -164,7 +150,7 @@ module Tst
 
         @test corr.exponent ≈ 325
         @test isapprox(corr.poly, [1, 0, 9450//29], atol = 1e-12)
-        @test isapprox(corr.prefac, -29//1587600, atol = 1e-13)
+        @test isapprox(corr.prefac, 29//1587600, atol = 1e-13)
     end
 
     begin
@@ -179,7 +165,7 @@ module Tst
 
         @test corr.exponent ≈ 2*333
         @test isapprox(corr.poly, [1], atol = 1e-13)
-        @test isapprox(corr.prefac, -1//425250, atol = 1e-13)
+        @test isapprox(corr.prefac, 1//425250, atol = 1e-13)
     end
 
     begin
@@ -194,7 +180,7 @@ module Tst
 
         @test corr.exponent ≈ 49
         @test isapprox(corr.poly, [1, 0, -2080540//65361, 0, 29868440//65361, 0, -186356016//65361, 0, 311299254//65361], atol = 1e-11)
-        @test isapprox(corr.prefac, -65361//4302592, atol = 1e-13)
+        @test isapprox(corr.prefac, 65361//4302592, atol = 1e-13)
     end
 
     begin
@@ -227,4 +213,31 @@ module Tst
         @test isapprox(corr.prefac, -4597019//80621568, atol = 1e-13)
     end
 
+    begin
+        μ1 = [3]
+        ν1 = [0]
+        ω =  Diagram([(μ1, ν1)])
+        corr = diagram_correction(ω)
+ 
+        @test corr.exponent ≈ 3^2
+        @test isapprox(corr.poly, [0, 0, 1], atol = 1e-8)
+        @test isapprox(corr.prefac, 3)
+    end
+
+    # up-singularity in the second bubble 
+    begin
+        μ1 = [1, 3];
+        ν1 = [];
+        μ2 = [0, 1, -1];  
+        ν2 = [];
+        
+        ω = Diagram([(μ1, ν1), (μ2, ν2)]);
+    
+        corr = diagram_correction(ω)
+
+        @test corr.exponent ≈ 2*8
+        @test isapprox(corr.poly, [1, 0, -69//7, 0, 72//7], atol = 1e-13)
+        @test isapprox(corr.prefac, 7//162, atol = 1e-13)
+    end
+    # there is error in the last one or two digits, probably resulting from limited machine precision
 end

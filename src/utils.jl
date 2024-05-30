@@ -18,6 +18,9 @@ Returns:
     freqs_dn - array of only the down-modes
 """
 function split_freqs(freqs::Array, l::Int, r::Int)
+    if length(freqs) < l + r
+        error("Number of frequencies does not match number of modes!")
+    end
     freqs_up = freqs[1:l]
     freqs_dn = freqs[l+1:l+r]
     return freqs_up, freqs_dn

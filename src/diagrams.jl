@@ -110,7 +110,23 @@ function get_diagrams(node::AbstractDiagramNode)
     diagrams_list = []
     if (node isa DiagramNode)
         node_decomp!(node, diagrams_list)                              # add all 2-bubble decompoisition to the list
-        for child in [node.left, node.right]                           # for both child nodes
+        child_set = []
+        reference_node = node
+        current_node = node
+        while true
+            if current_node.left isa DiagramNode
+                push!(child_set, current_node.left)
+                current_node = current_node.left
+            elseif reference_node.right isa DiagramNode
+                push!(child_set, reference_node.right)
+                current_node = reference_node.right
+                reference_node = reference_node.right
+            else
+                break
+            end
+        end
+
+        for child in child_set                                         # for all child nodes
             if (child isa DiagramNode)
                 decomp = DiagramNode(child)                            # build a new decomposition tree out of the rightmost bubble
                 child_list = get_diagrams(decomp)                      # get all diagrams of the child node
@@ -123,4 +139,8 @@ function get_diagrams(node::AbstractDiagramNode)
     end
     diagrams_list = pushfirst!(filter!(x-> ((0,0) ∉ x), diagrams_list),[node.root]) #Removing redundant diagrams with (0,0) terms
     return unique!(diagrams_list)
+end
+
+function get_diagrams(l::Int, r::Int)
+    return get_diagrams(DiagramNode((l, r)))
 end

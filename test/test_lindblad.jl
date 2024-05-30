@@ -1,95 +1,208 @@
-#Test file for lindblad.jl 
-using QuantumCumulants
-using IterTools
+using Revise
 using Symbolics
-using SymbolicUtils.Rewriters
+using Test
+using QuantumCumulants
+using QuantumGraining
 
-module Tst
-    using Test
-    include("../src/diagrams.jl")
-    include("../src/contractions.jl")
-    include("../src/lindblad.jl")
-    include("../src/printing.jl")
-    include("../src/poles.jl")
+@testset "lindblad" begin
+    # Operator and space definitions
+    begin
+        @variables g ωc ωa
+        #Ω = [-ωc - ωa, ωc + ωa, -ωc + ωa, ωc - ωa]
+        Ω = [ωc + ωa, - ωc - ωa, ωc - ωa, - ωc + ωa]
+        gvec = (g/2).*[1, 1, 1, 1]
 
-    #=
-        Old tests, may be irrelevant now ##
-    =#
-    diagram = [(2,1), (1,0)]
+        h_cav = FockSpace(:cavity)
+        h_atom = NLevelSpace(:atom, (:g,:e))
+        h = tensor(h_cav, h_atom)
 
-    h_cav = FockSpace(:cavity)
-    h_atom = NLevelSpace(:atom, (:g,:e))
-    h = tensor(h_cav, h_atom)
+        @qnumbers a::Destroy(h) σ::Transition(h)
+        σm = σ(:g, :e)
+        σp = σ(:e, :g)
+        σz = σ(:e, :e) - σ(:g, :g)
+        σee = σ(:e, :e)
+        hvec = [a*σm, a'*σp, a*σp, a'*σm]
 
-    @qnumbers a::Destroy(h_cav) σ::Transition(h)
-    @cnumbers ω_0 ω_d g κ γ ϵ ω_3 ω_1
-
-    σz = 2* σ(:e, :e)  - 1
-    σx = σ(:g, :e) + σ(:e, :g)
-    σy = 1im* (σ(:e, :g) - σ(:g, :e))
-    @syms t::Real
-    H_rab = ω_0 * a'*a + ω_d/2 * σz + g*(a' + a)*(σx) + ϵ*(a*exp(1im*ω_3*t) + a'*exp(-1im*ω_3*t))
-    #@register f(t)
-    ωs = [0,0,0,ω_3, -ω_3]
-    hs = [ω_0 * a'*a,ω_d/2 * σz,g*(a' + a)*(σx),ϵ*a, ϵ*a']
-
-    ωs2 = [ω_1,-ω_1,ω_3, -ω_3]
-    hs2 = [0.5*ω_0 * a'*a,0.5*ω_0 * a'*a,ϵ*a, ϵ*a'] 
-   
-
-    k=2
-    @syms t::Real
-    gs, Vs = simplify(effective_hamiltonian(k, ωs2, hs2))
-    @show Vs
-    @show gs
-    @show [typeof(g*V) for (g,V) in zip(gs, Vs)]
-    @show [g*V for (g,V) in zip(gs, Vs)]
-    @show (typeof(a'*a)==QuantumCumulants.QMul{Nothing})
-    sums = 0
-    for (g,V) in zip(gs, Vs)
-        if (typeof(g*V) != QuantumCumulants.QMul{Nothing})
-            sums+= 0
-        else
-            sums += g*V
-        end
+        Σ = ωa + ωc
+        Δ = ωc - ωa
     end
-    @show(simplify(sums))
-    (typeof(1) == QuantumCumulants.QMul{Nothing}) ? print("yes") : print("no")
-    #collect_rule = @rule(+(~~xs) => ~~xs)
-    #H_list = simplify(collect_rule(H))
-    #typeof(ω_d*σz1)
+
+    # first-order Rabi-model - no RWA
+    g_eff_1, Ω_eff_1 = effective_hamiltonian(hvec, gvec, Ω, 1; as_dict=true)
+
+    @test issetequal(values(Ω_eff_1), [ωc + ωa, ωc - ωa, ωa - ωc, -ωc - ωa])
+    @test issetequal(keys(g_eff_1), hvec)
+
+
+    # a*σm: -ωa - ωc
+    begin
+        @test isequal(g_eff_1[a*σm].prefacs[1], g//2)
+        @test isequal(expand(g_eff_1[a*σm].exponents[1]), expand((-ωa - ωc)^2))
+        @test isequal(Ω_eff_1[a*σm], ωa + ωc)
+    end
+
+    # a'*σp: ωc + ωa
+    begin
+        @test isequal(g_eff_1[a'*σp].prefacs[1], g//2)
+        @test isequal(expand(g_eff_1[a'*σp].exponents[1]), expand((ωc + ωa)^2))
+        @test isequal(Ω_eff_1[a'*σp], -ωc - ωa)
+    end
+
+    # a*σp: ωa - ωc
+    begin
+        @test isequal(g_eff_1[a*σp].prefacs[1], g//2)
+        @test isequal(expand(g_eff_1[a*σp].exponents[1]), expand((ωa - ωc)^2))
+        @test isequal(Ω_eff_1[a*σp], -ωa + ωc)
+    end
+
+    # a'*σm: ωc - ωa
+    begin
+        @test isequal(g_eff_1[a'*σm].prefacs[1], g//2)
+        @test isequal(expand(g_eff_1[a'*σm].exponents[1]), expand((ωc - ωa)^2))
+        @test isequal(Ω_eff_1[a'*σm], -ωc + ωa)
+    end
+
+    ### RWA by dropping terms
+    begin
+        fsubs = Dict(
+            ωa => 1,
+            ωc => 1.01
+        )
+        g_loew_1, Ω_low_1 = drop_high_freqs(g_eff_1, Ω_eff_1, fsubs)
+        @test issetequal(values(Ω_low_1), [ωc - ωa, ωa - ωc])
+        @show collect(keys(Ω_low_1))
+
+        g_low_1 = gaussian_to_cutoff(g_eff_1, Ω_low_1, fsubs; keep_small_exponents=true)
+    end
+
+    # a*σp: ωa - ωc
+    begin
+        @test isequal(g_low_1[a*σp].prefacs[1], g//2)
+        @test isequal(expand(g_low_1[a*σp].exponents[1]), expand((ωa - ωc)^2))
+    end
+
+    # a'*σm: ωc - ωa
+    begin
+        @test isequal(g_low_1[a'*σm].prefacs[1], g//2)
+        @test isequal(expand(g_low_1[a'*σm].exponents[1]), expand((ωc - ωa)^2))
+    end
     
-    secondOrderRule = @acrule((~a)*(~y)*(~z) + (~b)*(~y)*(~z) => ((~a)+(~b))*(~y)*(~z))
-    firstOrderRule = @acrule((~a)*(~y) + (~b)*(~y) => ((~a)+(~b))*(~y))
-    rules = Chain([firstOrderRule,secondOrderRule])
-    H1 = Fixpoint(rules)(sums)
-    #r = Chain[]
+    # Second-order Rabi-model -- Hamiltonian terms
+    g_eff_2, Ω_eff_2 = effective_hamiltonian(hvec, gvec, Ω, 2; as_dict=true)    
+    @show keys(Ω_eff_2)    
 
-    typeof(H1)
-    eqs = meanfield([σz1], H1, []; order=1)
-    eqs1 = complete(eqs)
-    ω2 = [([1, ω_d], [1,1, -ω_d])]
-    @show diagram_correction(ω2)
-    ω3 = [1,1,1,ω_d, -ω_d]
-    @show contraction_coeff((3,0), ω3) + contraction_coeff((0,3), -reverse(ω3))
+    g1 = g^2/4*contraction_coeff(2, 0, [-ωa - ωc, ωa + ωc])
+    g2 = g^2/4*contraction_coeff(2, 0, [ωa - ωc, ωc - ωa])
+    begin
+        # @show g1.prefacs
+        # @show g^2/4*1/Σ .* [1, -1]
+        # @show simplify.(g1.prefacs .- g^2/4*1/Σ .* [1, -1])
+        @test issetequal(simplify.(g1.prefacs .- g^2/4*1/Σ.* [1, -1]), [0, 0])
+    end
 
+    begin
+        @test issetequal(simplify.(g2.prefacs .- g^2/4*1/Δ.* [1, -1]), [0, 0])
+    end
 
-    ## repeated_combinations ##
-    #ω_combos = repeated_combinations(ω_list, 5)
-    #unique(ω_combos)
+    # a'*a: 0
+    begin
+        gada = -(g1 - g2)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[1] - gada.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[2] - gada.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].exponents[3] - gada.exponents[3]), 0)
 
-    #h_combos = repeated_combinations(h_list, 5)
-    #unique(simplify.(h_combos))                                 # seems to be an error with the simplification
+        @test isequal(simplify(g_eff_2[a'*a].prefacs[1] - gada.prefacs[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].prefacs[2] - gada.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a].prefacs[3] - gada.prefacs[3]), 0)
+    end
 
-    ## effective_hamiltonian ##
-    #k = 2
-    #ω_combos = repeated_combinations(ω_list, k)
-    #h_combos = repeated_combinations(h_list, k)
-    #@cnumbers t
-    #h_eff = effective_hamiltonian(k, ω_list, h_list,t)
-    #simplify(h_eff)
+    # σee: 0
+    begin
+        gσee = (g1 - g2)
+        @test isequal(simplify(g_eff_2[σee].exponents[1] - gσee.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[σee].exponents[2] - gσee.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[σee].exponents[3] - gσee.exponents[3]), 0)
+
+        @test isequal(simplify(g_eff_2[σee].prefacs[1] - gσee.prefacs[1]), 0)
+        @test isequal(simplify(g_eff_2[σee].prefacs[2] - gσee.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[σee].prefacs[3] - gσee.prefacs[3]), 0)
+    end
+
+    # a'*a*σee: 0
+    begin
+        gadaσee = 2*(g1 - g2)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[1] - gadaσee.exponents[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[2] - gadaσee.exponents[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].exponents[3] - gadaσee.exponents[3]), 0)
+
+        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[1] - gadaσee.prefacs[1]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[2] - gadaσee.prefacs[2]), 0)
+        @test isequal(simplify(g_eff_2[a'*a*σee].prefacs[3] - gadaσee.prefacs[3]), 0)
+    end
+
+    ### Third-order corrections
+    g_eff_3, Ω_eff_3 = effective_hamiltonian(hvec, gvec, Ω, 3; as_dict=true)
+
+    # (a'*a'*a'*σp): −ωa−3ωc
+    test_exponents = [(-ωa - 3ωc)^2, (-ωa - ωc)^2 + (4//1)*(ωc^2), (ωa - ωc)^2 + 2((-ωa - ωc)^2)]
+    test_prefacs = [0.271847, -1.33092, 1.05907]
+
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_3[(a'*a'*a'*σp)], -ωa - 3*ωc)
     
+        @test isequal(length(g_eff_3[(a'*a'*a'*σp)].exponents), 3)
+    
+        prefacs_num = [float.(substitute(g_eff_3[(a'*a'*a'*σp)].prefacs[i], Dict(ωa => 7/17, ωc => 11/13, g => 5/3))) for i in 1:3]
+        @show g_eff_3[(a'*a'*a'*σp)].polys
+        for i in 1:3
+            @test isequal(g_eff_3[(a'*a'*a'*σp)].exponents[i], test_exponents[i])
+            @test isapprox(prefacs_num[i], test_prefacs[i], rtol=0.001)
+        end
+
+        # the first element of polys should be 1
+    end
 
 
-    # problem with 0 frequencies and limits
+    ### Fourth-order corrections
+    g_eff_4, Ω_eff_4 = effective_hamiltonian(hvec, gvec, Ω, 4; as_dict=true)
+
+    # (σee): 0
+    test_exponents = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2, 2*((ωa + ωc)^2 + (-ωa - ωc)^2), (ωa - ωc)^2 + (-ωa - ωc)^2 + (4//1)*(ωc^2), (ωa + ωc)^2 + (ωa - ωc)^2 + (-ωa - ωc)^2 + (-ωa + ωc)^2, 2*((ωa - ωc)^2 + (-ωa + ωc)^2)]
+    test_prefacs = [[1.934400, 0, 0], [-0.912239, 0, -1.453626], [4.619092, 0, -1.453626], [0.242280], [-2.660242], [2.660242], [-5.883532]]
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[σee], 0)
+
+        @test isequal(length(g_eff_4[σee].exponents), 7)
+
+        prefacs_num = [float.(substitute(g_eff_4[σee].prefacs[i]*g_eff_4[σee].polys[i], Dict(ωa => 0.41176470588235, ωc => 0.84615384615385, g => 1.66666666666667, g^2 => 2.77777777777778, g^4 => 7.71604938271605))) for i in 1:7]
+        for i in 1:7
+            @test isequal(g_eff_4[σee].exponents[i], test_exponents[i])
+            for j in 1:length(test_prefacs[i])
+                @test isapprox(prefacs_num[i][j], test_prefacs[i][j], rtol=0.001)
+            end
+        end
+
+    end
+
+    # (a'*a'*a'*a'*σee): 4ωc
+    test_exponents = [(16//1)*(ωc^2), (-ωa - ωc)^2 + (ωa - 3ωc)^2, (8//1)*(ωc^2), (ωa - ωc)^2 + (-ωa - 3ωc)^2, (ωa - ωc)^2 + (-ωa - ωc)^2 + (4//1)*(ωc^2), 2((ωa - ωc)^2 + (-ωa - ωc)^2)]
+    test_prefacs = [-0.231682, -0.213043, 1.330121, 0.444725, -2.660242, 1.330121]
+    
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[(a'*a'*a'*a'*σee)], -4*ωc)
+    
+        @test isequal(length(g_eff_4[(a'*a'*a'*a'*σee)].exponents), 6)
+    
+        prefacs_num = [float.(substitute(g_eff_4[(a'*a'*a'*a'*σee)].prefacs[i], Dict(ωa => 7/17, ωc => 11/13, g => 5/3))) for i in 1:6]
+        @show g_eff_4[(a'*a'*a'*a'*σee)].polys
+        for i in 1:6
+            @test isequal(g_eff_4[(a'*a'*a'*a'*σee)].exponents[i], test_exponents[i])
+            @test isapprox(prefacs_num[i], test_prefacs[i], rtol=0.001)
+        end
+
+        # the first element of polys should be 1
+    end
 end

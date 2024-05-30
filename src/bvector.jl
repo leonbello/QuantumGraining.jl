@@ -44,9 +44,21 @@ function DVec(u::Vector{T}; special=false) where T
     return BVector(u, :down, special)
 end
 
+
 """
-    vec_factorial(u; include_poles=true)
-Calculates vector factorial for a BVector u. If the vector includes the edge mode, then the first term is omitted.
+    vec_factorial(u::BVector; include_poles=false)
+
+Compute the vector factorial of a `BVector` object `u`.
+
+# Arguments
+- `u::BVector`: The input `BVector` object.
+
+# Optional Arguments
+- `include_poles::Bool=false`: Whether to include poles in the computation.
+
+# Returns
+- `Int`: The vector factorial of `u`.
+
 """
 function vec_factorial(u::BVector; include_poles=false)
     if u.type == :down
@@ -70,6 +82,20 @@ function vec_factorial(u::BVector; include_poles=false)
     return isempty(prod_terms) ? 1 : prod(prod_terms)
 end
 
+"""
+    norm_fac(v::BVector, j::Int, mj::Int)
+
+Compute the normalization factor for a given `BVector` object `v` at mode `j` and  `mj`.
+
+# Arguments
+- `v::BVector`: The input `BVector` object.
+- `j::Int`: The mode index.
+- `mj::Int`: The inner mode index.
+
+# Returns
+- `Float64`: The normalization factor.
+
+"""
 function norm_fac(v::BVector, j::Int, mj::Int)
     j = v.special ? j - 1 : j
     

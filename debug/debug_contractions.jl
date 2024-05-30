@@ -28,4 +28,11 @@ diagram_correction(d)
 left = 2
 right = 3
 freqs = ones(left + right)
-contraction_coeff(left, right, freqs::Array)
+#contraction_coeff(left, right, freqs::Array)
+
+## Error in inputing the second frequency into the diagram -- for some reason poly is zero
+ωs = [1, 0]
+diagrams = get_diagrams(DiagramNode((2, 0)))
+ω_test = split_freqs_into_bubbles(ωs, diagrams[2])
+corr = diagram_correction(ω_test)
+@show corr.poly
