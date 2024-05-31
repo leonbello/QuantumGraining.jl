@@ -183,7 +183,42 @@ using QuantumGraining
                 @test isapprox(prefacs_num[i][j], test_prefacs[i][j], rtol=0.001)
             end
         end
+    end
 
+    # (a*a*σee): 0
+    test_exponents = [(4//1)*(ωc^2), (ωa + ωc)^2 + (-ωa + ωc)^2, (ωa + ωc)^2 + (-ωa - ωc)^2 + (4//1)*(ωc^2), 2((ωa + ωc)^2) + (-ωa - ωc)^2 + (-ωa + ωc)^2, (ωa + ωc)^2 + (ωa - ωc)^2 + 2((-ωa + ωc)^2), (ωa - ωc)^2 + (-ωa + ωc)^2 + (4//1)*(ωc^2), (ωa + 3ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + 3ωc)^2]
+    test_prefacs = [[5.072564, 0, 5.714011], [-7.415268, 0, 1.353134], [2.793791], [-2.793791], [0.317457], [-0.317457],[-0.385316],[2.728020]]
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[a*a*σee], 2ωc)
+
+        @test isequal(length(g_eff_4[a*a*σee].exponents), 8)
+
+        prefacs_num = [float.(substitute(g_eff_4[a*a*σee].prefacs[i]*g_eff_4[a*a*σee].polys[i], Dict(ωa => 0.41176470588235, ωc => 0.84615384615385, g => 1.66666666666667, g^2 => 2.77777777777778, g^4 => 7.71604938271605))) for i in 1:8]
+        for i in 1:8
+            @test isequal(g_eff_4[a*a*σee].exponents[i], test_exponents[i])
+            for j in 1:length(test_prefacs[i])
+                @test isapprox(prefacs_num[i][j], test_prefacs[i][j], rtol=0.001)
+            end
+        end
+    end                     
+
+    # (a'*a*σee): 0
+    test_exponents = [0, (ωa + ωc)^2 + (-ωa - ωc)^2, (ωa - ωc)^2 + (-ωa + ωc)^2, 2((ωa + ωc)^2 + (-ωa - ωc)^2), (ωa + ωc)^2 + (-ωa + ωc)^2 + (4//1)*(ωc^2), (ωa + ωc)^2 + (ωa - ωc)^2 + (-ωa - ωc)^2 + (-ωa + ωc)^2, 2((ωa - ωc)^2 + (-ωa + ωc)^2)]
+    test_prefacs = [[9.83081956], [-2.544840, 0, -5.814503], [15.279030, 0, -5.814503], [0.9691197], [-10.640968], [10.640968],[-23.53412897]]
+    # The following results are tested with ωa=7/17, ωc=11/13, and g = 5/3
+    begin
+        @test isequal(Ω_eff_4[a'*a*σee], 0)
+
+        @test isequal(length(g_eff_4[a'*a*σee].exponents), 7)
+
+        prefacs_num = [float.(substitute(g_eff_4[a'*a*σee].prefacs[i]*g_eff_4[a'*a*σee].polys[i], Dict(ωa => 0.41176470588235, ωc => 0.84615384615385, g => 1.66666666666667, g^2 => 2.77777777777778, g^4 => 7.71604938271605))) for i in 1:7]
+        for i in 1:7
+            @test isequal(g_eff_4[a'*a*σee].exponents[i], test_exponents[i])
+            for j in 1:length(test_prefacs[i])
+                @test isapprox(prefacs_num[i][j], test_prefacs[i][j], rtol=0.001)
+            end
+        end
     end
 
     # (a'*a'*a'*a'*σee): 4ωc

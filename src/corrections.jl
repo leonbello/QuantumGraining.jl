@@ -30,7 +30,7 @@ struct Correction
         
         first_nonzero_index = 1
         for i1 in 1:length(poly)
-            if isequal(poly[i1], 0)
+            if isequal(simplify(poly[i1]), 0)
                 first_nonzero_index += 1
             else
                 break
@@ -43,7 +43,7 @@ struct Correction
         prefac_norm = poly[first_nonzero_index]             # Make sure that the polynomial is always normalized such that the coefficient of the leading-order term in τ is 1
         poly[first_nonzero_index] = 1
         for i3 in (first_nonzero_index+1):length(poly)
-            poly[i3] = poly[i3]./prefac_norm
+            poly[i3] = poly[i3].//prefac_norm
         end
 
         new(prefac*prefac_norm, exponent, poly, order)
@@ -199,7 +199,7 @@ function extend_correction(c::Correction, poly::Vector{<:Number})
     end
     return Correction(norm*c.prefac,
                     c.exponent,
-                    1/norm*poly,
+                    1//norm*poly,
                     length(poly)
                     )
 end
@@ -265,7 +265,7 @@ function  +(c1::Correction, c2::Correction)
             polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)
             first_nonzero_index = 1
             for i1 in 1:length(polys)
-                if isequal(polys[i1], 0)
+                if isequal(simplify(polys[i1]), 0)
                     first_nonzero_index += 1
                 else
                     break
@@ -286,9 +286,9 @@ function  +(c1::Correction, c2::Correction)
                 end
 
                 try
-                    polys = simplify.(polys/prefacs[1]; simplify_fractions=true)
+                    polys = simplify.(polys//prefacs[1]; simplify_fractions=true)
                 catch
-                    polys = simplify.(polys/prefacs[1]; simplify_fractions=false)
+                    polys = simplify.(polys//prefacs[1]; simplify_fractions=false)
                 end
 
                 polys = [polys]
@@ -580,7 +580,7 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
 
             first_nonzero_index = 1
             for i1 in 1:length(merged_poly)
-                if isequal(merged_poly[i1], 0)
+                if isapprox(numerical_substitute(merged_poly[i1]), 0.0, rtol=0.00001)
                     first_nonzero_index += 1
                 else
                     break
@@ -599,9 +599,9 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
                 push!(normalized_merged_poly, convert(Num, 1))
                 for j2 in (first_nonzero_index+1):length(merged_poly)
                     try
-                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=true)
+                        global poly_coeff = simplify.(merged_poly[j2]//merged_prefac; simplify_fractions=true)
                     catch
-                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=false)
+                        global poly_coeff = simplify.(merged_poly[j2]//merged_prefac; simplify_fractions=false)
                     end
                     push!(normalized_merged_poly, poly_coeff)
                 end
@@ -619,4 +619,19 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
     end
 
     return ContractionCoefficient(unique_exponents, unique_prefacs, unique_polys)
+end
+
+
+"""
+numerical_substitute
+"""
+
+function numerical_substitute(expression::Num)
+    variable_list = Symbolics.get_variables(expression)
+    result = expression
+    for i in 1:length(variable_list)
+        result = substitute(result, variable_list[i] => (1+rand(Float64)))
+    end
+
+    return result
 end

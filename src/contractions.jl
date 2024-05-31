@@ -91,7 +91,7 @@ function calc_simple_factors(d::Diagram{T1, T2}) where {T1, T2}
         l = length(b.down)                                                                # number of down modes in the bubble
 
         exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν)                                  # exponent of the correction factor
-        prefac = (-1)^(l + 1)*1/(vec_factorial(μ)*vec_factorial(ν))                       # prefactor of the correction factor
+        prefac = (-1)^(l + 1)*1//(vec_factorial(μ)*vec_factorial(ν))                      # prefactor of the correction factor
         poly = Num[1,]                                                                    # polynomial representing the correction factor
         push!(taylor_factors, Correction(prefac, exponent, poly))                         # add the correction factor to the array
     end
@@ -113,7 +113,7 @@ function calc_expansion_factors(mu::BVector{T1}, ν::BVector{T2}, order, n::Int)
     for k in 0:floor(Int, n/2)
         freq_sum = isequal(sum(mu) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(mu) + sum(ν))
         l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
-        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
+        coeff = taylor_coeff(n, k)//factorial(n)*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
         poly[2*(n-k) + 1] = coeff
     end
     return poly
@@ -159,7 +159,7 @@ function calc_pole_normalization(up_poles, down_poles)
     end
 end
 
-pole_fac(v, regular, j, m) = (-j/sum(v[1:regular]))^m
+pole_fac(v, regular, j, m) = (-j//sum(v[1:regular]))^m
 
 function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vector{Int}, down_poles::Vector{Int}, u::Int, d::Int) where {T1, T2}
     if mu.special
@@ -216,7 +216,7 @@ function calc_pole_corrections(mu::BVector{T1}, ν::BVector{T2}, up_poles::Vecto
     end
 
     for (prod_u, prod_v) in product(prod_fac_u, prod_fac_v)
-        push!(pole_terms, prod_u*prod_v/norm)
+        push!(pole_terms, prod_u*prod_v//norm)
     end
 
     return pole_terms   
@@ -239,7 +239,7 @@ Returns the bubble factor for a single bubble.
 function calculate_bubble_factor(b::Bubble{T1, T2}, sols, up_poles::Vector{Int}, down_poles::Vector{Int}) where {T1, T2}
     μ, ν = b.up, b.down
     exponent = sum(μ)^2 + sum(ν)^2 + 2*sum(μ)*sum(ν) 
-    prefac =  1/(vec_factorial(μ)*vec_factorial(ν))
+    prefac =  1//(vec_factorial(μ)*vec_factorial(ν))
     poly = Float64[1,]
     if !isempty(up_poles) || !isempty(down_poles)
         poly = singular_expansion(b, sols, up_poles, down_poles)
@@ -297,7 +297,7 @@ function calc_analytic_terms(b::Bubble{T1, T2}, order, n) where {T1, T2}
     for k in 0:floor(Int, n/2)
         freq_sum = isequal(sum(μ) + sum(ν), 0) && (n - 2*k) == 0 ? 1 : (sum(μ) + sum(ν))
         l_plus_r = (l + r) == 0 && n == 0 ? 1 : (l + r)     # explicity deals with the 0^0 cases
-        coeff = taylor_coeff(n, k)/Float64(factorial(n))*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
+        coeff = taylor_coeff(n, k)//factorial(n)*(freq_sum)^(n - 2*k)*(l_plus_r)^n 
 
         poly[2*(n-k) + 1] += coeff
     end
@@ -344,7 +344,7 @@ function calc_pole_factor(b::Bubble{T1, T2}, u::Int, d::Int, up_poles::Vector{In
         end
         prod_fac_v = isempty(fac_v) ? 1 : prod(fac_v)
 
-        push!(pole_terms, prod_fac_u*prod_fac_v/denominator) 
+        push!(pole_terms, prod_fac_u*prod_fac_v//denominator) 
     end
     return pole_terms
 end

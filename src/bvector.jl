@@ -102,7 +102,7 @@ function norm_fac(v::BVector, j::Int, mj::Int)
     if j == 0 || mj == 0
         return 1
     else 
-        return (-j/sum(v[1:j]))^mj
+        return (-j//sum(v[1:j]))^mj
     end
 end 
 

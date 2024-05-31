@@ -15,7 +15,7 @@ import ModelingToolkit
 const MTK = ModelingToolkit
 
 # bvector.jl
-export DVec, UVec, BVector
+export DVec, UVec, BVector, vec_factorial
 
 # diagrams.jl
 export DiagramNode, node_decomp!,
@@ -32,7 +32,7 @@ export diagram_correction, contraction_coeff, calc_pole_corrections,
         split_freqs_into_bubbles, to_qc_symbol, calc_simple_factors, calc_expansion_factors, poly_multiplication
 
 # corrections.jl
-export merge_duplicate_exponents, simplify_contraction
+export merge_duplicate_exponents, simplify_contraction, ordered_sum, numerical_substitute
 
 # bubble.jl
 export Bubble, calculate_bubble_factor
