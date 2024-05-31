@@ -67,6 +67,7 @@ function diagram_correction(diagram::Diagram{T1, T2}) where {T1, T2}
                 d = sols[i, idx][3]
                 poly = poly_multiplication(poly, calc_expansion_factors(μ, ν, order, n), order)
                 prefac = calc_pole_corrections(μ, ν, μ.poles, ν.poles, u, d)
+                #total_prefac[idx] = (isempty(prefac) || sum(prefac) == 0) ? 1 : sum(prefac)
                 total_prefac[idx] = isempty(prefac) ? 0 : sum(prefac)
             end
 

@@ -2,14 +2,19 @@ using QuantumGraining
 using Test
 
 names = [
-    "test_corrections.jl"
     "test_bubble.jl"
+    "test_bvector.jl"
+    "test_contraction_coefficients.jl"
+    "test_corrections.jl"
     "test_decomp.jl"
+    "test_dissipators.jl"
+    "test_lindblad_frequencies.jl"
+    "test_lindblad.jl"
 ]
 
 detected_tests = filter(
     name->startswith(name, "test_") && endswith(name, ".jl"),
-    readdir("./test"))
+    readdir("../test"))
 
 unused_tests = setdiff(detected_tests, names)
 if length(unused_tests) != 0

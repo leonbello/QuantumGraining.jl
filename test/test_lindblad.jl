@@ -240,6 +240,4 @@ using QuantumGraining
 
         # the first element of polys should be 1
     end
-
-
 end
