@@ -12,7 +12,9 @@ Moreover, the TCG method provides this description in terms of a generalized Lin
 
 ## QuantumGraining.jl
 
-The TCG method is very computationally involved, with the number of terms growing rapidly with the order of truncation. The main object of interest is the "contraction coefficient" which encapsulates the relative weight of each possible `k`-order process. Each of these coefficients requires the recursive calculation of lower-order contraction coefficients to compute, a process which is the repeated for each frequency mode in the original Hamiltonian.
+[![Build Status](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml?query=branch%3Amain)
+
+The STCG method is very computationally involved, with the number of terms growing rapidly with the order of truncation. The main object of interest is the "contraction coefficient" which encapsulates the relative weight of each possible `k`-order process. Each of these coefficients requires the recursive calculation of lower-order contraction coefficients to compute, a process which is the repeated for each frequency mode in the original Hamiltonian.
 
 <img src="docs/imgs/decomp-tree.png" width=50% height=50%>
 
@@ -23,41 +25,22 @@ The TCG method is very computationally involved, with the number of terms growin
 * Finally, the symbolic Hamiltonian can be solved in **QuantumOptics.jl** or using **QuantumCumulants.jl**. 
 
 ## Installation
-`QuantumGraining.jl` is in early stages of developemnt, and is still not registered in the Julia package registrator. For the time being, the package can be installed by cloning the repository from GitHub. 
-To install `QuantumGraining.jl`, follow these steps:
-
-1. Clone the repository from GitHub:
+`QuantumGraining.jl` is  registered in the Julia package registrator, and can be easily installed on using the latest version of Julia. 
+1. Within the Julia REPL, press the `]` key. This will switch you to the Pkg REPL, indicated by a prompt like `(@v1.8) pkg>`.
+2. In the Pkg REPL, 
     ```
-    git clone https://github.com/leonbello/QuantumGraining.jl.git
+        add QuantumGraining
     ```
-
-2. Open the Julia package manager by running `julia` in your terminal.
-
-3. Activate the package by entering the package manager mode with `]`.
-
-4. Change to the `QuantumGraining.jl` directory:
+3. Since the operator algebra is handled by `QuantumCumulants`, you will need to install it as well,
+   ```
+        add QuantumCumulants
+   ```
+5. Once installed, include `QuantumGraining` in your code using:
     ```
-    cd /path/to/QuantumGraining.jl
+        using QuantumGraining
+        using QuantumCumulants
     ```
-
-5. Activate the package environment:
-    ```
-    activate .
-    ```
-
-6. Build the package and its dependencies:
-    ```
-    instantiate
-    ```
-
-7. Exit the package manager mode by pressing `Ctrl + C`.
-
 After following these steps, you should have successfully installed `QuantumGraining.jl` and its dependencies.
-
-## Development Status
-Note that **QuantumGraining.jl** is still at an early stage of development.
-
-[![Build Status](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/leonbello/QuantumGraining.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 ## Short example
 As a simple illustrative example, let us consider the implementation of a second-order time coarse graining of the Rabi model:
