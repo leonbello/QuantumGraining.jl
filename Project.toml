@@ -1,7 +1,7 @@
 name = "QuantumGraining"
 uuid = "77585022-d976-43ff-a138-80a6f5a3bb8b"
 authors = ["Leon Bello"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
