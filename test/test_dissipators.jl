@@ -29,7 +29,8 @@ using QuantumGraining
     @test isequal(ω_eff_2[(a*σm, a*σm)], 2*ωa + 2*ωc)
     @test isequal(length(γ_eff_2[(a*σm, a*σm)].exponents), 2)
     @test issetequal(γ_eff_2[(a*σm, a*σm)].exponents, [4((ωa + ωc)^2), 2((ωa + ωc)^2)])
-    @test isequal(simplify(γ_eff_2[(a*σm, a*σm)].prefacs[1] - 1im*(g^2//2)*1/(ωa + ωc)), 0)
+    @test isequal(real(simplify(γ_eff_2[(a*σm, a*σm)].prefacs[1] - 1im*(g^2//2)*1/(ωa + ωc))), 0)
+    @test isequal(imag(simplify(γ_eff_2[(a*σm, a*σm)].prefacs[1] - 1im*(g^2//2)*1/(ωa + ωc))), 0)
     @test isequal(simplify(γ_eff_2[(a*σm, a*σm)].prefacs[2] + 1im*(g^2//2)*1/(ωa + ωc)), 0)
 
     # ((a*σp), (a*σm)): 2ωc
