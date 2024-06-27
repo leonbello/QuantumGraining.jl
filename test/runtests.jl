@@ -14,7 +14,7 @@ names = [
 
 detected_tests = filter(
     name->startswith(name, "test_") && endswith(name, ".jl"),
-    readdir("test"))
+    readdir("../test"))
 
 unused_tests = setdiff(detected_tests, names)
 if length(unused_tests) != 0
