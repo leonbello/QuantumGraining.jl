@@ -53,7 +53,7 @@ using QuantumGraining
     @test issetequal(γ_eff_2[((a'*σp), (a'*σp))].exponents, [4((-ωa - ωc)^2), 2((-ωa - ωc)^2)])
     @test length(γ_eff_2[((a'*σp), (a'*σp))].exponents) == 2
     @test isequal(simplify(γ_eff_2[((a'*σp), (a'*σp))].prefacs[1] .- -1im*(g^2//2)*1/(ωa + ωc)), 0)
-    @test isequal((γ_eff_2[((a'*σp), (a'*σp))].prefacs[2] .- 1im*(g^2//2)*1/(ωa + ωc)), 0)
+    @test isequal(simplify((γ_eff_2[((a'*σp), (a'*σp))].prefacs[2] .- 1im*(g^2//2)*1/(ωa + ωc))), 0)
     @test issetequal(γ_eff_2[((a'*σp), (a'*σp))].polys, [[1],[1]])
 
     # ((a*σp), (a'*σp)): -2ωa
