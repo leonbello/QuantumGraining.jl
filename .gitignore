@@ -1,5 +1,9 @@
+# Package files to ignore
 /Manifest.toml
 /.DS_Store
-.vscode/settings.json
+
+# Folders to ignore
+debug/
+.vscode/
 .vs
-.vscode
+
