@@ -69,3 +69,23 @@ g_eff, Ω_eff = drop_high_freqs(effective_hamiltonian(hvec, gvec, Ω, order; as_
 ```
 
 The code above returns an effective Lindbladian that generates the time-coarse grained evolution of the Rabi-model up to second-order. The input is a list of frequencies and their corresponding operators, and the output is a new list of operators, frequencies and coupling strengths. The `drop_high_freqs` function is used to remove the high-frequency terms from the effective Hamiltonian and dissipator, to simplify the resulting expressions.
+
+## Citing
+If you find `QuantumGraining.jl` useful in your research, please consider citing this paper:
+
+```
+@misc{bello2024systematictimecoarsegrainingdriven,
+      title={Systematic time-coarse graining for driven quantum systems}, 
+      author={Leon Bello and Wentao Fan and Aditya Gandotra and Hakan E. Türeci},
+      year={2024},
+      eprint={2407.06068},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph},
+      url={https://arxiv.org/abs/2407.06068}, 
+}
+```
+
+## Funding
+
+This work was supported by the US Department of Energy, Office of Basic Energy Sciences, Division of Materials Sciences and Engineering, under Award No. DESC0016011. 
+Support was also provided by the Army Research Office under contract W911NF-23-1-0252.
