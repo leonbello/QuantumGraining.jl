@@ -28,7 +28,7 @@ Plots = "1"
 QuantumCumulants = "0.2, 0.3"
 QuantumOptics = "1"
 Revise = "3"
-SymbolicUtils = "1, 2"
+SymbolicUtils = "1, 2, 3"
 Symbolics = "5"
 julia = "1"
 
