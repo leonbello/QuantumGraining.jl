@@ -1,5 +1,5 @@
 
-## Short example
+# Short example
 As a simple illustrative example, let us consider the implementation of a second-order time coarse graining of the Rabi model:
 ```
 using QuantumCumulants

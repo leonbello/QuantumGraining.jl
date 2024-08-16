@@ -33,5 +33,5 @@ Due to the way the diagrams are constructed now, this will be deprecated soon.
 """
 function count_modes(diagram)
     bubs = tuple(map(sum, zip(diagram...)))[1]
-    return bubs[1], bubs[2] 
+    return bubs[1], bubs[2]
 end

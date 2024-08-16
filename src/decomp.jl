@@ -1,6 +1,6 @@
-#=
-diagrams.jl contains all recursive functions that help produce all child diagrams from a given contraction.
-=#
+"""
+decomp.jl contains all recursive functions that help produce all child diagrams from a given contraction.
+"""
 abstract type AbstractDiagramNode end
 
 """
@@ -13,7 +13,10 @@ A terminating node in the tree, has no value. Here so we can check if node can b
 
 """
 struct NullNode <: AbstractDiagramNode
-    root::Tuple{Int64, Int64}
+    root::Tuple{Int64,Int64}
+end
+function Base.show(io::IO, d::NullNode)
+    write(io, "$(d.root) -> NullNode")
 end
 
 """
@@ -30,9 +33,9 @@ It is defined as a recursive tree where the elements represent the different dec
 - `left::DiagramNode`: Pointer to the next left node of the tree, a diagram with one mode broken to the up-bubble.
 """
 struct DiagramNode <: AbstractDiagramNode
-    root::Tuple{Int64, Int64}
-    val::Tuple{Int64, Int64}
-    rightmost::Tuple{Int64, Int64}
+    root::Tuple{Int64,Int64}
+    val::Tuple{Int64,Int64}
+    rightmost::Tuple{Int64,Int64}
     left::AbstractDiagramNode
     right::AbstractDiagramNode
 
@@ -42,23 +45,30 @@ struct DiagramNode <: AbstractDiagramNode
         else
             rightmost = (root[1] - val[1], root[2] - val[2])
             # the nodes (2, N) and (N, 1) are the last ones we can break.
-            left  = (rightmost[1] >= 2) ? DiagramNode(root, (val[1] + 1, val[2])) : NullNode(root)
+            left = (rightmost[1] >= 2) ? DiagramNode(root, (val[1] + 1, val[2])) : NullNode(root)
             right = (rightmost[2] >= 1) ? DiagramNode(root, (val[1], val[2] + 1)) : NullNode(root)
             new(root, val, rightmost, left, right)
-        end 
+        end
     end
 end
-function DiagramNode(root::Tuple{Int64, Int64})
+function DiagramNode(root::Tuple{Int64,Int64})
     return DiagramNode(root, (0, 0))
 end
 function DiagramNode(node::DiagramNode)
     DiagramNode(node.rightmost)
 end
+function Base.show(io::IO, d::DiagramNode)
+    write(io, "$(d.root) -> $(to_array(d))")
+end
+
 
 """
     to_array(node::DiagramNode)
 
 Given a node, returns the diagram in array form where each entry corresponds to a different bubble.
+
+### Arguments
+- `node::DiagramNode`: The node to convert to an array.
 """
 function to_array(node::DiagramNode)
     return [node.val, node.rightmost]
@@ -68,14 +78,13 @@ to_array(node::NullNode) = []
 """
     node_decomp(node::DiagramNode)
     node_decomp!(node::AbstractDiagramNode, decomp_list)
-
-Uses the DiagramNode structure to give one level of decompositions explicitly using a recursive function.
+Use the DiagramNode structure to give one level of decompositions explicitly using a recursive function.
 In other words, gives all ways one can break a bubble into two.
 
-# Arguments
+### Arguments
 - `node::DiagramNode`: Node to break down.
 
-# Returns
+### Returns
 - `decomp_list::Array{Int}`: a list of all nodes in the tree. 
 """
 function node_decomp!(node::AbstractDiagramNode, decomp_list)
@@ -93,17 +102,17 @@ function node_decomp(node::DiagramNode)
     decomp_list = []
     node_decomp!(node, decomp_list)
     return decomp_list
-end 
+end
 
 """
     get_diagrams(init_diagram::Array)
 
 Uses the above `node_decomp()` to get all possible diagrams recursively.
 
-# Arguments
+### Arguments
 - `node::AbstractDiagramNode`: The initial diagram including the first level of breakdowns (two bubble diagrams)
 
-# Returns
+### Returns
 - A list of all possible diagrams for a given contractions.
 """
 function get_diagrams(node::AbstractDiagramNode)
@@ -137,7 +146,7 @@ function get_diagrams(node::AbstractDiagramNode)
             end
         end
     end
-    diagrams_list = pushfirst!(filter!(x-> ((0,0) ∉ x), diagrams_list),[node.root]) #Removing redundant diagrams with (0,0) terms
+    diagrams_list = pushfirst!(filter!(x -> ((0, 0) ∉ x), diagrams_list), [node.root]) #Removing redundant diagrams with (0,0) terms
     return unique!(diagrams_list)
 end
 

@@ -2,14 +2,6 @@
 printing.jl includes methods related to printing the different diagrams and terms.
 """
 
-function Base.show(io::IO, d::DiagramNode)  
-    write(io, "$(d.root) -> $(to_array(d))")
-end
-function Base.show(io::IO, d::NullNode)
-    write(io, "$(d.root) -> NullNode")
-end
-
-
 """
     symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
 
@@ -32,12 +24,12 @@ function symbolic_hamiltonian(gs::Vector, ops::Vector, Ω::Vector, t, τ)
         if isequal(ω, 0)
             ft = 1
         else
-            ft = Symbolics.Term(exp, [im*ω*t])
+            ft = Symbolics.Term(exp, [im * ω * t])
         end
 
-        term = to_symbol(g, τ)*ft
+        term = to_symbol(g, τ) * ft
         if !isequal(term, 0)
-            push!(terms, (term)*op)
+            push!(terms, (term) * op)
         end
     end
     return terms
@@ -101,7 +93,7 @@ Symbolic representation of the `Correction` object.
 
 """
 function to_symbol(c::Correction, τ) #where {T <: Number}
-    sym = c.prefac*exp(-0.5*τ^2*c.exponent)
-    sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n]*(τ^(n-1)) for n in 1:c.order])
+    sym = c.prefac * exp(-0.5 * τ^2 * c.exponent)
+    sym *= sum([isequal(c.poly[n], 0) ? 0 : c.poly[n] * (τ^(n - 1)) for n in 1:c.order])
     return sym
 end

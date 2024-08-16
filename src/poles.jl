@@ -1,41 +1,34 @@
 using QuantumCumulants
 using SymbolicUtils
 
-
 """
     taylor_coeff(n::Int, k::Int)
-
 Compute the Taylor coefficient for a given pair of integers `n` and `k`, as detailed in the paper.
 
-# Arguments
+### Arguments
 - `n::Int`: The total degree of the Taylor series.
 - `k::Int`: The degree of the term whose coefficient is being computed.
 
-# Returns
+### Returns
 - The value of the Taylor coefficient for the given pair of integers.
-
 """
 function taylor_coeff(n::Int, k::Int)
     # base cases
-    if (k == -1) || (n < 2*k)
+    if (k == -1) || (n < 2 * k)
         return 0
-    elseif (n == 0) && (k ==0)
+    elseif (n == 0) && (k == 0)
         return 1
     else
-        return -taylor_coeff(n - 1, k) + (n - 2*k + 1)*taylor_coeff(n - 1, k - 1)
+        return -taylor_coeff(n - 1, k) + (n - 2 * k + 1) * taylor_coeff(n - 1, k - 1)
     end
 end
 
 """
-find_poles(u)
-
+    find_poles(u)
 Finds all the factors of the vector factorial that evaluate to 0.
 
-Argument: 
-    - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
-
-Returns:
-    - poles_list: list of indices of poles
+### Arguments
+    - ω = A vector of mode frequencies [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
 """
 function find_poles(u::Vector{T}) where {T}
     poles_list = Int[]
@@ -51,23 +44,23 @@ find_poles(u::BVector) = u.special ? find_poles(u.freqs[2:end]) : find_poles(u.f
 
 """
     find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
-
 Find all poles in the given vector of tuples `d`. Each tuple contains two `BVector` objects, `μ` and `ν`.
+
+### Details
 The function iterates over each tuple and performs the following steps:
 - If `μ.special` is `true`, it removes the first element from `μ`.
 - Reverses the order of elements in `μ`.
 - Calls the `find_poles` function to find the poles in `μ` and `ν`.
 - Appends the resulting poles to `up_poles` and `down_poles` respectively.
 
-# Arguments
+### Arguments
 - `d::Vector{Tuple{BVector{T1}, BVector{T2}}}`: A vector of tuples, where each tuple contains two `BVector` objects.
 
-# Returns
+### Returns
 - A tuple `(up_poles, down_poles)` where `up_poles` is a vector of vectors containing the poles found in `μ`,
   and `down_poles` is a vector of vectors containing the poles found in `ν`.
-
 """
-function find_all_poles(d::Vector{Tuple{BVector{T1}, BVector{T2}}}) where {T1, T2}
+function find_all_poles(d::Vector{Tuple{BVector{T1},BVector{T2}}}) where {T1,T2}
     up_poles = Vector{Vector{Int}}()
     down_poles = Vector{Vector{Int}}()
     for (μ, ν) in d
@@ -85,11 +78,12 @@ end
     find_all_poles(d::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
 Finds all poles in vector factorial for frequency list `d`. Assumes that the first tuple in the list is the special mode.
 
-Argument: 
-    - ω = [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
-Returns:
-    - up_poles: list of indices of poles in upper modes
-    - down_poles: list of indices of poles in lower modes
+### Arguments
+- ω = A vector of bubble frequencies [(μ_1, ν_1), ..., (μ_||d||, ν_||d||)]
+
+### Returns
+- up_poles: list of indices of poles in upper modes
+- down_poles: list of indices of poles in lower modes
 """
 function find_all_poles(freqs::Vector) #::Vector{Tuple{Vector{T1}, Vector{T2}}}) where {T1, T2}
     d = Diagram(freqs)
@@ -99,12 +93,11 @@ find_all_poles(d::Diagram) = find_all_poles(d.freqs)
 
 """
     count_poles(s_list::Vector{Int}, stag_list::Vector{Int})
-
 Given two lists of poles, counts the total number of poles by counting the non-empty lists.
 
-Argument: 
-    - s_list: list of upper poles
-    - stag_list: list of lower poles
+Arguments: 
+- s_list: list of upper poles
+- stag_list: list of lower poles
 """
 function count_poles(s_list::Vector{Vector{Int}}, stag_list::Vector{Vector{Int}})
     count = 0
@@ -120,8 +113,13 @@ end
 
 """
     find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
-
 Function that calculates combinations of k positive integers adding up to m, as detailed in the paper.
+
+### Arguments
+- `num_vars::Int`: The number of variables in the combination.
+- `target_sum::Int`: The target sum of the combination.
+- `combination::Vector{Int}=Vector{Int}()`: The current combination of integers.
+- `sum_so_far::Int=0`: The sum of the integers in the current combination.
 """
 function find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vector{Int}=Vector{Int}(), sum_so_far::Int=0)
     res = []
@@ -135,7 +133,7 @@ function find_integer_solutions(num_vars::Int, target_sum::Int, combination::Vec
     end
     for i in 0:target_sum
         if length(combination) < num_vars
-            res = vcat(res, find_integer_solutions(num_vars, target_sum, [combination..., i], sum_so_far+i))
+            res = vcat(res, find_integer_solutions(num_vars, target_sum, [combination..., i], sum_so_far + i))
         end
     end
     return res
@@ -143,24 +141,29 @@ end
 
 
 """
-reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
-
+    reshape_sols(sols, target_sum, num_bubbles, num_indices = 3)
 Helper function that reshapes integer combinations from find_integer_solutions() into vectors
+
+### Arguments
+- `sols`: The integer combinations.
+- `target_sum`: The target sum of the combinations.
+- `num_bubbles`: The number of bubbles.
+- `num_indices::Int=3`: The number of indices in the combination.
 """
 function reshape_sols(sols, target_sum, num_bubbles, num_indices=3)
-    num_vars = num_bubbles*num_indices
-    num_sols = binomial(target_sum + num_vars - 1, num_vars - 1)    
+    num_vars = num_bubbles * num_indices
+    num_sols = binomial(target_sum + num_vars - 1, num_vars - 1)
 
     dim_sols = num_sols                # total number of solutions
     dim_indices = num_indices          # number of indices - u, n, l
     dim_bubbles = num_bubbles          # number of bubbles 
-    
-    vectors = Array{Array{Int64,1}, 2}(undef, dim_sols, dim_bubbles)
 
-    for i in 1:dim_sols           
-        for j in 1:dim_bubbles    
-            end_idx = dim_indices*j < length(sols[i][:]) ? dim_indices*j : length(sols[i][:])
-            vectors[i, j] = sols[i][(1 + dim_indices*(j - 1)):end_idx]
+    vectors = Array{Array{Int64,1},2}(undef, dim_sols, dim_bubbles)
+
+    for i in 1:dim_sols
+        for j in 1:dim_bubbles
+            end_idx = dim_indices * j < length(sols[i][:]) ? dim_indices * j : length(sols[i][:])
+            vectors[i, j] = sols[i][(1+dim_indices*(j-1)):end_idx]
         end
     end
     return vectors

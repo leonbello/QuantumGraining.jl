@@ -16,9 +16,9 @@ const MTK = ModelingToolkit
 # bvector.jl
 export DVec, UVec, BVector
 
-# diagrams.jl
+# decomp.jl
 export DiagramNode, node_decomp!,
-        node_decomp, get_diagrams, Diagram                                 
+        node_decomp, get_diagrams, Diagram
 
 # poles.jl
 export Contraction, count_poles,
@@ -26,21 +26,21 @@ export Contraction, count_poles,
         reshape_sols
 
 # contractions.jl
-export diagram_correction, contraction_coeff, calc_pole_corrections, 
-        Correction, ContractionCoefficient, 
-        split_freqs_into_bubbles, to_qc_symbol, calc_simple_factors, calc_expansion_factors, poly_multiplication
+export diagram_correction, contraction_coeff, pole_corrections,
+        Correction, ContractionCoefficient,
+        split_freqs_into_tuples, to_qc_symbol, simple_factors, expansion_factors, poly_multiplication
 
 # corrections.jl
-export merge_duplicate_exponents, simplify_contraction
+export merge_duplicate_exponents, simplify
 
 # bubble.jl
-export Bubble, calculate_bubble_factor
+export Bubble, bubble_factor
 
 # lindblad.jl
 export effective_hamiltonian_term, effective_dissipator_term, repeated_combinations,
         gaussian_to_cutoff, drop_high_freqs, effective_hamiltonian, effective_dissipator
 
-# printing.jl
+# symbols.jl
 export symbolic_hamiltonian, to_symbol
 
 # convert.jl
@@ -55,10 +55,10 @@ include("bubble.jl")
 include("diagram.jl")
 include("corrections.jl")
 include("contractions.jl")
-include("diagrams.jl")
+include("decomp.jl")
 include("lindblad.jl")
 include("poles.jl")
-include("printing.jl")
+include("symbols.jl")
 include("utils.jl")
 include("convert.jl")
 include("ordering.jl")

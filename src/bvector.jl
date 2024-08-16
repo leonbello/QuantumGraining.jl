@@ -2,7 +2,7 @@
     BVector{T} <: AbstractVector{T}
 A struct representing the up- or down-modes. The poles are stored in the poles field.
 
-Arguments:
+### Arguments
     - freqs: A vector representing the frequencies of the vector.
     - poles: A vector of the indices of poles of the vector, if any. Does not include the special mode, if there is one.
     - special: A boolean representing whether the vector is the special mode.
@@ -31,6 +31,10 @@ end
 """"
     UVec(u::Vector; special=false)
 Creates a BVector with type :up. Assumes the frequency ordering is clockwise
+
+### Arguments
+    - `u::Vector`: Components of the vector.
+    - `special::Bool=false`: Whether the vector holds the special mode.
 """
 function UVec(u::Vector{T}; special=false) where {T}
     return BVector(u, :up, special)
@@ -39,8 +43,12 @@ end
 """"
     DVec(u::Vector; special=false)
 Creates a BVector with type :down. Assumes the frequency ordering is clockwise
+
+### Arguments
+    - `u::Vector`: Components of the vector.
+    - `special::Bool=false`: Whether the vector holds the special mode.
 """
-function DVec(u::Vector{T}; special=false) where T
+function DVec(u::Vector{T}; special=false) where {T}
     return BVector(u, :down, special)
 end
 
@@ -50,20 +58,23 @@ end
 
 Compute the vector factorial of a `BVector` object `u`.
 
-# Arguments
+### Arguments
 - `u::BVector`: The input `BVector` object.
-
-# Optional Arguments
 - `include_poles::Bool=false`: Whether to include poles in the computation.
 
-# Returns
-- `Int`: The vector factorial of `u`.
+### Returns
+- The vector factorial of `u`.
 
+### Example
+\```julia
+u = UVec([a, b, c])
+vec_factorial(u) # (a+b+c)*(a+b)*c
+\```
 """
 function vec_factorial(u::BVector; include_poles=false)
     if u.type == :down
         reverse!(u.freqs)
-    end    
+    end
 
     if include_poles && !isempty(u.poles)
         return 0
@@ -72,7 +83,9 @@ function vec_factorial(u::BVector; include_poles=false)
     start = (u.special == true) ? 2 : 1
     for i = length(u):-1:start
         temp_sum = sum(u.freqs[length(u):-1:i])
-        if !isequal(temp_sum, 0) push!(prod_terms, temp_sum) end
+        if !isequal(temp_sum, 0)
+            push!(prod_terms, temp_sum)
+        end
     end
 
     if u.type == :down
@@ -85,28 +98,27 @@ end
 """
     norm_fac(v::BVector, j::Int, mj::Int)
 
-Compute the normalization factor for a given `BVector` object `v` at mode `j` and  `mj`.
+Computes the normalization factor for a given `BVector` object `v` at mode `j` and  `mj`.
 
-# Arguments
+### Arguments
 - `v::BVector`: The input `BVector` object.
 - `j::Int`: The mode index.
 - `mj::Int`: The inner mode index.
 
-# Returns
+### Returns
 - `Float64`: The normalization factor.
-
 """
 function norm_fac(v::BVector, j::Int, mj::Int)
     j = v.special ? j - 1 : j
-    
+
     if j == 0 || mj == 0
         return 1
-    else 
-        return (-j/sum(v[1:j]))^mj
+    else
+        return (-j / sum(v[1:j]))^mj
     end
-end 
+end
 
-Base.sum(u::BVector) = isempty(u) ? 0 : sum(u.freqs) 
+Base.sum(u::BVector) = isempty(u) ? 0 : sum(u.freqs)
 Base.length(u::BVector) = length(u.freqs)
 Base.getindex(u::BVector, i::Int) = u.freqs[i]
 Base.size(u::BVector) = size(u.freqs)

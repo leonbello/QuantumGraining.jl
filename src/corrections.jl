@@ -1,21 +1,19 @@
 using Symbolics
 using SymbolicUtils
-using QuantumGraining
 
 """
     struct Correction
-
 A struct representing a correction term.
 
-# Fields
+### Fields
 - `prefac`: The prefactor of the correction term.
 - `exponent`: The exponent of the correction term.
 - `poly`: A vector of coefficients for the polynomial term.
 - `order`: The order of the polynomial term.
 
-# Constructors
-- `Correction(prefac, exponent, poly=Num[1,], order=length(poly))`: Constructs a `Correction` object with the given parameters. If `poly` is not provided, it defaults to `[1]`. If `order` is not provided, it defaults to the length of `poly`.
-
+### Constructors
+- `Correction(prefac, exponent, poly=Num[1,], order=length(poly))`: Constructs a `Correction` object with the given parameters. 
+If `poly` is not provided, it defaults to `[1]`. If `order` is not provided, it defaults to the length of `poly`.
 """
 struct Correction
     prefac
@@ -27,10 +25,10 @@ struct Correction
         if !(poly isa Array)
             poly = [poly]
         end
-        
+
         first_nonzero_index = 1
         for i in 1:length(poly)
-            if isequal(simplify(poly[i]), 0.0) || isequal(simplify(poly[i]), -0.0) 
+            if isequal(simplify(poly[i]), 0.0) || isequal(simplify(poly[i]), -0.0)
                 first_nonzero_index += 1
             else
                 break
@@ -38,40 +36,39 @@ struct Correction
         end
 
         for i2 in 1:(first_nonzero_index-1)
-            poly[i2] = convert(Num,0)
+            poly[i2] = convert(Num, 0)
         end
         prefac_norm = poly[first_nonzero_index]             # Make sure that the polynomial is always normalized such that the coefficient of the leading-order term in τ is 1
         poly[first_nonzero_index] = 1
         for i3 in (first_nonzero_index+1):length(poly)
-            poly[i3] = poly[i3]./prefac_norm
+            poly[i3] = poly[i3] ./ prefac_norm
         end
 
-        new(prefac*prefac_norm, exponent, poly, order)
+        new(prefac * prefac_norm, exponent, poly, order)
     end
 end
 
 Base.show(io::IO, c::Correction) = begin
-    @variables τ 
+    @variables τ
     print(io, to_symbol(c, τ))
 end
 
 """
     struct ContractionCoefficient
-
 A struct representing a contraction coefficient.
 
-# Fields
+### Fields
 - `corrections::Vector{Correction}`: Vector of `Correction` objects.
 - `exponents::Vector{Number}`: Vector of exponents.
 - `prefacs::Vector{Number}`: Vector of prefactors.
 - `polys::Vector{Vector{Number}}`: Vector of polynomials.
 
-# Constructors
+### Constructors
 - `ContractionCoefficient(exponents, prefacs, polys)`: Constructs a `ContractionCoefficient` object with given exponents, prefactors, and polynomials.
 - `ContractionCoefficient(exponents, prefacs)`: Constructs a `ContractionCoefficient` object with given exponents and prefactors. Polynomials are set to `[1]` by default.
 
 """
-struct ContractionCoefficient 
+struct ContractionCoefficient
     corrections::Vector{Correction}
     exponents::Vector{Number}
     prefacs::Vector{Number}
@@ -91,27 +88,26 @@ struct ContractionCoefficient
         end
         polys = fill([1], size(exponents))
         corrections = [Correction(exponents[i], prefacs[i], polys[i]) for i in eachindex(exponents)]
-        new(corrections, exponents, prefacs, polys) 
+        new(corrections, exponents, prefacs, polys)
     end
 end
 
 """
-    simplify_contraction(c::ContractionCoefficient)
-
+    simplify(c::ContractionCoefficient)
 Simplifies the given `ContractionCoefficient` by applying simplification operations to its components.
 
-# Arguments
+### Arguments
 - `c::ContractionCoefficient`: The `ContractionCoefficient` to be simplified.
 
-# Returns
+### Returns
 A new `ContractionCoefficient` object with simplified components.
-
 """
-function simplify_contraction(c::ContractionCoefficient) 
+#function simplify_contraction(c::ContractionCoefficient)
+function simplify(c::ContractionCoefficient)
     simplified_polys = [simplify.(poly; simplify_fractions=false) for poly in c.polys]
     simplified_prefacs = simplify.(c.prefacs; simplify_fractions=false)
     simplified_exponents = simplify.(c.exponents; simplify_fractions=false)
-    
+
     try
         simplified_polys = [simplify.(poly; simplify_fractions=true) for poly in c.polys]
     catch
@@ -123,7 +119,7 @@ function simplify_contraction(c::ContractionCoefficient)
     catch
         simplified_prefacs = simplify.(c.prefacs; simplify_fractions=false)
     end
-    
+
     try
         simplified_exponents = simplify.(c.exponents; simplify_fractions=true)
     catch
@@ -135,29 +131,28 @@ end
 
 """
     contraction_coeff(left::Int, right::Int, freqs::Array)
-
 Calculates the coefficient of a whole contraction, given the contraction and input frequencies. Calculates equation (7) in the paper.
 
-# Arguments
+### Arguments
 - `left`: the left-order of the contraction
 - `right`: the right-order of the contraction
 - `freqs`: array of frequencies to put in each mode
 
-# Returns
+### Returns
 - `c`: a contraction coefficient struct, symbolic expression for the contraction coeffeicient.
 """
-# Possibly, this should be a `ContractionCoefficient` constructor.
 function contraction_coeff(left::Int, right::Int, freqs::Array)
+    # Possibly, this should be a `ContractionCoefficient` constructor.
     node = DiagramNode((left, right))
     diagrams = get_diagrams(node)
     exp_list = []
     pre_list = []
     poly_list = []
     d_list = []
-    
+
     for diagram in diagrams
         reverse!(diagram)                               # reversing since Wentao's order is right-to-left, rather than left-to-right
-        ω = split_freqs_into_bubbles(freqs, diagram)
+        ω = split_freqs_into_tuples(freqs, diagram)
         corr = diagram_correction(ω)
         push!(d_list, diagram)
         push!(exp_list, corr.exponent)
@@ -167,7 +162,7 @@ function contraction_coeff(left::Int, right::Int, freqs::Array)
     c = ContractionCoefficient(exp_list, pre_list, poly_list)
     return merge_duplicate_exponents(c)
 end
-contraction_coeff(order::Tuple{Int, Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
+contraction_coeff(order::Tuple{Int,Int}, ω::Array) = contraction_coeff(order[1], order[2], ω)
 
 Base.show(io::IO, coeff::ContractionCoefficient) = begin
     @variables τ
@@ -177,14 +172,13 @@ end
 
 """
     extend_correction(c::Correction, poly::Vector{<:Number})
-
 Extend a correction by normalizing and modifying its polynomial representation.
 
-# Arguments
+### Arguments
 - `c::Correction`: The correction to be extended.
 - `poly::Vector{<:Number}`: The polynomial representation of the correction.
 
-# Returns
+### Returns
 - `Correction`: The extended correction.
 
 """
@@ -197,24 +191,23 @@ function extend_correction(c::Correction, poly::Vector{<:Number})
     else
         norm = poly[non_zero_poly[1]] # find the first non-zero element of poly and normalize the correction by it.
     end
-    return Correction(norm*c.prefac,
-                    c.exponent,
-                    1/norm*poly,
-                    length(poly)
-                    )
+    return Correction(norm * c.prefac,
+        c.exponent,
+        1 / norm * poly,
+        length(poly)
+    )
 end
 
 import Base: ==
 """
     ==(c1::ContractionCoefficient, c2::ContractionCoefficient)
-
 Check if two `ContractionCoefficient` objects are equal by comparing their `corrections` arrays.
 
-# Arguments
+### Arguments
 - `c1::ContractionCoefficient`: The first `ContractionCoefficient` object.
 - `c2::ContractionCoefficient`: The second `ContractionCoefficient` object.
 
-# Returns
+### Returns
 - `true` if the `corrections` arrays of `c1` and `c2` are equal, `false` otherwise.
 """
 function ==(c1::ContractionCoefficient, c2::ContractionCoefficient)
@@ -223,14 +216,13 @@ end
 
 """
     ==(c1::Correction, c2::Correction)
-
 Check if two `Correction` objects are equal by comparing their `order`, `exponent`, and `poly` properties.
 
-# Arguments
+### Arguments
 - `c1::Correction`: The first `Correction` object.
 - `c2::Correction`: The second `Correction` object.
 
-# Returns
+### Returns
 - `true` if the `order`, `exponent`, and `poly` properties of `c1` and `c2` are equal, `false` otherwise.
 """
 function ==(c1::Correction, c2::Correction)
@@ -238,7 +230,7 @@ function ==(c1::Correction, c2::Correction)
         return false
     else
         exp_eq = isequal(simplify.(expand(c1.exponent) - expand(c2.exponent)), 0)
-        poly_eq = isequal(simplify.(c1.prefac*c1.poly - c2.prefac*c2.poly), 0)
+        poly_eq = isequal(simplify.(c1.prefac * c1.poly - c2.prefac * c2.poly), 0)
     end
     return exp_eq && poly_eq
 end
@@ -246,72 +238,66 @@ end
 import Base: +
 """
     +(c1::Correction, c2::Correction)
-
 Addition operator for `Correction` objects.
-
 This function adds two `Correction` objects `c1` and `c2` and returns a new `ContractionCoefficient` object.
 
-# Arguments
+### Arguments
 - `c1::Correction`: The first `Correction` object.
 - `c2::Correction`: The second `Correction` object.
 
-# Returns
-- `ContractionCoefficient`: The result of adding `c1` and `c2`.
-
 """
-function  +(c1::Correction, c2::Correction)
-        if isequal(expand(c1.exponent), expand(c2.exponent))
-            exponents = [c1.exponent]
-            polys = ordered_sum(c1.prefac.*c1.poly, c2.prefac.*c2.poly)
-            first_nonzero_index = 1
-            for i1 in 1:length(polys)
-                if isequal(polys[i1], 0)
-                    first_nonzero_index += 1
-                else
-                    break
-                end
-            end
-
-            if first_nonzero_index > length(polys)
-                prefacs, polys = [convert(Num, 0)], [[convert(Num, 1)]]
+function +(c1::Correction, c2::Correction)
+    if isequal(expand(c1.exponent), expand(c2.exponent))
+        exponents = [c1.exponent]
+        polys = ordered_sum(c1.prefac .* c1.poly, c2.prefac .* c2.poly)
+        first_nonzero_index = 1
+        for i1 in 1:length(polys)
+            if isequal(polys[i1], 0)
+                first_nonzero_index += 1
             else
-                try
-                    prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=true)]
-                catch
-                    prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=false)]
-                end
-                
-                for i2 in 1:(first_nonzero_index-1)
-                    polys[i2] = convert(Num, 0)
-                end
+                break
+            end
+        end
 
-                try
-                    polys = simplify.(polys/prefacs[1]; simplify_fractions=true)
-                catch
-                    polys = simplify.(polys/prefacs[1]; simplify_fractions=false)
-                end
-
-                polys = [polys]
+        if first_nonzero_index > length(polys)
+            prefacs, polys = [convert(Num, 0)], [[convert(Num, 1)]]
+        else
+            try
+                prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=true)]
+            catch
+                prefacs = [simplify.(polys[first_nonzero_index]; simplify_fractions=false)]
             end
 
-        else
-            exponents = [c1.exponent, c2.exponent]
-            prefacs = [c1.prefac, c2.prefac]
-            polys = [c1.poly, c2.poly]
+            for i2 in 1:(first_nonzero_index-1)
+                polys[i2] = convert(Num, 0)
+            end
+
+            try
+                polys = simplify.(polys / prefacs[1]; simplify_fractions=true)
+            catch
+                polys = simplify.(polys / prefacs[1]; simplify_fractions=false)
+            end
+
+            polys = [polys]
         end
+
+    else
+        exponents = [c1.exponent, c2.exponent]
+        prefacs = [c1.prefac, c2.prefac]
+        polys = [c1.poly, c2.poly]
+    end
     return ContractionCoefficient(exponents, prefacs, polys)
 end
 
 """
     +(c1::ContractionCoefficient, c2::Correction)
-
 Add a `Correction` object to a `ContractionCoefficient` object.
 
-# Arguments
+### Arguments
 - `c1::ContractionCoefficient`: The `ContractionCoefficient` object to add to.
 - `c2::Correction`: The `Correction` object to add.
 
-# Returns
+### Returns
 A new `ContractionCoefficient` object with the `Correction` object added.
 
 """
@@ -328,46 +314,40 @@ end
     +(c1::ContractionCoefficient, c2::ContractionCoefficient)
 
 Addition operator for `ContractionCoefficient` objects.
-
 This function performs element-wise addition of two `ContractionCoefficient` objects, `c1` and `c2`. It creates a new `ContractionCoefficient` object by adding the corresponding elements of `c1` and `c2`. 
 The resulting object is then simplified by merging duplicate exponents and simplifying the contraction.
 
-# Arguments
+### Arguments
 - `c1::ContractionCoefficient`: The first `ContractionCoefficient` object.
 - `c2::ContractionCoefficient`: The second `ContractionCoefficient` object.
 
-# Returns
+### Returns
 - `ContractionCoefficient`: The result of the addition operation.
-
 """
-function  +(c1::ContractionCoefficient, c2::ContractionCoefficient)
+function +(c1::ContractionCoefficient, c2::ContractionCoefficient)
     new_c = deepcopy(c1)
     for i in eachindex(c2.exponents)
         corr = Correction(c2.prefacs[i], c2.exponents[i], c2.polys[i])
         new_c += corr
     end
-    return simplify_contraction(merge_duplicate_exponents(new_c))
+    return simplify(merge_duplicate_exponents(new_c))
 end
 
 import Base: *
 """
     *(c1::Correction, c2::Correction)
-
 Multiply two `Correction` objects.
 
-# Arguments
+### Arguments
 - `c1::Correction`: The first `Correction` object.
 - `c2::Correction`: The second `Correction` object.
-
-# Returns
-- `Correction`: The result of multiplying `c1` and `c2`.
 
 """
 function *(c1::Correction, c2::Correction)
     exponent = c1.exponent + c2.exponent
     poly = conv(c1.poly, c2.poly)
     order = c1.order + c2.order - 1
-    prefac = c1.prefac*c2.prefac
+    prefac = c1.prefac * c2.prefac
     return Correction(prefac, exponent, poly, order)
 end
 
@@ -376,84 +356,68 @@ end
 
 Multiply a `Correction` object `c` by a number `n`.
 
-# Arguments
+### Arguments
 - `c::Correction`: The `Correction` object to be multiplied.
 - `n::Number`: The number to multiply `c` by.
-
-# Returns
-- `Correction`: The result of multiplying `c` by `n`.
-
 """
 function *(c::Correction, n::Number)
     exponent = c.exponent
     poly = c.poly
     order = c.order
-    prefac = c.prefac*n
+    prefac = c.prefac * n
     return Correction(prefac, exponent, poly, order)
 end
 
 """
     *(n::Number, c::Correction)
-
 Multiply a number `n` with a `Correction` object `c`.
 
-# Arguments
+### Arguments
 - `n::Number`: The number to be multiplied.
 - `c::Correction`: The `Correction` object to be multiplied.
-
-# Returns
-- `result`: The result of multiplying `n` with `c`.
-
 """
-*(n::Number, c::Correction) = c*n
+*(n::Number, c::Correction) = c * n
 
 """
     *(n::Number, c1::ContractionCoefficient)
-
 Multiply a number `n` with a `ContractionCoefficient` object `c1`.
 
-# Arguments
+### Arguments
 - `n::Number`: The number to be multiplied.
 - `c1::ContractionCoefficient`: The `ContractionCoefficient` object to be multiplied.
-
-# Returns
-- `result`: The result of multiplying `n` with `c1`.
-
 """
 function *(n::Number, c1::ContractionCoefficient)
-    prefacs = c1.prefacs*n
-    return ContractionCoefficient(c1.exponents,prefacs,c1.polys)
+    prefacs = c1.prefacs * n
+    return ContractionCoefficient(c1.exponents, prefacs, c1.polys)
 end
 
 import Base: -
-function  -(c1::Correction, c2::Correction)
-    return c1 + -1*c2
+function -(c1::Correction, c2::Correction)
+    return c1 + -1 * c2
 end
-function  -(c1::ContractionCoefficient, c2::Correction)
-    return c1 + -1*c2
+function -(c1::ContractionCoefficient, c2::Correction)
+    return c1 + -1 * c2
 end
-function  -(c1::ContractionCoefficient, c2::ContractionCoefficient)
-    return c1 + -1*c2
+function -(c1::ContractionCoefficient, c2::ContractionCoefficient)
+    return c1 + -1 * c2
 end
-function  -(c::Correction)
-    return -1*c
+function -(c::Correction)
+    return -1 * c
 end
-function  -(c::ContractionCoefficient)
-    return -1*c
+function -(c::ContractionCoefficient)
+    return -1 * c
 end
 
 """
     conv(u::Vector{<:Number}, v::Vector{<:Number})
-
 Compute the convolution of two vectors `u` and `v`.
 
-# Arguments
+### Arguments
 - `u::Vector{<:Number}`: The first input vector.
 - `v::Vector{<:Number}`: The second input vector.
 
-# Returns
+### Returns
 - `result::Vector{<:Number}`: The resulting vector after performing the convolution.
-
 """
 function conv(u::Vector{<:Number}, v::Vector{<:Number})
     m, n = length(u), length(v)
@@ -470,37 +434,34 @@ end
 
 """
     pad(a::Vector, new_length)
-
 Pad a vector `a` with zeros to a new length `new_length`.
 
-# Arguments
+### Details
+The padded vector has length `new_length`, where the original elements of `a` are preserved and the remaining elements are filled with zeros.
+
+### Arguments
 - `a::Vector`: The input vector to be padded.
 - `new_length`: The desired length of the padded vector.
-
-# Returns
-- A new vector with length `new_length`, where the original elements of `a` are preserved and the remaining elements are filled with zeros.
-
 """
 function pad(a::Vector, new_length)
     old_length = length(a)
     if new_length < old_length
         error("New length must be bigger than old length!")
     end
-    
+
     padding = zeros(typeof(a[1]), new_length - old_length)
     return [a..., padding...]
 end
 
 """
     ordered_sum(a, b)
-
 Compute the element-wise sum of two arrays `a` and `b`, padding the shorter array with zeros.
 
-# Arguments
+### Arguments
 - `a`: The first input array.
 - `b`: The second input array.
 
-# Returns
+### Returns
 The element-wise sum of `a` and `b`, with the shorter array padded with zeros.
 """
 function ordered_sum(a, b)
@@ -524,22 +485,16 @@ end
 
 """
     merge_duplicate_exponents(c::ContractionCoefficient)
-
 Merge duplicate exponents in a `ContractionCoefficient` object.
 
-# Arguments
-- `c::ContractionCoefficient`: The `ContractionCoefficient` object to merge duplicate exponents.
-
-# Returns
-A new `ContractionCoefficient` object with merged duplicate exponents.
-
-# Description
+### Details
 This function takes a `ContractionCoefficient` object and merges any duplicate exponents. It iterates over the exponents, prefactors, and polynomials in the `ContractionCoefficient` object and checks for duplicates. 
 If duplicates are found, the prefactors and polynomials are merged into a single polynomial. 
 The resulting unique exponents, merged prefactors, and merged polynomials are then used to create a new `ContractionCoefficient` object.
-
 Note that the function uses the `ordered_sum` function to merge the polynomials and the `simplify` function to simplify the resulting polynomial.
 
+### Arguments
+- `c::ContractionCoefficient`: The `ContractionCoefficient` object to merge duplicate exponents.
 """
 function merge_duplicate_exponents(c::ContractionCoefficient)
     unique_exponents = []
@@ -569,7 +524,7 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
             # Merge prefacs and polys for indices_to_merge
             merged_poly = [convert(Num, 0)]
             for j1 in indices_to_merge
-                merged_poly = ordered_sum(merged_poly, c.prefacs[j1]*c.polys[j1])
+                merged_poly = ordered_sum(merged_poly, c.prefacs[j1] * c.polys[j1])
             end
 
             try
@@ -595,13 +550,13 @@ function merge_duplicate_exponents(c::ContractionCoefficient)
                 push!(unique_polys, normalized_merged_poly)
             else
                 merged_prefac = merged_poly[first_nonzero_index]
-                normalized_merged_poly = fill(convert(Num, 0), first_nonzero_index-1)
+                normalized_merged_poly = fill(convert(Num, 0), first_nonzero_index - 1)
                 push!(normalized_merged_poly, convert(Num, 1))
                 for j2 in (first_nonzero_index+1):length(merged_poly)
                     try
-                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=true)
+                        global poly_coeff = simplify.(merged_poly[j2] / merged_prefac; simplify_fractions=true)
                     catch
-                        global poly_coeff = simplify.(merged_poly[j2]/merged_prefac; simplify_fractions=false)
+                        global poly_coeff = simplify.(merged_poly[j2] / merged_prefac; simplify_fractions=false)
                     end
                     push!(normalized_merged_poly, poly_coeff)
                 end

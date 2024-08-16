@@ -4,29 +4,28 @@ To demonstrate the use of the method, we start with a simple but illustrative ex
 
 More concretely, the model we consider here is described by the following Hamiltonian terms in the interaction picture,
 The Hamiltonian terms in the interaction picture are described by the following equations:
-
-\[
+$$
 \begin{align}
 \label{eq:Rabi Hamiltonian}
     \hat{H} &= \frac{g}{2} \left ( \hat{a}^\dagger \hat{\sigma}_+ e^{-i(\omega_c + \omega_a) t} + \hat{a}\hat{\sigma}_-e^{+i(\omega_c + \omega_a) t} \right ) \\
     &+ \frac{g}{2} \left ( \hat{a}^\dagger \hat{\sigma_-} e^{-i(\omega_c - \omega_a) t} + \hat{a}\hat{\sigma}_+e^{i(\omega_c - \omega_a) t} \right )
 \end{align}
-\]
-where we $\omega_c$  $(\omega_a)$  is the cavity (atom) resonance.
+$$
+where we $\omega_c (\omega_a)$  is the cavity (atom) resonance.
 
 In particular, we consider the situation where the coupling strength $g$ is not much smaller than the spin and cavity frequencies $\omega_{a}$ and $\omega_{c}$. i.e. $g \approx \omega_c \ (\omega_a)$. In that regime, the counter-rotating terms assume significance, and the induced dynamics that depend on the time resolution of the measurement apparatus.
 
 When observing the dynamics of a coherent-state cavity mode interacting with a single atom, the Jaynes-Cummings model (which is simply the Rabi model with the RWA employed), show collapse-revival dynamics. Due to the photon-number dispersion of a coherent state, the Rabi oscillation decoheres and revives. Interestingly, these collapse-revivla cycles are completely absent in the full Rabi-model, and as we will see, only appear under finite-time resolution (or equivalently, time-coarse graining).
 
 For example, the numerical simulations in this subsection assume the following set of parameters:
-\[
+$$
 \begin{align}
-\frac{\omega_{c}}{2\pi} &= \frac{\omega_{a}}{2\pi} = 2 \textrm{GHz}; \\
-\frac{g}{4\pi} &= 0.4 \textrm{GHz}.
+    \frac{\omega_{c}}{2\pi} &= \frac{\omega_{a}}{2\pi} = 2 \textrm{GHz}; \\
+    \frac{g}{4\pi} &= 0.4 \textrm{GHz}.
 \end{align}
-\]
+$$
 
-With the TCG method, we obtain an effective description that gives us \textbf{directly} the time-averaged observables that would be obtained from a bandwidth-limited measurement apparatus.  The TCG description produces a set of operators, comprised of products of the original Hamiltonian operators (i.e. multi-body transitions) $h^{(k)}_{\vec{\mu}}$, and their corresponding coupling strengths $g_{\vec{\mu}}^{(k)}$. In general, the produced TCG evolution does not need to be unitary, and produces also a set of pairs of pseudo-dissipators $(\hat{L}_{\vec\mu}, \hat{J}_{\vec\nu})$ with complex coupling rate $i\gamma_{\vec{\mu}, \vec{\nu}}^{(k)}$. These coupling strengths are encoded in a set of frequency-dependent scalars we call "contraction coefficients" $C_{l,r}(\vec{\mu}, \vec{\nu})$.
+Using the TCG method, we obtain an effective description that gives us \textbf{directly} the time-averaged observables that would be obtained from a bandwidth-limited measurement apparatus.  The TCG description produces a set of operators, comprised of products of the original Hamiltonian operators (i.e. multi-body transitions) $h^{(k)}_{\vec{\mu}}$, and their corresponding coupling strengths $g_{\vec{\mu}}^{(k)}$. In general, the produced TCG evolution does not need to be unitary, and produces also a set of pairs of pseudo-dissipators $(\hat{L}_{\vec\mu}, \hat{J}_{\vec\nu})$ with complex coupling rate $i\gamma_{\vec{\mu}, \vec{\nu}}^{(k)}$. These coupling strengths are encoded in a set of frequency-dependent scalars we call "contraction coefficients" $C_{l,r}(\vec{\mu}, \vec{\nu})$.
 $$
     \begin{subequations}
         \begin{align}
@@ -48,28 +47,26 @@ $$
         \end{align}
     \end{subequations}
 $$
-where $k = l + r$ is the order of up approximation in the original coupling strengths. We explain the details of the calculation in the following sections, but for now we will just assume these are given to us based on the original Hamiltonian, as illustrated in the figure, for example by the symbolic software package we developed \textbf{QuantumGraining.jl}, as illustrated in the figure. The full explicit calculation up to second-order is shown in the appendix \ref{app:rabi-model_contraction_coefficients}. 
+where $k = l + r$ is the order of up approximation in the original coupling strengths. We explain the details of the calculation in the following sections, but for now we will just assume these are given to us based on the original Hamiltonian, as illustrated in the figure.
 
-In order to effectively capture the coarse-grained dynamics of the Rabi model, we apply the TCG perturbation theory up to the third order and derive the corresponding master equation. In particular, we will see that the TCG procedure reproduces the RWA Hamiltonian at the first-order, and goes beyond it starting at the second-order. 
-
-The TCG prduces many different terms, but the high-frequency contributions would be exponentially suppressed by the filter function $f(\omega)$. Ignoring these exponentially suppressed terms, we find the most significant effective Hamiltonian terms to be,
+In order to effectively capture the coarse-grained dynamics of the Rabi model, we apply the TCG perturbation theory up to the third order and derive the corresponding master equation. In particular, we will see that the TCG procedure reproduces the RWA Hamiltonian at the first-order, and goes beyond it starting at the second-order. The TCG prduces many different terms, but the high-frequency contributions would be exponentially suppressed by the filter function $f(\omega)$. Ignoring these exponentially suppressed terms, we find the most significant effective Hamiltonian terms to be,
 $$
-    \begin{equation}
-    \hat{H}_{\rm TCG}^{(2)}
+\begin{align}
+    &\hat{H}_{\rm TCG}^{(2)}
     \approx
     \hat{H}_{\rm{RWA}}
     +
-    \frac{g^{2}}{8} \Big[
+    \frac{g^2}{8} \left [
     \frac{1}{2\omega_{a}}
     -
-    \big(
+    \left (
     \tau^{2}
     +
     \frac{1}{4\omega_{a}^{2}}
-    \big) (\omega_{c} - \omega_{a})
-    \Big]
-    (1 + 2 \hat{a}^{\dagger} \hat{a}) \cdot \hat{\sigma}_z
-    \end{equation}
+    \right ) (\omega_{c} - \omega_{a})
+    \right ]
+    \left ( 1 + 2 \hat{a}^{\dagger} \hat{a} \right ) \cdot \hat{\sigma}_z
+\end{align}
 $$
 if we work in the limit where $\frac{1}{\omega_{a}} \ll \tau \ll \frac{1}{\abs{\omega_{c}-\omega_{a}}}, \frac{2}{g}$. 
 
