@@ -19,9 +19,10 @@ makedocs(;
   doctest = true,
   linkcheck = false, # Rely on Lint.yml/lychee for the links
   authors = "Leon Bello <lionbello@gmail.com> and contributors",
-  repo = "https://github.com/leonbello/QuantumGraining.jl",
+  repo = "github.com/leonbello/QuantumGraining.jl",
   sitename = "QuantumGraining.jl",
   format = Documenter.HTML(;
+    mathengine=MathJax(),
     prettyurls = true,
     canonical = "https://leonbello.github.io/QuantumGraining.jl",
     assets = ["assets/style.css"],
